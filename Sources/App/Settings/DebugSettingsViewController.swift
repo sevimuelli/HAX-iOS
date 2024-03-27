@@ -22,6 +22,10 @@ class DebugSettingsViewController: HAFormViewController {
 
         becomeFirstResponder()
 
+        if #available(iOS 17, *), !Current.isCatalyst {
+            form.append(threadCredentials())
+        }
+
         form.append(contentsOf: [
             logs(),
             reset(),
@@ -69,7 +73,7 @@ class DebugSettingsViewController: HAFormViewController {
         var firstPinLatitude = "40.785091"
         var firstPinLongitude = "-73.968285"
 
-        if Current.appConfiguration == .FastlaneSnapshot,
+        if Current.appConfiguration == .fastlaneSnapshot,
            let lat = prefs.string(forKey: "mapPin1Latitude"),
            let lon = prefs.string(forKey: "mapPin1Longitude") {
             firstPinLatitude = lat
@@ -79,7 +83,7 @@ class DebugSettingsViewController: HAFormViewController {
         var secondPinLatitude = "40.758896"
         var secondPinLongitude = "-73.985130"
 
-        if Current.appConfiguration == .FastlaneSnapshot,
+        if Current.appConfiguration == .fastlaneSnapshot,
            let lat = prefs.string(forKey: "mapPin2Latitude"),
            let lon = prefs.string(forKey: "mapPin2Longitude") {
             secondPinLatitude = lat
@@ -113,7 +117,7 @@ class DebugSettingsViewController: HAFormViewController {
 
         var entityID = "camera.amcrest_camera"
 
-        if Current.appConfiguration == .FastlaneSnapshot,
+        if Current.appConfiguration == .fastlaneSnapshot,
            let snapshotEntityID = prefs.string(forKey: "cameraEntityID") {
             entityID = snapshotEntityID
         }
@@ -129,6 +133,10 @@ class DebugSettingsViewController: HAFormViewController {
             trigger: trigger
         )
         UNUserNotificationCenter.current().add(notificationRequest)
+    }
+
+    private func threadCredentials() -> Eureka.Section {
+        Section() <<< SettingsRootDataSource.Row.thread.row
     }
 
     private func logs() -> Eureka.Section {
@@ -170,7 +178,7 @@ class DebugSettingsViewController: HAFormViewController {
                 cell.textLabel?.textAlignment = .natural
             }
         }.onCellSelection { [weak self] cell, _ in
-            guard let self = self else { return }
+            guard let self else { return }
             Current.Log.export(from: self, sender: cell, openURLHandler: { url in
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
             })
@@ -180,9 +188,9 @@ class DebugSettingsViewController: HAFormViewController {
             $0.isDestructive = true
             $0.title = L10n.Settings.ResetSection.ResetWebCache.title
             $0.onCellSelection { [weak self] _, _ in
-                guard let self = self else { return }
+                guard let self else { return }
 
-                let hud = MBProgressHUD.showAdded(to: self.view.window ?? self.view, animated: true)
+                let hud = MBProgressHUD.showAdded(to: view.window ?? view, animated: true)
                 hud.backgroundView.backgroundColor = UIColor(white: 0.0, alpha: 0.5)
 
                 let (promise, seal) = Guarantee<Void>.pending()

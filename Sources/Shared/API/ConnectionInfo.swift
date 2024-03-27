@@ -43,7 +43,7 @@ public struct ConnectionInfo: Codable, Equatable {
     public var securityExceptions: SecurityExceptions = .init()
     public func evaluate(_ challenge: URLAuthenticationChallenge)
         -> (URLSession.AuthChallengeDisposition, URLCredential?) {
-        return securityExceptions.evaluate(challenge)
+        securityExceptions.evaluate(challenge)
     }
 
     public var customHeaders: [CustomHeaderStruct]?
@@ -156,7 +156,7 @@ public struct ConnectionInfo: Codable, Equatable {
 
     /// Returns the url that should be used at this moment to access the Home Assistant instance.
     public mutating func activeURL() -> URL {
-        if let overrideActiveURLType = overrideActiveURLType {
+        if let overrideActiveURLType {
             let overrideURL: URL?
 
             switch overrideActiveURLType {
@@ -171,28 +171,28 @@ public struct ConnectionInfo: Codable, Equatable {
                 overrideURL = externalURL
             }
 
-            if let overrideURL = overrideURL {
+            if let overrideURL {
                 return overrideURL.sanitized()
             }
         }
 
         let url: URL
 
-        if let internalURL = internalURL, isOnInternalNetwork || overrideActiveURLType == .internal {
+        if let internalURL, isOnInternalNetwork || overrideActiveURLType == .internal {
             activeURLType = .internal
             url = internalURL
-        } else if let remoteUIURL = remoteUIURL, useCloud {
+        } else if let remoteUIURL, useCloud {
             activeURLType = .remoteUI
             url = remoteUIURL
-        } else if let externalURL = externalURL {
+        } else if let externalURL {
             activeURLType = .external
             url = externalURL
         } else {
             // we're missing a url, so try and fall back to one that _could_ work
-            if let remoteUIURL = remoteUIURL {
+            if let remoteUIURL {
                 activeURLType = .remoteUI
                 url = remoteUIURL
-            } else if let internalURL = internalURL {
+            } else if let internalURL {
                 activeURLType = .internal
                 url = internalURL
             } else {
@@ -210,7 +210,7 @@ public struct ConnectionInfo: Codable, Equatable {
     }
 
     public mutating func webhookURL() -> URL {
-        if let cloudhookURL = cloudhookURL, !isOnInternalNetwork {
+        if let cloudhookURL, !isOnInternalNetwork {
             return cloudhookURL
         }
 
@@ -257,7 +257,7 @@ public struct ConnectionInfo: Codable, Equatable {
 
     /// Secret as byte array
     func webhookSecretBytes(version: Version) -> [UInt8]? {
-        guard let webhookSecret = webhookSecret, webhookSecret.count.isMultiple(of: 2) else {
+        guard let webhookSecret, webhookSecret.count.isMultiple(of: 2) else {
             return nil
         }
 

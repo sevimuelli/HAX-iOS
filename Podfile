@@ -5,14 +5,14 @@ project 'HomeAssistant', 'Debug' => :debug, 'Release' => :release, 'Beta' => :re
 
 def support_modules
   pod 'SwiftGen', '~> 6.5.0'
-  pod 'SwiftLint', '0.49.1' # also update ci.yml GHA
-  pod 'SwiftFormat/CLI', '0.50.3' # also update ci.yml GHA
+  pod 'SwiftLint', '0.54.0' # also update ci.yml GHA
+  pod 'SwiftFormat/CLI', '0.53.1' # also update ci.yml GHA
 end
 
 if ENV['ONLY_SUPPORT_MODULES']
   # some of our CI scripts only need e.g. SwiftLint
   # this allows us to skip a lot of installation when unnecessary
-  platform :ios, '12.0'
+  platform :ios, '15.0'
   support_modules
   workspace 'abstract.workspace'
 
@@ -23,7 +23,7 @@ plugin 'cocoapods-acknowledgements'
 
 system('./Tools/BuildMaterialDesignIconsFont.sh')
 
-pod 'Alamofire', '~> 5.6'
+pod 'Alamofire', '~> 5.8'
 pod 'Communicator', git: 'https://github.com/zacwest/Communicator.git', branch: 'observation-memory-direct'
 pod 'KeychainAccess'
 pod 'ObjectMapper', git: 'https://github.com/tristanhimmelman/ObjectMapper.git', branch: 'master'
@@ -48,7 +48,7 @@ def shared_fwk_pods
 end
 
 abstract_target 'iOS' do
-  platform :ios, '12.0'
+  platform :ios, '15.0'
 
   pod 'MBProgressHUD', '~> 1.2.0'
   pod 'ReachabilitySwift'
@@ -98,7 +98,7 @@ abstract_target 'iOS' do
 end
 
 abstract_target 'watchOS' do
-  platform :watchos, '5.0'
+  platform :watchos, '8.0'
 
   target 'Shared-watchOS' do
     shared_fwk_pods
@@ -112,8 +112,8 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['WATCHOS_DEPLOYMENT_TARGET'] = '5.0'
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      config.build_settings['WATCHOS_DEPLOYMENT_TARGET'] = '8.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
 
       config.build_settings['SWIFT_INSTALL_OBJC_HEADER'] = 'NO' unless target.name.include? 'Firebase'
 

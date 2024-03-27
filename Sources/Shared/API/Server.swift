@@ -166,7 +166,7 @@ public struct ServerInfo: Codable, Equatable {
 }
 
 public final class Server: Hashable, Comparable, CustomStringConvertible {
-    public static var historicId: Identifier<Server> = "historic"
+    public static let historicId: Identifier<Server> = "historic"
 
     public let identifier: Identifier<Server>
     public var info: ServerInfo {
@@ -177,7 +177,7 @@ public final class Server: Hashable, Comparable, CustomStringConvertible {
             let oldValue = getter()
             let didUpdate = setter(newValue)
             if newValue != oldValue, didUpdate {
-                observers.values.forEach { observer in
+                for observer in observers.values {
                     DispatchQueue.main.async {
                         observer(newValue)
                     }

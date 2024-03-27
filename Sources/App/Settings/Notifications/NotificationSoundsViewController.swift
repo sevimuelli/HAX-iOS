@@ -100,7 +100,7 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
                     $0.title = L10n.SettingsDetails.Notifications.Sounds.importMacOpenFolder
                     $0.onCellSelection { _, _ in
                         do {
-                            UIApplication.shared.open(try self.librarySoundsURL(), options: [:], completionHandler: nil)
+                            try UIApplication.shared.open(self.librarySoundsURL(), options: [:], completionHandler: nil)
                         } catch {
                             Current.Log.error("couldn't open folder: \(error)")
                         }
@@ -263,7 +263,7 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
             Current.Log.verbose("New sound path is \(newSoundPath)")
 
             AKConverter(inputURL: pickedURL, outputURL: newSoundPath, options: options).start { error in
-                if let error = error {
+                if let error {
                     let sError = SoundError(soundURL: newSoundPath, kind: .conversionFailed, underlying: error)
                     Current.Log.error("Experienced error during convert \(sError) (\(error))")
                     self.showAlert(sError.localizedDescription)
@@ -306,9 +306,8 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
     func importedFilesWithSuffix(_ suffix: String) throws -> [URL] {
         do {
             let files = try FileManager.default.contentsOfDirectory(
-                at: try librarySoundsURL(),
-                includingPropertiesForKeys: nil,
-                options: []
+                at: librarySoundsURL(),
+                includingPropertiesForKeys: nil
             )
             return files.filter({ $0.lastPathComponent.hasSuffix(suffix) })
         } catch {
@@ -336,7 +335,7 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
     func fileSharingPath() -> Promise<URL> {
         Promise { seal in
             do {
-                seal.fulfill(try FileManager.default.url(
+                try seal.fulfill(FileManager.default.url(
                     for: .documentDirectory,
                     in: .userDomainMask,
                     appropriateFor: nil,
@@ -353,7 +352,7 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
     func copySounds(_ soundURLs: [URL], _ formSectionTag: String) throws -> [URL] {
         guard !soundURLs.isEmpty else { return [URL]() }
 
-        let librarySoundsURL = try self.librarySoundsURL()
+        let librarySoundsURL = try librarySoundsURL()
 
         var copiedSounds: [URL] = []
 
@@ -402,7 +401,7 @@ class NotificationSoundsViewController: HAFormViewController, UIDocumentPickerDe
         guard !soundURLs.isEmpty else { return Promise.value([URL]()) }
 
         do {
-            let librarySoundsURL = try self.librarySoundsURL()
+            let librarySoundsURL = try librarySoundsURL()
 
             let promises: [Promise<URL>] = soundURLs.map { self.copySound(librarySoundsURL, $0, formSectionTag) }
 

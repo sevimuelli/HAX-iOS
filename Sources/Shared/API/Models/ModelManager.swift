@@ -95,7 +95,7 @@ public class ModelManager: ServerObserver {
             ]
         }
 
-        public static var defaults: [Self] = [
+        public static let defaults: [Self] = [
             CleanupDefinition(
                 model: LocationHistoryEntry.self,
                 createdKey: #keyPath(LocationHistoryEntry.CreatedAt)
@@ -229,7 +229,7 @@ public class ModelManager: ServerObserver {
             })
         }
 
-        public static var defaults: [Self] = [
+        public static let defaults: [Self] = [
             .states(domain: "zone", type: RLMZone.self),
             .states(domain: "scene", type: RLMScene.self),
         ]
@@ -257,7 +257,7 @@ public class ModelManager: ServerObserver {
             _ modelManager: ModelManager
         ) -> Promise<Void>
 
-        public static var defaults: [Self] = [
+        public static let defaults: [Self] = [
             FetchDefinition(update: { api, queue, manager in
                 api.GetMobileAppConfig().then(on: queue) {
                     when(fulfilled: [
@@ -282,15 +282,15 @@ public class ModelManager: ServerObserver {
         }).asVoid()
     }
 
-    internal enum StoreError: Error {
+    enum StoreError: Error {
         case missingPrimaryKey
     }
 
-    internal func store<UM: Object & UpdatableModel, C: Collection>(
+    func store<UM: Object & UpdatableModel>(
         type realmObjectType: UM.Type,
         from server: Server,
-        sourceModels: C
-    ) -> Promise<Void> where C.Element == UM.Source {
+        sourceModels: some Collection<UM.Source>
+    ) -> Promise<Void> {
         let realm = Current.realm()
         return realm.reentrantWrite {
             guard let realmPrimaryKey = realmObjectType.primaryKey() else {

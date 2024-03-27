@@ -1,7 +1,6 @@
 import Alamofire
 import KeychainAccess
 import MBProgressHUD
-import ObjectMapper
 import PromiseKit
 import Shared
 import UIKit
@@ -117,7 +116,7 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         ).then { [weak self] controller -> Promise<Void> in
             self?.activeViewController = controller
 
-            guard let controller = controller else {
+            guard let controller else {
                 return .value(())
             }
 

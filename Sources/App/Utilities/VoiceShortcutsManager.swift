@@ -2,7 +2,6 @@ import Foundation
 import Intents
 import Shared
 
-@available(iOS 12, *)
 public class VoiceShortcutsManager {
     public var voiceShortcuts: [INVoiceShortcut] = []
 
@@ -21,14 +20,14 @@ public class VoiceShortcutsManager {
 
     public func updateVoiceShortcuts(completion: (() -> Void)?) {
         INVoiceShortcutCenter.shared.getAllVoiceShortcuts { voiceShortcutsFromCenter, error in
-            guard let voiceShortcutsFromCenter = voiceShortcutsFromCenter else {
-                if let error = error {
+            guard let voiceShortcutsFromCenter else {
+                if let error {
                     Current.Log.error("Failed to fetch voice shortcuts with error: \(error)")
                 }
                 return
             }
             self.voiceShortcuts = voiceShortcutsFromCenter
-            if let completion = completion {
+            if let completion {
                 completion()
             }
         }

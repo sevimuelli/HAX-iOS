@@ -3,7 +3,7 @@ import Shared
 import UIKit
 
 final class WindowScenesManager {
-    static var shared = WindowScenesManager()
+    static let shared = WindowScenesManager()
     private(set) var windowSizeObservers: [WindowSizeObserver] = []
 
     func sceneDidBecomeActive(_ scene: UIWindowScene) {
@@ -37,7 +37,7 @@ final class WindowScenesManager {
     }
 
     // Create cascade effect so windows don't overlap
-    internal func adjustedSystemFrame(
+    func adjustedSystemFrame(
         _ systemFrame: CGRect,
         for screenSize: CGSize,
         numberOfConnectedScenes: Int

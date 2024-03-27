@@ -117,11 +117,11 @@ extension DataRequest {
         validate { _, response, data in
             if case 200 ..< 300 = response.statusCode {
                 return .success(())
-            } else if let data = data {
+            } else if let data {
                 let errorCode: String?
                 let error: String?
 
-                if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     errorCode = json["error"] as? String
                     error = json["error_description"] as? String
                 } else {

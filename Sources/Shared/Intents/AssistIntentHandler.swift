@@ -2,7 +2,6 @@ import Intents
 import ObjectMapper
 import PromiseKit
 
-@available(iOS 13, watchOS 6, *)
 class AssistIntentHandler: NSObject, AssistIntentHandling {
     typealias Intent = AssistIntent
 
@@ -18,7 +17,6 @@ class AssistIntentHandler: NSObject, AssistIntentHandling {
         completion(IntentServer.all, nil)
     }
 
-    @available(watchOS 7, *)
     func provideServerOptionsCollection(
         for intent: Intent,
         with completion: @escaping (INObjectCollection<IntentServer>?, Error?) -> Void
@@ -37,7 +35,6 @@ class AssistIntentHandler: NSObject, AssistIntentHandling {
         completion(Locale.current.intentLanguages, nil)
     }
 
-    @available(watchOS 7, *)
     func provideLanguageOptionsCollection(
         for intent: AssistIntent,
         with completion: @escaping (INObjectCollection<IntentLanguage>?, Error?) -> Void
@@ -82,7 +79,7 @@ class AssistIntentHandler: NSObject, AssistIntentHandling {
         }.done { object, original in
             Current.Log.info("finishing with \(object)")
             let value = IntentAssistResult(identifier: nil, display: object.speech)
-            value.json = String(decoding: try JSONSerialization.data(withJSONObject: original), as: UTF8.self)
+            value.json = try String(decoding: JSONSerialization.data(withJSONObject: original), as: UTF8.self)
             completion(.success(result: value))
         }.catch { error in
             Current.Log.error("erroring with \(error)")

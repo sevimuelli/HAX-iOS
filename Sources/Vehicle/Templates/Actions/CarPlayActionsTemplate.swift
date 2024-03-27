@@ -3,7 +3,6 @@ import Foundation
 import RealmSwift
 import Shared
 
-@available(iOS 15.0, *)
 final class CarPlayActionsTemplate: CarPlayTemplateProvider {
     private var actions: Results<Action>?
     private let viewModel: CarPlayActionsViewModel
@@ -78,8 +77,8 @@ final class CarPlayActionsTemplate: CarPlayTemplateProvider {
             let materialDesignIcon = MaterialDesignIcons(named: action.IconName)
                 .carPlayIcon()
             let item = CPListItem(
-                text: action.Name,
-                detailText: action.Text,
+                text: action.Text,
+                detailText: nil,
                 image: materialDesignIcon
             )
             item.handler = { [weak self] _, _ in

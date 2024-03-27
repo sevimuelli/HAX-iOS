@@ -251,6 +251,31 @@ public enum L10n {
     }
   }
 
+  public enum AppIntents {
+    public enum PerformAction {
+      /// Which action?
+      public static var actionParameterConfiguration: String { return L10n.tr("Localizable", "app_intents.perform_action.action_parameter_configuration") }
+      /// Just to confirm, you wanted ‘%@’?
+      public static func actionParameterConfirmation(_ p1: Any) -> String {
+        return L10n.tr("Localizable", "app_intents.perform_action.action_parameter_confirmation", String(describing: p1))
+      }
+      /// There are %@ options matching ‘%@’.
+      public static func actionParameterDisambiguationIntro(_ p1: Any, _ p2: Any) -> String {
+        return L10n.tr("Localizable", "app_intents.perform_action.action_parameter_disambiguation_intro", String(describing: p1), String(describing: p2))
+      }
+      /// Failed: %@
+      public static func responseFailure(_ p1: Any) -> String {
+        return L10n.tr("Localizable", "app_intents.perform_action.response_failure", String(describing: p1))
+      }
+      /// Done
+      public static var responseSuccess: String { return L10n.tr("Localizable", "app_intents.perform_action.response_success") }
+    }
+    public enum WidgetAction {
+      /// Which actions?
+      public static var actionsParameterConfiguration: String { return L10n.tr("Localizable", "app_intents.widget_action.actions_parameter_configuration") }
+    }
+  }
+
   public enum CarPlay {
     public enum Action {
       public enum Intro {
@@ -440,6 +465,15 @@ public enum L10n {
         /// Are you sure you want to clear all events?
         public static var title: String { return L10n.tr("Localizable", "client_events.view.clear_confirm.title") }
       }
+    }
+  }
+
+  public enum Component {
+    public enum CollapsibleView {
+      /// Collapse
+      public static var collapse: String { return L10n.tr("Localizable", "component.collapsible_view.collapse") }
+      /// Expand
+      public static var expand: String { return L10n.tr("Localizable", "component.collapsible_view.expand") }
     }
   }
 
@@ -1873,6 +1907,10 @@ public enum L10n {
         public static var title: String { return L10n.tr("Localizable", "settings_details.privacy.messaging.title") }
       }
     }
+    public enum Thread {
+      /// Thread
+      public static var title: String { return L10n.tr("Localizable", "settings_details.thread.title") }
+    }
     public enum Updates {
       public enum CheckForUpdates {
         /// Include Beta Releases
@@ -1946,6 +1984,14 @@ public enum L10n {
   }
 
   public enum Thread {
+    public enum ActiveOperationalDataSet {
+      /// Active operational data set
+      public static var title: String { return L10n.tr("Localizable", "thread.active_operational_data_set.title") }
+    }
+    public enum BorderAgentId {
+      /// Border Agent ID
+      public static var title: String { return L10n.tr("Localizable", "thread.border_agent_id.title") }
+    }
     public enum Credentials {
       /// Border Agent ID
       public static var borderAgentIdTitle: String { return L10n.tr("Localizable", "thread.credentials.border_agent_id_title") }
@@ -1965,6 +2011,40 @@ public enum L10n {
         /// You don't have credentials to share
         public static var noCredentialsTitle: String { return L10n.tr("Localizable", "thread.credentials.share_credentials.no_credentials_title") }
       }
+    }
+    public enum ExtendedPanId {
+      /// Extended PAN ID
+      public static var title: String { return L10n.tr("Localizable", "thread.extended_pan_id.title") }
+    }
+    public enum Management {
+      /// Thread Credentials
+      public static var title: String { return L10n.tr("Localizable", "thread.management.title") }
+    }
+    public enum NetworkKey {
+      /// Network Key
+      public static var title: String { return L10n.tr("Localizable", "thread.network_key.title") }
+    }
+    public enum StoreInKeychain {
+      public enum Error {
+        /// Operation failed
+        public static var title: String { return L10n.tr("Localizable", "thread.store_in_keychain.error.title") }
+        public enum Generic {
+          /// Failed to store thread credential in keychain, check logs for more information.
+          public static var body: String { return L10n.tr("Localizable", "thread.store_in_keychain.error.generic.body") }
+        }
+        public enum HexadecimalConversion {
+          /// Failed to convert input to hexadecimal while storing thread credential in keychain
+          public static var body: String { return L10n.tr("Localizable", "thread.store_in_keychain.error.hexadecimal_conversion.body") }
+        }
+      }
+    }
+    public enum TransterToApple {
+      /// Transfer to Apple Keychain
+      public static var title: String { return L10n.tr("Localizable", "thread.transter_to_apple.title") }
+    }
+    public enum TransterToHomeassistant {
+      /// Transfer to Home Assistant
+      public static var title: String { return L10n.tr("Localizable", "thread.transter_to_homeassistant.title") }
     }
   }
 

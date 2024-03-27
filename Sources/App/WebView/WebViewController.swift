@@ -23,11 +23,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private let refreshControl = UIRefreshControl()
     private let sidebarGestureRecognizer: UIScreenEdgePanGestureRecognizer
 
-    private var keepAliveTimer: Timer?
     private var initialURL: URL?
     private var barCodeScannerController: UIViewController?
 
-    private let settingsButton: UIButton! = {
+    private let settingsButton: UIButton = {
         let button = UIButton()
         button.setImage(
             MaterialDesignIcons.cogIcon.image(ofSize: CGSize(width: 36, height: 36), color: .white),
@@ -46,7 +45,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         button.layer.masksToBounds = true
 
         button.translatesAutoresizingMaskIntoConstraints = false
-        if Current.appConfiguration == .FastlaneSnapshot {
+        if Current.appConfiguration == .fastlaneSnapshot {
             button.alpha = 0
         }
         return button
@@ -159,7 +158,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         webView.addGestureRecognizer(sidebarGestureRecognizer)
 
         urlObserver = webView.observe(\.url) { [weak self] webView, _ in
-            guard let self = self else { return }
+            guard let self else { return }
 
             guard let currentURL = webView.url?.absoluteString.replacingOccurrences(of: "?external_auth=1", with: ""),
                   let cleanURL = URL(string: currentURL), let scheme = cleanURL.scheme else {
@@ -171,12 +170,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 return
             }
 
-            self.userActivity?.webpageURL = cleanURL
-            self.userActivity?.userInfo = [
+            userActivity?.webpageURL = cleanURL
+            userActivity?.userInfo = [
                 RestorableStateKey.lastURL.rawValue: cleanURL,
-                RestorableStateKey.server.rawValue: self.server.identifier.rawValue,
+                RestorableStateKey.server.rawValue: server.identifier.rawValue,
             ]
-            self.userActivity?.becomeCurrent()
+            userActivity?.becomeCurrent()
         }
 
         webView.navigationDelegate = self
@@ -252,7 +251,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case server(Server)
 
         init?(_ userActivity: NSUserActivity?) {
-            if let userActivity = userActivity {
+            if let userActivity {
                 self = .userActivity(userActivity)
             } else {
                 return nil
@@ -569,7 +568,6 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
-    @available(iOS 15, *)
     func webView(
         _ webView: WKWebView,
         requestMediaCapturePermissionFor origin: WKSecurityOrigin,
@@ -612,7 +610,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         var request: URLRequest
 
         if Current.settingsStore.restoreLastURL,
-           let initialURL = initialURL, initialURL.baseIsEqual(to: webviewURL) {
+           let initialURL, initialURL.baseIsEqual(to: webviewURL) {
             Current.Log.info("restoring initial url path: \(initialURL.path)")
             request = addHeaders(request: URLRequest(url: initialURL), urlToCheck: initialURL)
         } else {
@@ -824,8 +822,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             withTimeInterval: 5.0,
             repeats: true,
             block: { [weak self] timer in
-                if let self = self, Current.date().timeIntervalSince(timer.fireDate) > 30.0 {
-                    self.sendExternalBus(message: .init(command: "restart"))
+                if let self, Current.date().timeIntervalSince(timer.fireDate) > 30.0 {
+                    sendExternalBus(message: .init(command: "restart"))
                 }
 
                 if UIApplication.shared.applicationState == .active {
@@ -883,9 +881,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
 extension String {
     func matchingStrings(regex: String) -> [[String]] {
-        guard let regex = try? NSRegularExpression(pattern: regex, options: []) else { return [] }
+        guard let regex = try? NSRegularExpression(pattern: regex) else { return [] }
         let nsString = self as NSString
-        let results = regex.matches(in: self, options: [], range: NSRange(location: 0, length: nsString.length))
+        let results = regex.matches(in: self, range: NSRange(location: 0, length: nsString.length))
         return results.map { result in
             (0 ..< result.numberOfRanges).map {
                 result.range(at: $0).location != NSNotFound
@@ -920,12 +918,12 @@ extension WebViewController: WKScriptMessageHandler {
             firstly {
                 Current.api(for: server).tokenManager.authDictionaryForWebView(forceRefresh: force)
             }.done { dictionary in
-                let jsonData = try? JSONSerialization.data(withJSONObject: dictionary, options: [])
+                let jsonData = try? JSONSerialization.data(withJSONObject: dictionary)
                 if let jsonString = String(data: jsonData!, encoding: .utf8) {
                     // Current.Log.verbose("Responding to getExternalAuth with: \(callbackName)(true, \(jsonString))")
                     let script = "\(callbackName)(true, \(jsonString))"
                     self.webView.evaluateJavaScript(script, completionHandler: { result, error in
-                        if let error = error {
+                        if let error {
                             Current.Log.error("Failed to trigger getExternalAuth callback: \(error)")
                         }
 
@@ -953,7 +951,7 @@ extension WebViewController: WKScriptMessageHandler {
                 self.webView.evaluateJavaScript(script, completionHandler: { _, error in
                     Current.onboardingObservation.needed(.logout)
 
-                    if let error = error {
+                    if let error {
                         Current.Log.error("Failed calling sign out callback: \(error)")
                     }
 
@@ -1018,6 +1016,8 @@ extension WebViewController: WKScriptMessageHandler {
                                 "canCommissionMatter": Current.matter.isAvailable,
                                 "canImportThreadCredentials": Current.matter.threadCredentialsSharingEnabled,
                                 "hasQRScanner": true,
+                                "canTransferThreadCredentialsToKeychain": Current.matter
+                                    .threadCredentialsStoreInKeychainEnabled,
                             ]
                         ))
                     }
@@ -1077,12 +1077,12 @@ extension WebViewController: WKScriptMessageHandler {
                     Current.Log.error(error)
                 }
             case .threadImportCredentials:
-                threadCredentialsRequested()
+                transferKeychainThreadCredentialsToHARequested()
             case .barCodeScanner:
                 guard let title = incomingMessage.Payload?["title"] as? String,
                       let description = incomingMessage.Payload?["description"] as? String,
                       let incomingMessageId = incomingMessage.ID else { return }
-                qrCodeScannerRequested(
+                barcodeScannerRequested(
                     title: title,
                     description: description,
                     alternativeOptionLabel: incomingMessage.Payload?["alternative_option_label"] as? String,
@@ -1096,6 +1096,13 @@ extension WebViewController: WKScriptMessageHandler {
                 alert.addAction(.init(title: L10n.okLabel, style: .default))
                 let controller = barCodeScannerController ?? self
                 controller.present(alert, animated: false, completion: nil)
+            case .threadStoreCredentialInAppleKeychain:
+                guard let macExtendedAddress = incomingMessage.Payload?["mac_extended_address"] as? String,
+                      let activeOperationalDataset = incomingMessage.Payload?["active_operational_dataset"] as? String else { return }
+                transferHAThreadCredentialsToKeychain(
+                    macExtendedAddress: macExtendedAddress,
+                    activeOperationalDataset: activeOperationalDataset
+                )
             }
         } else {
             Current.Log.error("unknown: \(incomingMessage.MessageType)")
@@ -1116,7 +1123,7 @@ extension WebViewController: WKScriptMessageHandler {
                     let script = "window.externalBus(\(jsonString))"
                     Current.Log.verbose("sending \(jsonString)")
                     webView.evaluateJavaScript(script, completionHandler: { _, error in
-                        if let error = error {
+                        if let error {
                             Current.Log.error("failed to fire message to externalBus: \(error)")
                         }
                         seal.resolve(error)
@@ -1129,12 +1136,13 @@ extension WebViewController: WKScriptMessageHandler {
         }
     }
 
-    private func threadCredentialsRequested() {
+    private func transferKeychainThreadCredentialsToHARequested() {
         if #available(iOS 16.4, *) {
-            let threadManagementView = UIHostingController(rootView: ThreadCredentialsSharingView(viewModel: .init(
-                server: server,
-                threadClient: ThreadClientService()
-            )))
+            let threadManagementView =
+                UIHostingController(
+                    rootView: ThreadCredentialsSharingView<ThreadTransferCredentialToHAViewModel>
+                        .buildTransferToHomeAssistant(server: server)
+                )
             threadManagementView.view.backgroundColor = .clear
             threadManagementView.modalPresentationStyle = .overFullScreen
             threadManagementView.modalTransitionStyle = .crossDissolve
@@ -1142,7 +1150,24 @@ extension WebViewController: WKScriptMessageHandler {
         }
     }
 
-    private func qrCodeScannerRequested(
+    private func transferHAThreadCredentialsToKeychain(macExtendedAddress: String, activeOperationalDataset: String) {
+        if #available(iOS 16.4, *) {
+            let threadManagementView =
+                UIHostingController(
+                    rootView: ThreadCredentialsSharingView<ThreadTransferCredentialToKeychainViewModel>
+                        .buildTransferToAppleKeychain(
+                            macExtendedAddress: macExtendedAddress,
+                            activeOperationalDataset: activeOperationalDataset
+                        )
+                )
+            threadManagementView.view.backgroundColor = .clear
+            threadManagementView.modalPresentationStyle = .overFullScreen
+            threadManagementView.modalTransitionStyle = .crossDissolve
+            present(threadManagementView, animated: true)
+        }
+    }
+
+    private func barcodeScannerRequested(
         title: String,
         description: String,
         alternativeOptionLabel: String?,
@@ -1170,7 +1195,7 @@ extension WebViewController: UIScrollViewDelegate {
 
 extension ConnectionInfo {
     mutating func webviewURLComponents() -> URLComponents? {
-        if Current.appConfiguration == .FastlaneSnapshot, prefs.object(forKey: "useDemo") != nil {
+        if Current.appConfiguration == .fastlaneSnapshot, prefs.object(forKey: "useDemo") != nil {
             return URLComponents(string: "https://companion.home-assistant.io/app/ios/demo")!
         }
         guard var components = URLComponents(url: activeURL(), resolvingAgainstBaseURL: true) else {

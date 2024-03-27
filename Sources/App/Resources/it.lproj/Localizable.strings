@@ -52,6 +52,12 @@
 "announcement.drop_support.button_read_more" = "Leggi di più";
 "announcement.drop_support.subtitle" = "Dopo un'attenta valutazione, nei nostri prossimi aggiornamenti interromperemo il supporto per iOS 12, 13 e 14.";
 "announcement.drop_support.title" = "Aggiornamento importante";
+"app_intents.perform_action.action_parameter_configuration" = "Which action?";
+"app_intents.perform_action.action_parameter_confirmation" = "Just to confirm, you wanted ‘%@’?";
+"app_intents.perform_action.action_parameter_disambiguation_intro" = "There are %@ options matching ‘%@’.";
+"app_intents.perform_action.response_failure" = "Failed: %@";
+"app_intents.perform_action.response_success" = "Done";
+"app_intents.widget_action.actions_parameter_configuration" = "Which actions?";
 "cancel_label" = "Annulla";
 "carPlay.action.intro.item.body" = "Tocca per continuare sul tuo iPhone";
 "carPlay.action.intro.item.title" = "Crea la tua prima azione";
@@ -108,7 +114,9 @@
 "client_events.view.clear" = "Pulisci";
 "client_events.view.clear_confirm.message" = "Questo non può essere annullato.";
 "client_events.view.clear_confirm.title" = "Sei sicuro di voler cancellare tutti gli eventi?";
-"close_label" = "Close";
+"close_label" = "Chiudi";
+"component.collapsible_view.collapse" = "Riduci";
+"component.collapsible_view.expand" = "Espandi";
 "continue_label" = "Continua";
 "copy_label" = "Copia";
 "database.problem.delete" = "Elimina il database e chiudi l'applicazione";
@@ -561,6 +569,7 @@
 "settings_details.privacy.messaging.description" = "Firebase Cloud Messaging deve essere abilitato affinché le notifiche push funzionino.";
 "settings_details.privacy.messaging.title" = "Firebase Cloud Messaging";
 "settings_details.privacy.title" = "Privacy";
+"settings_details.thread.title" = "Discussione";
 "settings_details.updates.check_for_updates.include_betas" = "Includi versioni beta";
 "settings_details.updates.check_for_updates.title" = "Controlla automaticamente gli aggiornamenti";
 "settings_details.watch.title" = "Apple Watch";
@@ -583,6 +592,8 @@
 "share_extension.entered_placeholder" = "'inserito' nell'evento";
 "share_extension.error.title" = "Impossibile inviare";
 "success_label" = "Successo";
+"thread.active_operational_data_set.title" = "Set di dati operativi";
+"thread.border_agent_id.title" = "Border Agent ID";
 "thread.credentials.border_agent_id_title" = "Border Agent ID";
 "thread.credentials.network_key_title" = "Chiave di rete";
 "thread.credentials.network_name_title" = "Nome della rete";
@@ -591,6 +602,14 @@
 "thread.credentials.share_credentials.no_credentials_message" = "Assicurati di aver effettuato l'accesso con il tuo account iCloud che è proprietario di una Home in Apple Home.";
 "thread.credentials.share_credentials.no_credentials_title" = "Non hai credenziali da condividere";
 "thread.credentials.share_credentials_button_title" = "Condividi le credenziali con Home Assistant";
+"thread.extended_pan_id.title" = "ID PAN esteso";
+"thread.management.title" = "Credenziali del thread";
+"thread.network_key.title" = "Password di rete";
+"thread.store_in_keychain.error.generic.body" = "Impossibile memorizzare le credenziali del thread nel portachiavi, controlla i log per ulteriori informazioni.";
+"thread.store_in_keychain.error.hexadecimal_conversion.body" = "Impossibile convertire l'input in esadecimale durante la memorizzazione delle credenziali del thread nel portachiavi";
+"thread.store_in_keychain.error.title" = "Operazione fallita";
+"thread.transter_to_apple.title" = "Trasferisci ad Apple Keychain";
+"thread.transter_to_homeassistant.title" = "Trasferisci ad Home Assistant";
 "token_error.connection_failed" = "Connessione fallita.";
 "token_error.expired" = "Il token è scaduto.";
 "token_error.token_unavailable" = "Il Token non è disponibile.";

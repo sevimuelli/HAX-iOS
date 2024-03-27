@@ -22,7 +22,7 @@ struct WidgetOpenPage: Widget {
                                 id: panel.identifier!,
                                 title: panel.displayString,
                                 subtitle: showSubtitle ? Current.servers.server(for: panel)?.info.name : nil,
-                                widgetURL: panel.widgetURL,
+                                interactionType: .widgetURL(panel.widgetURL),
                                 icon: panel.materialDesignIcon,
                                 showsChevron: true,
                                 textColor: .white,
@@ -37,15 +37,7 @@ struct WidgetOpenPage: Widget {
         .contentMarginsDisabledIfAvailable()
         .configurationDisplayName(L10n.Widgets.OpenPage.title)
         .description(L10n.Widgets.OpenPage.description)
-        .supportedFamilies({
-            var supportedFamilies: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
-
-            if #available(iOS 15, *) {
-                supportedFamilies.append(.systemExtraLarge)
-            }
-
-            return supportedFamilies
-        }())
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
         .onBackgroundURLSessionEvents(matching: nil) { identifier, completion in
             Current.webhooks.handleBackground(for: identifier, completionHandler: completion)
         }

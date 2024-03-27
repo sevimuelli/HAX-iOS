@@ -47,7 +47,7 @@ enum OneShotError: Error, Equatable, LocalizedError, CustomNSError {
     }
 }
 
-internal struct PotentialLocation: Comparable, CustomStringConvertible {
+struct PotentialLocation: Comparable, CustomStringConvertible {
     static func desiredAccuracy(for accuracy: CLAccuracyAuthorization) -> CLLocationAccuracy {
         switch accuracy {
         case .fullAccuracy: return 100.0
@@ -165,7 +165,7 @@ internal struct PotentialLocation: Comparable, CustomStringConvertible {
     }
 }
 
-internal final class OneShotLocationProxy: NSObject, CLLocationManagerDelegate {
+final class OneShotLocationProxy: NSObject, CLLocationManagerDelegate {
     private(set) var promise: Promise<CLLocation>
     private let seal: Resolver<CLLocation>
     private let locationManager: CLLocationManager
@@ -209,14 +209,7 @@ internal final class OneShotLocationProxy: NSObject, CLLocationManagerDelegate {
         }
 
         if let cachedLocation = locationManager.location {
-            let authorization: CLAccuracyAuthorization
-
-            if #available(watchOS 7, *) {
-                authorization = locationManager.accuracyAuthorization
-            } else {
-                authorization = .fullAccuracy
-            }
-
+            let authorization: CLAccuracyAuthorization = locationManager.accuracyAuthorization
             let potentialLocation = PotentialLocation(location: cachedLocation, accuracyAuthorization: authorization)
             potentialLocations.append(potentialLocation)
         }
@@ -231,7 +224,7 @@ internal final class OneShotLocationProxy: NSObject, CLLocationManagerDelegate {
 
         let bestLocation = potentialLocations.sorted().last
 
-        if let bestLocation = bestLocation {
+        if let bestLocation {
             switch bestLocation.quality {
             case .perfect:
                 Current.Log.info("Got a perfect location!")
@@ -256,14 +249,7 @@ internal final class OneShotLocationProxy: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         precondition(Thread.isMainThread)
 
-        let authorization: CLAccuracyAuthorization
-
-        if #available(watchOS 7, *) {
-            authorization = manager.accuracyAuthorization
-        } else {
-            authorization = .fullAccuracy
-        }
-
+        let authorization: CLAccuracyAuthorization = manager.accuracyAuthorization
         let updatedPotentialLocations = locations.map {
             PotentialLocation(location: $0, accuracyAuthorization: authorization)
         }

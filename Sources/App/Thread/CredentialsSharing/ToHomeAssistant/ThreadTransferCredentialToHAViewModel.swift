@@ -2,28 +2,23 @@ import Foundation
 import HAKit
 import Shared
 
-final class ThreadCredentialsSharingViewModel: ObservableObject {
-    enum AlertType {
-        case empty(title: String, message: String)
-        case error(title: String, message: String)
-    }
-
+final class ThreadTransferCredentialToHAViewModel: ThreadCredentialsSharingViewModelProtocol {
     @Published var credentials: [ThreadCredential] = []
     @Published var showAlert = false
-    @Published var alertType: AlertType?
-    @Published var showImportSuccess = false
+    @Published var alertType: ThreadCredentialsAlertType?
+    @Published var showOperationSuccess = false
 
-    private let threadClient: THClientProtocol
+    private let threadClient: ThreadClientProtocol
     private let connection: HAConnection
     private var credentialsToImport: [String] = []
 
-    init(server: Server, threadClient: THClientProtocol) {
+    init(server: Server, threadClient: ThreadClientProtocol) {
         self.threadClient = threadClient
         self.connection = Current.api(for: server).connection
     }
 
     @MainActor
-    func retrieveAllCredentials() async {
+    func mainOperation() async {
         do {
             credentials = try await threadClient.retrieveAllCredentials()
 
@@ -44,7 +39,7 @@ final class ThreadCredentialsSharingViewModel: ObservableObject {
     @MainActor
     private func processImport() {
         guard let first = credentialsToImport.first else {
-            showImportSuccess = true
+            showOperationSuccess = true
             return
         }
 
@@ -68,17 +63,16 @@ final class ThreadCredentialsSharingViewModel: ObservableObject {
             case .fulfilled:
                 completion(true)
             case let .rejected(error):
-                self
-                    .showAlert(type: .error(
-                        title: L10n.errorLabel,
-                        message: error.localizedDescription
-                    ))
+                showAlert(type: .error(
+                    title: L10n.errorLabel,
+                    message: error.localizedDescription
+                ))
                 completion(false)
             }
         }
     }
 
-    private func showAlert(type: AlertType) {
+    private func showAlert(type: ThreadCredentialsAlertType) {
         alertType = type
         showAlert = true
     }

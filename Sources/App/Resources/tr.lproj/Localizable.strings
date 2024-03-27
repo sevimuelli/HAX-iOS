@@ -52,6 +52,12 @@
 "announcement.drop_support.button_read_more" = "Devamını oku";
 "announcement.drop_support.subtitle" = "Dikkatli bir değerlendirmenin ardından gelecek güncellemelerimizde iOS 12, 13 ve 14 desteğine son vereceğiz.";
 "announcement.drop_support.title" = "Önemli güncelleme";
+"app_intents.perform_action.action_parameter_configuration" = "Hangi eylem?";
+"app_intents.perform_action.action_parameter_confirmation" = "Onaylamak için ' %@ ' mi istediniz?";
+"app_intents.perform_action.action_parameter_disambiguation_intro" = "' %@ ' ile eşleşen %@ seçenek var.";
+"app_intents.perform_action.response_failure" = "Başarısız: %@";
+"app_intents.perform_action.response_success" = "Bitti";
+"app_intents.widget_action.actions_parameter_configuration" = "Hangi eylemler?";
 "cancel_label" = "İptal";
 "carPlay.action.intro.item.body" = "iPhone'unuzda devam etmek için dokunun";
 "carPlay.action.intro.item.title" = "İlk eyleminizi oluşturun";
@@ -108,7 +114,9 @@
 "client_events.view.clear" = "Temizle";
 "client_events.view.clear_confirm.message" = "Bu geri alınamaz.";
 "client_events.view.clear_confirm.title" = "Tüm olayları temizlemek istediğinizden emin misiniz?";
-"close_label" = "Close";
+"close_label" = "Kapat";
+"component.collapsible_view.collapse" = "Daralt";
+"component.collapsible_view.expand" = "Genişlet";
 "continue_label" = "Devam et";
 "copy_label" = "Kopyala";
 "database.problem.delete" = "Veritabanını Sil ve Uygulamadan Çık";
@@ -561,6 +569,7 @@
 "settings_details.privacy.messaging.description" = "Push bildirimlerinin çalışabilmesi için Firebase Bulut Mesajlaşma etkinleştirilmelidir.";
 "settings_details.privacy.messaging.title" = "Firebase Bulut Mesajlaşma";
 "settings_details.privacy.title" = "Gizlilik";
+"settings_details.thread.title" = "Konu";
 "settings_details.updates.check_for_updates.include_betas" = "Beta Sürümlerini Dahil Et";
 "settings_details.updates.check_for_updates.title" = "Güncelleştirmeleri Otomatik Olarak Denetle";
 "settings_details.watch.title" = "Apple Watch";
@@ -583,6 +592,8 @@
 "share_extension.entered_placeholder" = "Etkinliğe 'girildi'";
 "share_extension.error.title" = "Gönderilemedi";
 "success_label" = "Başarılı!";
+"thread.active_operational_data_set.title" = "Aktif operasyonel veri seti";
+"thread.border_agent_id.title" = "Sınır Ajanı Kimliği";
 "thread.credentials.border_agent_id_title" = "Sınır Ajanı Kimliği";
 "thread.credentials.network_key_title" = "Ağ Anahtarı";
 "thread.credentials.network_name_title" = "Ağ Adı";
@@ -591,6 +602,14 @@
 "thread.credentials.share_credentials.no_credentials_message" = "Apple Home'da bir Evin sahibi olan iCloud hesabınızla oturum açtığınızdan emin olun.";
 "thread.credentials.share_credentials.no_credentials_title" = "Paylaşacak kimlik bilgileriniz yok";
 "thread.credentials.share_credentials_button_title" = "Kimlik bilgilerinizi Ev Asistanı ile paylaşın";
+"thread.extended_pan_id.title" = "Genişletilmiş PAN Kimliği";
+"thread.management.title" = "İş Parçacığı Kimlik Bilgileri";
+"thread.network_key.title" = "Ağ Anahtarı";
+"thread.store_in_keychain.error.generic.body" = "Konu kimlik bilgileri anahtarlıkta depolanamadı. Daha fazla bilgi için günlükleri kontrol edin.";
+"thread.store_in_keychain.error.hexadecimal_conversion.body" = "Anahtar zincirinde iş parçacığı kimlik bilgileri saklanırken giriş onaltılı sayıya dönüştürülemedi";
+"thread.store_in_keychain.error.title" = "Operasyon başarısız";
+"thread.transter_to_apple.title" = "Apple Anahtarlık'a Aktar";
+"thread.transter_to_homeassistant.title" = "Home Asistanına Aktar";
 "token_error.connection_failed" = "Bağlantı kurulamadı.";
 "token_error.expired" = "Anahtar süresi doldu.";
 "token_error.token_unavailable" = "Anahtar kullanılamıyor.";

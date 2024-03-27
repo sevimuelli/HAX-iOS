@@ -3,16 +3,17 @@ import Foundation
 import UIKit
 
 class MJPEGStreamerSessionDelegate: SessionDelegate {
-    static var didReceiveResponse: Notification.Name = .init(rawValue: "MJPEGStreamerSessionDelegateDidReceiveResponse")
-    static var taskUserInfoKey: AnyHashable = "taskUserInfoKey"
+    static let didReceiveResponse: Notification.Name = .init(rawValue: "MJPEGStreamerSessionDelegateDidReceiveResponse")
+    static let taskUserInfoKey: AnyHashable = "taskUserInfoKey"
 
     // if/when alamofire also implements this again, we need to update to handle it as the breakpoint between images
-    func urlSession(
+    override func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
         didReceive response: URLResponse,
         completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
     ) {
+        super.urlSession(session, dataTask: dataTask, didReceive: response, completionHandler: completionHandler)
         NotificationCenter.default.post(
             name: Self.didReceiveResponse,
             object: self,
@@ -114,7 +115,7 @@ public class MJPEGStreamer {
         case .endOfResponse:
             let image = UIImage(data: pendingData)
             pendingData.removeAll(keepingCapacity: true)
-            if let image = image {
+            if let image {
                 DispatchQueue.main.async { [self] in
                     callback?(image, nil)
                 }

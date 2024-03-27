@@ -7,13 +7,11 @@ public protocol DiskCache {
     func set<T: Codable>(_ value: T, for key: String) -> Promise<Void>
 }
 
-@available(iOS 13, watchOS 6, *)
 private struct DiskCacheKey: EnvironmentKey {
     static let defaultValue = Current.diskCache
 }
 
 // also in AppEnvironment
-@available(iOS 13, watchOS 6, *)
 public extension EnvironmentValues {
     var diskCache: DiskCache {
         get { self[DiskCacheKey.self] }
@@ -28,11 +26,10 @@ public final class DiskCacheImpl: DiskCache {
             var coordinatorError: NSError?
             coordinator.coordinate(
                 readingItemAt: Self.URL(in: container, for: key),
-                options: [],
                 error: &coordinatorError
             ) { url in
                 do {
-                    let data = try Data(contentsOf: url, options: [])
+                    let data = try Data(contentsOf: url)
                     let value = try JSONDecoder().decode(T.self, from: data)
                     seal.fulfill(value)
                 } catch {
@@ -47,7 +44,7 @@ public final class DiskCacheImpl: DiskCache {
         return promise
     }
 
-    public func set<T: Codable>(_ value: T, for key: String) -> Promise<Void> {
+    public func set(_ value: some Codable, for key: String) -> Promise<Void> {
         let data: Data
 
         do {
@@ -63,11 +60,10 @@ public final class DiskCacheImpl: DiskCache {
             var coordinatorError: NSError?
             coordinator.coordinate(
                 writingItemAt: Self.URL(in: container, for: key),
-                options: [],
                 error: &coordinatorError
             ) { url in
                 do {
-                    try data.write(to: url, options: [])
+                    try data.write(to: url)
                     seal.fulfill(())
                 } catch {
                     seal.reject(error)

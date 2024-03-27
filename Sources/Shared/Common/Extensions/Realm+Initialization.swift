@@ -105,7 +105,7 @@ public extension Realm {
                     // but it seems like some time in the past, it allowed the same identifier to be inserted >1 time
                     var discoveredIdentifiers = Set<String>()
                     migration.enumerateObjects(ofType: NotificationCategory.className()) { _, newObject in
-                        if let newObject = newObject, let identifier = newObject["Identifier"] as? String {
+                        if let newObject, let identifier = newObject["Identifier"] as? String {
                             if discoveredIdentifiers.contains(identifier) {
                                 migration.delete(newObject)
                             } else {
@@ -134,7 +134,7 @@ public extension Realm {
                 if oldVersion < 15 {
                     migration.enumerateObjects(ofType: RLMScene.className()) { oldObject, newObject in
                         if let data = oldObject?["underlyingSceneData"] as? Data,
-                           let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                            let attributes = json["attributes"] as? [String: Any] {
                             newObject?["backgroundColor"] = attributes["background_color"] as? String
                             newObject?["textColor"] = attributes["text_color"] as? String
@@ -155,7 +155,7 @@ public extension Realm {
 
                 if oldVersion < 18 {
                     // set the serverIdentifier to the historic value for anything synced earlier
-                    func migrate<T: Object & UpdatableModel>(_ modelType: T.Type) {
+                    func migrate(_ modelType: (some Object & UpdatableModel).Type) {
                         migration.enumerateObjects(ofType: modelType.className()) { _, newObject in
                             newObject?[modelType.serverIdentifierKey()] = Server.historicId.rawValue
                         }
@@ -206,14 +206,14 @@ public extension Realm {
 
                         if let oldData = newObject?[dataKey] as? Data,
                            let oldJson = try? JSONSerialization
-                           .jsonObject(with: oldData, options: []) as? [String: Any],
+                           .jsonObject(with: oldData) as? [String: Any],
                            let oldIconDict = oldJson[iconDictKey] as? [String: String],
                            let oldIconIcon = oldIconDict[iconDictIconKey] {
                             var updatedIconDict = oldIconDict
                             updatedIconDict[iconDictIconKey] = MDIMigration.migrate(icon: oldIconIcon)
                             var updatedJson = oldJson
                             updatedJson[iconDictKey] = updatedIconDict
-                            if let newData = try? JSONSerialization.data(withJSONObject: updatedJson, options: []) {
+                            if let newData = try? JSONSerialization.data(withJSONObject: updatedJson) {
                                 newObject?[dataKey] = newData
                             }
                         }
@@ -339,12 +339,12 @@ public extension Realm {
 
         if isInWriteTransaction {
             promise = Promise { seal in
-                seal.fulfill(try block())
+                try seal.fulfill(block())
             }
         } else {
             promise = Current.backgroundTask(withName: "realm-write") { _ in
                 Promise<Result> { seal in
-                    seal.fulfill(try write(withoutNotifying: tokens, block))
+                    try seal.fulfill(write(withoutNotifying: tokens, block))
                 }
             }
         }

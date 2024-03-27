@@ -62,53 +62,30 @@ public class NotificationAction: Object {
 
     public var action: UNNotificationAction {
         let action: UNNotificationAction
+        let actionIcon: UNNotificationActionIcon?
 
-        let baseAction: () -> UNNotificationAction = { [self] in
-            if TextInput {
-                return UNTextInputNotificationAction(
-                    identifier: Identifier,
-                    title: Title,
-                    options: options,
-                    textInputButtonTitle: TextInputButtonTitle,
-                    textInputPlaceholder: TextInputPlaceholder
-                )
-            } else {
-                return UNNotificationAction(
-                    identifier: Identifier,
-                    title: Title,
-                    options: options
-                )
-            }
+        if let icon, icon.hasPrefix("sfsymbols:") {
+            actionIcon = .init(systemImageName: icon.replacingOccurrences(of: "sfsymbols:", with: ""))
+        } else {
+            actionIcon = nil
         }
 
-        if #available(iOS 15, watchOS 8, *) {
-            let actionIcon: UNNotificationActionIcon?
-
-            if let icon = icon, icon.hasPrefix("sfsymbols:") {
-                actionIcon = .init(systemImageName: icon.replacingOccurrences(of: "sfsymbols:", with: ""))
-            } else {
-                actionIcon = nil
-            }
-
-            if TextInput {
-                action = UNTextInputNotificationAction(
-                    identifier: Identifier,
-                    title: Title,
-                    options: options,
-                    icon: actionIcon,
-                    textInputButtonTitle: TextInputButtonTitle,
-                    textInputPlaceholder: TextInputPlaceholder
-                )
-            } else {
-                action = UNNotificationAction(
-                    identifier: Identifier,
-                    title: Title,
-                    options: options,
-                    icon: actionIcon
-                )
-            }
+        if TextInput {
+            action = UNTextInputNotificationAction(
+                identifier: Identifier,
+                title: Title,
+                options: options,
+                icon: actionIcon,
+                textInputButtonTitle: TextInputButtonTitle,
+                textInputPlaceholder: TextInputPlaceholder
+            )
         } else {
-            action = baseAction()
+            action = UNNotificationAction(
+                identifier: Identifier,
+                title: Title,
+                options: options,
+                icon: actionIcon
+            )
         }
 
         return action

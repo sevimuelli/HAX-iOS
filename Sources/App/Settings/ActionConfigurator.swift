@@ -28,7 +28,7 @@ class ActionConfigurator: HAFormViewController, TypedRowControllerType {
 
         self.isModalInPresentation = true
 
-        if let action = action {
+        if let action {
             self.action = Action(value: action)
             self.newAction = false
         } else if let firstServer = Current.servers.all.first {
@@ -61,8 +61,8 @@ class ActionConfigurator: HAFormViewController, TypedRowControllerType {
             guard let self else { return }
             cell.backgroundColor = UIColor.clear
             cell.preservesSuperviewLayoutMargins = false
-            self.updatePreviews()
-            cell.view = self.preview
+            updatePreviews()
+            cell.view = preview
         }
 
         let firstSection = Section()
@@ -305,7 +305,9 @@ class ActionConfigurator: HAFormViewController, TypedRowControllerType {
     private func saveAndAutomate() {
         if form.validate().count == 0 {
             Current.Log.verbose("Category form is valid, calling dismiss callback!")
-            shouldSave = true
+            if !action.isServerControlled {
+                shouldSave = true
+            }
             shouldOpenAutomationEditor = true
             onDismissCallback?(self)
         }
@@ -367,7 +369,7 @@ class ActionPreview: UIView {
     }
 
     @objc func handleGesture(gesture: UITapGestureRecognizer) {
-        guard let action = action,
+        guard let action,
               let server = Current.servers.server(forServerIdentifier: action.serverIdentifier) else {
             return
         }

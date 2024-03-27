@@ -1,8 +1,8 @@
 import Foundation
 import Shared
 
-struct ServerFixture {
-    static var standard = Server(identifier: "123", getter: {
+enum ServerFixture {
+    static let standard = Server(identifier: "123", getter: {
         .init(
             name: "A Name",
             connection: .init(

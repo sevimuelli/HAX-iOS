@@ -63,11 +63,7 @@ public class DeviceWrapper {
         #if os(iOS)
         return UIDevice.current.identifierForVendor?.uuidString
         #elseif os(watchOS)
-        if #available(watchOS 6.2, *) {
-            return WKInterfaceDevice.current().identifierForVendor?.uuidString
-        } else {
-            return nil
-        }
+        return WKInterfaceDevice.current().identifierForVendor?.uuidString
         #endif
     }
 
@@ -150,15 +146,13 @@ public class DeviceWrapper {
         #if targetEnvironment(macCatalyst)
         let seconds = CGEventSource.secondsSinceLastEventType(
             .combinedSessionState,
-            eventType: {
-                /*
-                 Apple's docs say:
-                 > The event type to access. To get the elapsed time since the previous input event—keyboard, mouse, or
-                 > tablet—specify kCGAnyInputEventType.
-                 But kCGAnyInputEventType isn't available in Swift. In Objective-C it's defined as `((CGEventType)(~0))`
-                 */
-                CGEventType(rawValue: ~0)!
-            }()
+            eventType: /*
+                Apple's docs say:
+                > The event type to access. To get the elapsed time since the previous input event—keyboard, mouse, or
+                > tablet—specify kCGAnyInputEventType.
+                But kCGAnyInputEventType isn't available in Swift. In Objective-C it's defined as `((CGEventType)(~0))`
+                */
+            CGEventType(rawValue: ~0)!
         )
         return .init(value: seconds, unit: .seconds)
         #else

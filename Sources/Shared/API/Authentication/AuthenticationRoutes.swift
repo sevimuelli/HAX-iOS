@@ -19,7 +19,7 @@ enum AuthenticationRoute {
     func asURLRequestWith(baseURL: URL, headers: HTTPHeaders) throws -> URLRequest {
         let baseRequest = try URLRequest(url: baseURL.appendingPathComponent(path), method: method, headers: headers)
         let request: URLRequest
-        if let parameters = parameters {
+        if let parameters {
             request = try URLEncoding.httpBody.encode(baseRequest, with: parameters)
         } else {
             request = baseRequest
@@ -32,9 +32,9 @@ enum AuthenticationRoute {
     private var clientID: String {
         var clientID = "https://home-assistant.io/iOS"
 
-        if Current.appConfiguration == .Debug {
+        if Current.appConfiguration == .debug {
             clientID = "https://home-assistant.io/iOS/dev-auth"
-        } else if Current.appConfiguration == .Beta {
+        } else if Current.appConfiguration == .beta {
             clientID = "https://home-assistant.io/iOS/beta-auth"
         }
         return clientID

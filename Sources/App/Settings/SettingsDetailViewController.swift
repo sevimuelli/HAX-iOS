@@ -468,10 +468,10 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
             with(toggleAllSwitch) {
                 $0.title = L10n.SettingsDetails.Actions.Scenes.selectAll
                 $0.onChange { [weak self] row in
-                    guard let self = self,
+                    guard let self,
                           let value = row.value else { return }
-                    self.realm.reentrantWrite {
-                        scenes.forEach { scene in
+                    realm.reentrantWrite {
+                        for scene in scenes {
                             scene.actionEnabled = value
                         }
                     }
@@ -716,6 +716,17 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                 _ = vc.navigationController?.popViewController(animated: true)
 
                 if let vc = vc as? ActionConfigurator {
+                    defer {
+                        if vc.shouldOpenAutomationEditor {
+                            vc.navigationController?.dismiss(animated: true, completion: {
+                                Current.sceneManager.webViewWindowControllerPromise.then(\.webViewControllerPromise)
+                                    .done { controller in
+                                        controller.openActionAutomationEditor(actionId: vc.action.ID)
+                                    }
+                            })
+                        }
+                    }
+
                     if vc.shouldSave == false {
                         Current.Log.verbose("Not saving action to DB and returning early!")
                         return
@@ -734,15 +745,6 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                     }.done {
                         self?.updatePositions()
                     }.cauterize()
-
-                    if vc.shouldOpenAutomationEditor {
-                        vc.navigationController?.dismiss(animated: true, completion: {
-                            Current.sceneManager.webViewWindowControllerPromise.then(\.webViewControllerPromise)
-                                .done { controller in
-                                    controller.openActionAutomationEditor(actionId: vc.action.ID)
-                                }
-                        })
-                    }
                 }
             })
         }
@@ -791,7 +793,7 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                 cell.selectionStyle = .default
             }
             $0.onCellSelection { _, row in
-                if CLLocationManager.authorizationStatus() == .notDetermined {
+                if locationManager.authorizationStatus == .notDetermined {
                     locationManager.requestAlwaysAuthorization()
                 } else {
                     UIApplication.shared.openSettings(destination: .location)
@@ -954,9 +956,9 @@ enum AppIcon: String, CaseIterable {
 
     var isDefault: Bool {
         switch Current.appConfiguration {
-        case .Debug where self == .Dev: return true
-        case .Beta where self == .Beta: return true
-        case .Release where self == .Release: return true
+        case .debug where self == .Dev: return true
+        case .beta where self == .Beta: return true
+        case .release where self == .Release: return true
         default: return false
         }
     }

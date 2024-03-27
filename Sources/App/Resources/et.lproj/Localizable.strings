@@ -52,6 +52,12 @@
 "announcement.drop_support.button_read_more" = "Lisateave";
 "announcement.drop_support.subtitle" = "Pärast hoolikat kaalumist lõpetame oma tulevastes värskendustes iOS 12, 13 ja 14 toe.";
 "announcement.drop_support.title" = "Oluline uuendus";
+"app_intents.perform_action.action_parameter_configuration" = "Milline toiming?";
+"app_intents.perform_action.action_parameter_confirmation" = "Lihtsalt kinnita, kas sa tahtsid ' %@ '?";
+"app_intents.perform_action.action_parameter_disambiguation_intro" = "On %@ valikut mis vastavad '%@'.";
+"app_intents.perform_action.response_failure" = "Nurjus: %@";
+"app_intents.perform_action.response_success" = "Valmis";
+"app_intents.widget_action.actions_parameter_configuration" = "Millised toimingud?";
 "cancel_label" = "Loobu";
 "carPlay.action.intro.item.body" = "Puuduta jätkamiseks oma iPhone'is";
 "carPlay.action.intro.item.title" = "Loo oma esimene toiming";
@@ -108,7 +114,9 @@
 "client_events.view.clear" = "Kustuta";
 "client_events.view.clear_confirm.message" = "Seda ei saa tagasi võtta.";
 "client_events.view.clear_confirm.title" = "Kas soovid kindlasti kõik sündmused kustutada?";
-"close_label" = "Close";
+"close_label" = "Sulge";
+"component.collapsible_view.collapse" = "Ahenda";
+"component.collapsible_view.expand" = "Laienda";
 "continue_label" = "Jätka";
 "copy_label" = "Kopeeri";
 "database.problem.delete" = "Kustuta andmebaas ja sulge rakendus";
@@ -561,6 +569,7 @@ Sildid toimivad igas seadmes, kuhu on paigaldatud Home Assistant, millel on nend
 "settings_details.privacy.messaging.description" = "Tõukemärguannete toimimiseks peab Firebase'i pilvsõnumside olema lubatud.";
 "settings_details.privacy.messaging.title" = "Firebase'i pilvsõnumside";
 "settings_details.privacy.title" = "Privaatsus";
+"settings_details.thread.title" = "Thread";
 "settings_details.updates.check_for_updates.include_betas" = "Kaasa beetaversioonid";
 "settings_details.updates.check_for_updates.title" = "Uuenduste automaatne kontrollimine";
 "settings_details.watch.title" = "Apple Watch";
@@ -583,6 +592,8 @@ Sildid toimivad igas seadmes, kuhu on paigaldatud Home Assistant, millel on nend
 "share_extension.entered_placeholder" = "'alustati' sündmusest";
 "share_extension.error.title" = "Edastamine nurjus";
 "success_label" = "Õnnestus";
+"thread.active_operational_data_set.title" = "Aktiivne tööandmete kogum";
+"thread.border_agent_id.title" = "Ääreseadme agendi ID";
 "thread.credentials.border_agent_id_title" = "Ääreseadme agendi ID";
 "thread.credentials.network_key_title" = "Võrgu võti";
 "thread.credentials.network_name_title" = "Võrgu nimi";
@@ -591,6 +602,14 @@ Sildid toimivad igas seadmes, kuhu on paigaldatud Home Assistant, millel on nend
 "thread.credentials.share_credentials.no_credentials_message" = "Veendu, et oled sisse logitud oma iCloudi kontoga, mis on Apple Home'i Home omanik.";
 "thread.credentials.share_credentials.no_credentials_title" = "Pole identimisteavet mida jagada";
 "thread.credentials.share_credentials_button_title" = "Volituste jagamine Home Assistantiga";
+"thread.extended_pan_id.title" = "Laiendatud PAN ID";
+"thread.management.title" = "Threadi sidumse volitused";
+"thread.network_key.title" = "Võrgu võti";
+"thread.store_in_keychain.error.generic.body" = "Threadi mandaadi salvestamine võtmehoidlasse nurjus. Lisateabe saamiseks vaata logisid.";
+"thread.store_in_keychain.error.hexadecimal_conversion.body" = "Sisendi teisendamine kuueteistkümnendsüsteemiks nurjus lõimemandaadi salvestamisel võtmehoidlasse";
+"thread.store_in_keychain.error.title" = "Toiming nurjus";
+"thread.transter_to_apple.title" = "Siirda Apple'i võtmehoidlasse";
+"thread.transter_to_homeassistant.title" = "Siirda Home Assistantisse";
 "token_error.connection_failed" = "Ühendus nurjus.";
 "token_error.expired" = "Token on aegunud.";
 "token_error.token_unavailable" = "Token pole saadaval.";

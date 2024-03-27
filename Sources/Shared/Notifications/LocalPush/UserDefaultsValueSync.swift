@@ -16,7 +16,6 @@ public class UserDefaultsValueSync<ValueType: Codable>: NSObject {
         self.userDefaults.addObserver(
             self,
             forKeyPath: settingsKey,
-            options: [],
             context: nil
         )
     }
@@ -69,7 +68,7 @@ public class UserDefaultsValueSync<ValueType: Codable>: NSObject {
         change: [NSKeyValueChangeKey: Any]?,
         context: UnsafeMutableRawPointer?
     ) {
-        guard let value = value else { return }
+        guard let value else { return }
 
         for observer in observers {
             observer.handler(value)

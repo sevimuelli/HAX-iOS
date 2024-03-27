@@ -117,7 +117,7 @@ class CameraStreamMJPEGViewController: UIViewController, CameraStreamHandler {
         lastSize = CGSize(width: 16, height: 9)
 
         streamer.streamImages(fromURL: url, headers: headers) { [weak self, imageView] image, error in
-            guard let image = image else {
+            guard let image else {
                 self?.seal.reject(MJPEGError.networkError(path: path, error: error))
                 return
             }

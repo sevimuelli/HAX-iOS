@@ -64,11 +64,11 @@ public enum Constants {
 
         let groupDir = fileManager.containerURL(forSecurityApplicationGroupIdentifier: Constants.AppGroupID)
 
-        guard groupDir != nil else {
+        guard let groupDir else {
             fatalError("Unable to get groupDir.")
         }
 
-        return groupDir!
+        return groupDir
     }
 
     public static var LogsDirectory: URL {
@@ -126,7 +126,7 @@ public enum Constants {
         SharedPlistFiles.Info.cfBundleShortVersionString
     }
 
-    internal static var clientVersion: Version {
+    static var clientVersion: Version {
         // swiftlint:disable:next force_try
         var clientVersion = try! Version(version)
         clientVersion.build = build
@@ -135,18 +135,17 @@ public enum Constants {
 }
 
 public extension Version {
-    static var canSendDeviceID: Version = .init(minor: 104)
-    static var pedometerIconsAvailable: Version = .init(minor: 105)
-    static var tagWebhookAvailable: Version = .init(minor: 114, prerelease: "b5")
-    static var tagPlatformTrigger: Version = .init(minor: 115, prerelease: "any0")
-    static var actionSyncing: Version = .init(minor: 115, prerelease: "any0")
-    static var localPushConfirm: Version = .init(major: 2021, minor: 10, prerelease: "any0")
-    static var externalBusCommandRestart: Version = .init(major: 2021, minor: 12, prerelease: "b6")
-    static var updateLocationGPSOptional: Version = .init(major: 2022, minor: 2, prerelease: "any0")
-    static var fullWebhookSecretKey: Version = .init(major: 2022, minor: 3)
-    static var conversationWebhook: Version = .init(major: 2023, minor: 2, prerelease: "any0")
-    static var externalBusCommandSidebar: Version = .init(major: 2023, minor: 4, prerelease: "b3")
-    static var externalBusCommandAutomationEditor: Version = .init(major: 2024, minor: 2, prerelease: "any0")
+    static let canSendDeviceID: Version = .init(minor: 104)
+    static let pedometerIconsAvailable: Version = .init(minor: 105)
+    static let tagWebhookAvailable: Version = .init(minor: 114, prerelease: "b5")
+    static let actionSyncing: Version = .init(minor: 115, prerelease: "any0")
+    static let localPushConfirm: Version = .init(major: 2021, minor: 10, prerelease: "any0")
+    static let externalBusCommandRestart: Version = .init(major: 2021, minor: 12, prerelease: "b6")
+    static let updateLocationGPSOptional: Version = .init(major: 2022, minor: 2, prerelease: "any0")
+    static let fullWebhookSecretKey: Version = .init(major: 2022, minor: 3)
+    static let conversationWebhook: Version = .init(major: 2023, minor: 2, prerelease: "any0")
+    static let externalBusCommandSidebar: Version = .init(major: 2023, minor: 4, prerelease: "b3")
+    static let externalBusCommandAutomationEditor: Version = .init(major: 2024, minor: 2, prerelease: "any0")
 
     var coreRequiredString: String {
         L10n.requiresVersion(String(format: "core-%d.%d", major, minor ?? -1))

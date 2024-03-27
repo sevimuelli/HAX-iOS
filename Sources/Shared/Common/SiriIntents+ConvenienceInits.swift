@@ -5,7 +5,6 @@ import Intents
 import MapKit
 import UIColor_Hex_Swift
 
-@available(iOS 12, *)
 public extension CallServiceIntent {
     convenience init(domain: String, service: String) {
         self.init()
@@ -16,14 +15,13 @@ public extension CallServiceIntent {
         self.init()
         self.service = "\(domain).\(service)"
 
-        if let payload = payload, let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
+        if let payload, let jsonData = try? JSONSerialization.data(withJSONObject: payload),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             self.payload = jsonString
         }
     }
 }
 
-@available(iOS 12, *)
 public extension FireEventIntent {
     convenience init(eventName: String) {
         self.init()
@@ -34,14 +32,13 @@ public extension FireEventIntent {
         self.init()
         self.eventName = eventName
 
-        if let payload = payload, let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
+        if let payload, let jsonData = try? JSONSerialization.data(withJSONObject: payload),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             self.eventData = jsonString
         }
     }
 }
 
-@available(iOS 12, *)
 public extension SendLocationIntent {
     convenience init(place: CLPlacemark) {
         self.init()
@@ -56,7 +53,6 @@ public extension SendLocationIntent {
     }
 }
 
-@available(iOS 12, *)
 public extension PerformActionIntent {
     convenience init(action: Action) {
         self.init()
@@ -77,7 +73,6 @@ public extension PerformActionIntent {
     }
 }
 
-@available(iOS 12, *)
 public extension IntentAction {
     convenience init(action: Action) {
         #if os(iOS)
@@ -105,7 +100,7 @@ public extension IntentAction {
     }
 
     func asAction() -> Action? {
-        guard let identifier = identifier, identifier.isEmpty == false else {
+        guard let identifier, identifier.isEmpty == false else {
             return nil
         }
 
@@ -117,12 +112,10 @@ public extension IntentAction {
     }
 }
 
-@available(iOS 12, *)
 public extension WidgetActionsIntent {
     static let widgetKind = "WidgetActions"
 }
 
-@available(iOS 13, watchOS 6, *)
 public extension IntentPanel {
     convenience init(panel: HAPanel, server: Server) {
         let image: INImage?
@@ -180,7 +173,6 @@ public extension IntentPanel {
     }
 }
 
-@available(iOS 12, *)
 public extension WidgetOpenPageIntent {
     static let widgetKind = "WidgetOpenPage"
 }
