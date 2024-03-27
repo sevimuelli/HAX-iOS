@@ -12,6 +12,7 @@ class ImageAttachmentViewController: UIViewController, NotificationCategory {
     let image: UIImage
     let imageData: Data
     let imageUTI: CFString
+    var customHeaders: [(key: String, value: String)] = []
 
     enum ImageViewType {
         case imageView(UIImageView)
@@ -34,6 +35,10 @@ class ImageAttachmentViewController: UIViewController, NotificationCategory {
 
         self.needsEndSecurityScoped = attachmentURL.startAccessingSecurityScopedResource()
 
+        if let customHeaders = api.server.info.connection.activeCustomHeaders() {
+            self.customHeaders = customHeaders
+        }
+
         // rather than hard-coding an acceptable list of UTTypes it's probably easier to just try decoding
         // https://developer.apple.com/documentation/usernotifications/unnotificationattachment
         // has the full list of what is advertised - at time of writing (iOS 14.5) it's jpeg, gif and png
@@ -48,7 +53,7 @@ class ImageAttachmentViewController: UIViewController, NotificationCategory {
             self.imageData = data
 
             if let imageSource = CGImageSourceCreateWithData(data as CFData, nil),
-               let uti = CGImageSourceGetType(imageSource) {
+                let uti = CGImageSourceGetType(imageSource) {
                 self.imageUTI = uti
             } else {
                 // can't figure out, just assume JPEG
