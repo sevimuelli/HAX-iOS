@@ -85,3 +85,5 @@ Configuration/HomeAssistant.overrides.xcconfig
 Brewfile.lock.json
 vendor/bundle
 .env.development
+
+custom-app/tmp
