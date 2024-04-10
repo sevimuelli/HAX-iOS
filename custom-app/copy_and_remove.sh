@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# copy HomeAssistant.overrides.xcconfig
+yes | cp -rf ../custom-app/HomeAssistant.overrides.xcconfig ../Configuration/HomeAssistant.overrides.xcconfig
+
+# create tmp directory if it not exists
 mkdir -p tmp
 
 # remove alternate icons
@@ -37,6 +41,10 @@ cd ./tmp/
 rename 's/(.*)\.png/dev-$1.png/' *.png
 cd -
 yes | cp -rf ./tmp/* ../WatchApp/Assets.xcassets/WatchIcon.dev.appiconset/
+
+yes | cp -rf "../custom-app/icons/watch_pdf/ha-logo-black (2).pdf" "../Sources/Extensions/Watch/Resources/Assets.xcassets/TemplateLogo.imageset/ha-logo-black (2).pdf"
+yes | cp -rf ../custom-app/icons/watch_pdf/ha-logo-round.pdf ../Sources/Extensions/Watch/Resources/Assets.xcassets/RoundLogo.imageset/ha-logo-round.pdf
+
 
 # replace app icons
 yes | cp -rf ../custom-app/icons/base_logos/square_1024.jpg ../Sources/App/Resources/Assets.xcassets/AppIcon.appiconset/release-1024x1024.png
