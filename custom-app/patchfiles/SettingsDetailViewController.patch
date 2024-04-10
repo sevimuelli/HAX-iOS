@@ -1,0 +1,13 @@
+diff --git a/Sources/App/Settings/SettingsDetailViewController.swift b/Sources/App/Settings/SettingsDetailViewController.swift
+index f15907f5..df3ee692 100644
+--- a/Sources/App/Settings/SettingsDetailViewController.swift
++++ b/Sources/App/Settings/SettingsDetailViewController.swift
+@@ -65,7 +65,7 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
+ 
+             form
+                 +++ Section {
+-                    $0.hidden = .isCatalyst
++                    $0.hidden = true
+                 }
+ 
+                 <<< PushRow<AppIcon>("appIcon") {

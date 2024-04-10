@@ -1,0 +1,13 @@
+diff --git a/Sources/WatchApp/Info.plist b/Sources/WatchApp/Info.plist
+index 7a71e47e..17bd9dbf 100644
+--- a/Sources/WatchApp/Info.plist
++++ b/Sources/WatchApp/Info.plist
+@@ -5,7 +5,7 @@
+ 	<key>CFBundleDevelopmentRegion</key>
+ 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+ 	<key>CFBundleDisplayName</key>
+-	<string>Home Assistant</string>
++	<string>HAX</string>
+ 	<key>CFBundleExecutable</key>
+ 	<string>$(EXECUTABLE_NAME)</string>
+ 	<key>CFBundleIdentifier</key>

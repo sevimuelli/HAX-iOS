@@ -1,0 +1,79 @@
+diff --git a/Sources/App/Settings/AboutViewController.swift b/Sources/App/Settings/AboutViewController.swift
+index 2b2b0c23..2d52ade2 100644
+--- a/Sources/App/Settings/AboutViewController.swift
++++ b/Sources/App/Settings/AboutViewController.swift
+@@ -42,9 +42,9 @@ class AboutViewController: HAFormViewController {
+                     bundle: nil
+                 ))
+                 logoHeader.onSetupView = { view, _ in
+-                    view.AppTitle.text = L10n.About.Logo.appTitle
++                    view.AppTitle.text = "HAX-iOS: Fork of Home Assistant Companion"
+                     view.Version.text = HomeAssistantAPI.clientVersionDescription
+-                    view.Tagline.text = L10n.About.Logo.tagline
++                    view.Tagline.text = "Home Assistant Extended"
+                     view.addGestureRecognizer(UITapGestureRecognizer(
+                         target: self,
+                         action: #selector(self.tapAbout(_:))
+@@ -61,9 +61,9 @@ class AboutViewController: HAFormViewController {
+             }.onCellSelection { _, _ in
+                 let urlStr: String
+                 if Current.isCatalyst {
+-                    urlStr = "https://companion.home-assistant.io/app/ios/beta_mac"
++                    urlStr = "https://github.com/sevimuelli/HAX-iOS"
+                 } else {
+-                    urlStr = "https://companion.home-assistant.io/app/ios/beta"
++                    urlStr = "https://github.com/sevimuelli/HAX-iOS"
+                 }
+                 // We want to open this in Safari so the TestFlight redirect works.
+                 UIApplication.shared.open(URL(string: urlStr)!, options: [:], completionHandler: nil)
+@@ -83,9 +83,9 @@ class AboutViewController: HAFormViewController {
+             }.onCellSelection { _, _ in
+                 let urlStr: String
+                 if Current.isCatalyst {
+-                    urlStr = "https://companion.home-assistant.io/app/ios/review_mac"
++                    urlStr = "https://github.com/sevimuelli/HAX-iOS"
+                 } else {
+-                    urlStr = "https://companion.home-assistant.io/app/ios/review"
++                    urlStr = "https://github.com/sevimuelli/HAX-iOS"
+                 }
+                 UIApplication.shared.open(URL(string: urlStr)!, options: [:], completionHandler: nil)
+             }
+@@ -100,19 +100,19 @@ class AboutViewController: HAFormViewController {
+             +++ pushLookingButtonRow {
+                 $0.title = L10n.About.Website.title
+             }.onCellSelection { _, _ in
+-                openURLInBrowser(URL(string: "https://www.home-assistant.io/")!, self)
++                openURLInBrowser(URL(string: "https://github.com/sevimuelli/HAX-iOS")!, self)
+             }
+ 
+             <<< pushLookingButtonRow {
+                 $0.title = L10n.About.Forums.title
+             }.onCellSelection { _, _ in
+-                openURLInBrowser(URL(string: "https://community.home-assistant.io/")!, self)
++                openURLInBrowser(URL(string: "https://github.com/sevimuelli/HAX-iOS")!, self)
+             }
+ 
+             <<< pushLookingButtonRow {
+                 $0.title = L10n.About.Chat.title
+             }.onCellSelection { _, _ in
+-                openURLInBrowser(URL(string: "https://companion.home-assistant.io/app/ios/chat")!, self)
++                openURLInBrowser(URL(string: "https://github.com/sevimuelli/HAX-iOS")!, self)
+             }
+ 
+             <<< pushLookingButtonRow {
+@@ -138,13 +138,13 @@ class AboutViewController: HAFormViewController {
+             <<< pushLookingButtonRow {
+                 $0.title = L10n.About.Github.title
+             }.onCellSelection { _, _ in
+-                openURLInBrowser(URL(string: "https://companion.home-assistant.io/app/ios/repo")!, self)
++                openURLInBrowser(URL(string: "https://github.com/sevimuelli/HAX-iOS")!, self)
+             }
+ 
+             <<< pushLookingButtonRow {
+                 $0.title = L10n.About.GithubIssueTracker.title
+             }.onCellSelection { _, _ in
+-                openURLInBrowser(URL(string: "https://companion.home-assistant.io/app/ios/issues")!, self)
++                openURLInBrowser(URL(string: "https://github.com/sevimuelli/HAX-iOS/issues")!, self)
+             }
+     }
+ 
