@@ -34,10 +34,11 @@ pod 'UIColor_Hex_Swift'
 pod 'Version'
 pod 'XCGLogger'
 
-pod 'Starscream', git: 'https://github.com/zacwest/starscream', branch: 'ha-swift-api'
-pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', branch: 'main'
-pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', branch: 'main'
-pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', branch: 'main'
+# Keep Starscream reference even though HAKit already install it, because it defines our fork with the necessary fix
+pod 'Starscream', git: 'https://github.com/bgoncal/starscream', branch: 'ha-URLSession-fix'
+pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
+pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
+pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
 
 def test_pods
   pod 'OHHTTPStubs/Swift'
