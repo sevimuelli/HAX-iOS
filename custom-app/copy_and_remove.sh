@@ -3,6 +3,22 @@
 # ignore changed files on git
 ./git_ignore_changes.sh
 
+# apply all patches
+cd ..
+#git am --stat custom-app/patchfiles/*
+git apply --check custom-app/patchfiles/*
+git apply custom-app/patchfiles/AboutViewController.patch
+git apply custom-app/patchfiles/App-catalyst.entitlements
+git apply custom-app/patchfiles/App-ios.entitlements.patch
+git apply custom-app/patchfiles/Extension-catalyst.entitlements.patch
+git apply custom-app/patchfiles/Extension-ios.entitlements.patch
+git apply custom-app/patchfiles/Extensions_Watch__Info_plist.patch
+git apply custom-app/patchfiles/Podfile.patch
+git apply custom-app/patchfiles/SettingsDetailViewController.patch
+git apply custom-app/patchfiles/WatchApp_Info_plist.patch
+
+cd -
+
 # copy HomeAssistant.overrides.xcconfig
 yes | cp -rf ../custom-app/HomeAssistant.overrides.xcconfig ../Configuration/HomeAssistant.overrides.xcconfig
 
