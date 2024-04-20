@@ -58,6 +58,7 @@
 "app_intents.perform_action.response_failure" = "失敗しました: %@";
 "app_intents.perform_action.response_success" = "完了";
 "app_intents.widget_action.actions_parameter_configuration" = "どのアクション？";
+"assist.pipelines_picker.title" = "アシストパイプライン";
 "cancel_label" = "キャンセル";
 "carPlay.action.intro.item.body" = "iPhoneで続けるをタップ";
 "carPlay.action.intro.item.title" = "最初のアクションを作成する";
@@ -839,6 +840,10 @@ Home Assistantは、ローカルコントロールとプライバシーに重点
 "widgets.actions.description" = "Home Assistantのアクションを実行する。";
 "widgets.actions.not_configured" = "アクションの設定なし";
 "widgets.actions.title" = "アクション";
+"widgets.assist.action_title" = "Ask Assist";
+"widgets.assist.description" = "アプリでアシストを開く";
+"widgets.assist.title" = "アシスト";
+"widgets.assist.unknown_configuration" = "Configure";
 "widgets.open_page.description" = "Home Assistantでフロントエンドページを開きます。";
 "widgets.open_page.not_configured" = "利用できるページがありません";
 "widgets.open_page.title" = "ページを開く";

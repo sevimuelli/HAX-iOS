@@ -276,6 +276,13 @@ public enum L10n {
     }
   }
 
+  public enum Assist {
+    public enum PipelinesPicker {
+      /// Assist Pipelines
+      public static var title: String { return L10n.tr("Localizable", "assist.pipelines_picker.title") }
+    }
+  }
+
   public enum CarPlay {
     public enum Action {
       public enum Intro {
@@ -2816,6 +2823,20 @@ public enum L10n {
       public static var notConfigured: String { return L10n.tr("Localizable", "widgets.actions.not_configured") }
       /// Actions
       public static var title: String { return L10n.tr("Localizable", "widgets.actions.title") }
+    }
+    public enum Assist {
+      /// Ask Assist
+      public static var actionTitle: String { return L10n.tr("Localizable", "widgets.assist.action_title") }
+      /// Open Assist in the app
+      public static var description: String { return L10n.tr("Localizable", "widgets.assist.description") }
+      /// Assist
+      public static var title: String { return L10n.tr("Localizable", "widgets.assist.title") }
+      /// Configure
+      public static var unknownConfiguration: String { return L10n.tr("Localizable", "widgets.assist.unknown_configuration") }
+    }
+    public enum Button {
+      /// Reload all widgets
+      public static var reloadTimeline: String { return L10n.tr("Localizable", "widgets.button.reload_timeline") }
     }
     public enum OpenPage {
       /// Open a frontend page in Home Assistant.
