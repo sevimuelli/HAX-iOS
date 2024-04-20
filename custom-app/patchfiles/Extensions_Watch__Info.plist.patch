@@ -1,0 +1,13 @@
+diff --git a/Sources/Extensions/Watch/Resources/Info.plist b/Sources/Extensions/Watch/Resources/Info.plist
+index 20d76374..abfe3ed0 100644
+--- a/Sources/Extensions/Watch/Resources/Info.plist
++++ b/Sources/Extensions/Watch/Resources/Info.plist
+@@ -46,7 +46,7 @@
+ 		<key>NSExtensionAttributes</key>
+ 		<dict>
+ 			<key>WKAppBundleIdentifier</key>
+-			<string>$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX).watchkitapp</string>
++			<string>$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX).watchkitapp</string>
+ 		</dict>
+ 		<key>NSExtensionPointIdentifier</key>
+ 		<string>com.apple.watchkit</string>

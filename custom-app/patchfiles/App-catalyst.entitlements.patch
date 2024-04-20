@@ -1,0 +1,22 @@
+diff --git a/Configuration/Entitlements/App-catalyst.entitlements b/Configuration/Entitlements/App-catalyst.entitlements
+index 8bf46a5f..dce060fa 100644
+--- a/Configuration/Entitlements/App-catalyst.entitlements
++++ b/Configuration/Entitlements/App-catalyst.entitlements
+@@ -13,7 +13,7 @@
+ 	<true/>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.$(BUNDLE_ID_PREFIX).homeassistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>group.$(BUNDLE_ID_PREFIX).hax$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+ 	<key>com.apple.security.network.client</key>
+ 	<true/>
+@@ -23,7 +23,7 @@
+ 	<true/>
+ 	<key>keychain-access-groups</key>
+ 	<array>
+-		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+ 	<key>com.apple.security.device.camera</key>
+ 	<true/>

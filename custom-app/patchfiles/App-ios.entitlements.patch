@@ -1,0 +1,24 @@
+diff --git a/Configuration/Entitlements/App-ios.entitlements b/Configuration/Entitlements/App-ios.entitlements
+index 153010f7..81046c01 100644
+--- a/Configuration/Entitlements/App-ios.entitlements
++++ b/Configuration/Entitlements/App-ios.entitlements
+@@ -20,15 +20,15 @@
+ 	<true/>
+ 	<key>com.apple.developer.usernotifications.communication</key>
+ 	<true/>
++	<key>com.apple.developer.usernotifications.time-sensitive</key>
++	<true/>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.$(BUNDLE_ID_PREFIX).homeassistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>group.$(BUNDLE_ID_PREFIX).hax$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+-	<key>com.apple.developer.usernotifications.time-sensitive</key>
+-	<true/>
+ 	<key>keychain-access-groups</key>
+ 	<array>
+-		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+ </dict>
+ </plist>

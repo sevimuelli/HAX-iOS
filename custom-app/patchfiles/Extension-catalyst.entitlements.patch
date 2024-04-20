@@ -1,0 +1,20 @@
+diff --git a/Configuration/Entitlements/Extension-catalyst.entitlements b/Configuration/Entitlements/Extension-catalyst.entitlements
+index 1c5ab628..eb801cd0 100644
+--- a/Configuration/Entitlements/Extension-catalyst.entitlements
++++ b/Configuration/Entitlements/Extension-catalyst.entitlements
+@@ -6,13 +6,13 @@
+ 	<true/>
+ 	<key>com.apple.security.application-groups</key>
+ 	<array>
+-		<string>group.$(BUNDLE_ID_PREFIX).homeassistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>group.$(BUNDLE_ID_PREFIX).hax$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+ 	<key>com.apple.security.network.client</key>
+ 	<true/>
+ 	<key>keychain-access-groups</key>
+ 	<array>
+-		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX)</string>
++		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX)</string>
+ 	</array>
+ </dict>
+ </plist>

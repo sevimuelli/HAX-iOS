@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# ignore changed files on git
+./git_ignore_changes.sh
+
 # copy HomeAssistant.overrides.xcconfig
 yes | cp -rf ../custom-app/HomeAssistant.overrides.xcconfig ../Configuration/HomeAssistant.overrides.xcconfig
 
@@ -7,7 +10,10 @@ yes | cp -rf ../custom-app/HomeAssistant.overrides.xcconfig ../Configuration/Hom
 mkdir -p tmp
 
 # remove alternate icons
-rm -rf ../Sources/App/Resources/Assets.xcassets/AlternateIcons
+rm -rf ../Sources/App/Resources/Assets.xcassets/AlternateIcons/*
+
+# remove icons folder
+rm -rf ../icons
 
 # replace apple watch comlications icons
 yes | cp -rf ../custom-app/icons/complication/*  ../Sources/App/Resources/gallery.ckcomplication/
@@ -66,3 +72,5 @@ yes | cp -rf ../custom-app/icons/launch_screen/* ../Sources/App/Resources/Assets
 # replace shared assets
 yes | cp -rf ../custom-app/icons/shared_assets/home-assistant-logomark-color-on-light.pdf ../Sources/Shared/Assets/SharedAssets.xcassets/Logo.imageset/home-assistant-logomark-color-on-light.pdf
 yes | cp -rf ../custom-app/icons/shared_assets/home-assistant-logomark-monochrome-on-light-small.pdf ../Sources/Shared/Assets/SharedAssets.xcassets/statusItemIcon.imageset/home-assistant-logomark-monochrome-on-light-small.pdf
+
+
