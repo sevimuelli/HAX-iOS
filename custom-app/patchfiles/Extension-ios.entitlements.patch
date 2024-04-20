@@ -1,9 +1,13 @@
 diff --git a/Configuration/Entitlements/Extension-ios.entitlements b/Configuration/Entitlements/Extension-ios.entitlements
-index 5f83cb6e..fb2c0f0f 100644
+index 5f83cb6e..7f019825 100644
 --- a/Configuration/Entitlements/Extension-ios.entitlements
 +++ b/Configuration/Entitlements/Extension-ios.entitlements
-@@ -6,11 +6,11 @@
+@@ -4,13 +4,15 @@
+ <dict>
+ 	<key>com.apple.developer.networking.wifi-info</key>
  	<true/>
++	<key>com.apple.developer.usernotifications.critical-alerts</key>
++	<true/>
  	<key>com.apple.security.application-groups</key>
  	<array>
 -		<string>group.$(BUNDLE_ID_PREFIX).homeassistant$(BUNDLE_ID_SUFFIX)</string>

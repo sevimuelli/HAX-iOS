@@ -89,4 +89,5 @@ yes | cp -rf ../custom-app/icons/launch_screen/* ../Sources/App/Resources/Assets
 yes | cp -rf ../custom-app/icons/shared_assets/home-assistant-logomark-color-on-light.pdf ../Sources/Shared/Assets/SharedAssets.xcassets/Logo.imageset/home-assistant-logomark-color-on-light.pdf
 yes | cp -rf ../custom-app/icons/shared_assets/home-assistant-logomark-monochrome-on-light-small.pdf ../Sources/Shared/Assets/SharedAssets.xcassets/statusItemIcon.imageset/home-assistant-logomark-monochrome-on-light-small.pdf
 
-
+# copy empty entitlements file so there are no errors
+yes | cp -rf ../custom-app/custom-files/activate_special_entitlements.sh ../Configuration/Entitlements/activate_special_entitlements.sh
