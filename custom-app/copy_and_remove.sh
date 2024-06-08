@@ -16,6 +16,8 @@ git apply custom-app/patchfiles/Extensions_Watch__Info_plist.patch
 git apply custom-app/patchfiles/Podfile.patch
 git apply custom-app/patchfiles/SettingsDetailViewController.patch
 git apply custom-app/patchfiles/WatchApp_Info_plist.patch
+git apply custom-app/patchfiles/Launcher_Info_plist.patch
+git apply custom-app/patchfiles/MacBridge_Info_plist.patch
 
 cd -
 
@@ -91,3 +93,8 @@ yes | cp -rf ../custom-app/icons/shared_assets/home-assistant-logomark-monochrom
 
 # copy empty entitlements file so there are no errors
 yes | cp -rf ../custom-app/custom-files/activate_special_entitlements.sh ../Configuration/Entitlements/activate_special_entitlements.sh
+
+# replace Firebase settings
+yes | cp -rf ../custom-app/custom-files/GoogleService-Info-Release.plist ../Sources/App/Resources/GoogleService-Info-Release.plist
+yes | cp -rf ../custom-app/custom-files/GoogleService-Info-Beta.plist ../Sources/App/Resources/GoogleService-Info-Beta.plist
+yes | cp -rf ../custom-app/custom-files/GoogleService-Info-Debug.plist ../Sources/App/Resources/GoogleService-Info-Debug.plist

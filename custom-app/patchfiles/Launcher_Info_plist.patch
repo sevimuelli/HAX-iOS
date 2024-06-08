@@ -1,0 +1,13 @@
+diff --git a/Sources/Launcher/Info.plist b/Sources/Launcher/Info.plist
+index 2cf40d60..7a5759e1 100644
+--- a/Sources/Launcher/Info.plist
++++ b/Sources/Launcher/Info.plist
+@@ -23,7 +23,7 @@
+ 	<key>LSMinimumSystemVersion</key>
+ 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+ 	<key>NSHumanReadableCopyright</key>
+-	<string>Copyright © 2021 Home Assistant. All rights reserved.</string>
++	<string>Copyright © 2024 Severin Müller. All rights reserved.</string>
+ 	<key>NSMainNibFile</key>
+ 	<string>Application</string>
+ 	<key>NSPrincipalClass</key>
