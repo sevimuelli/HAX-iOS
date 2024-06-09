@@ -39,5 +39,7 @@ index 153010f7..299410f9 100644
 -		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX)</string>
 +		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX)</string>
  	</array>
++       <key>com.apple.developer.device-information.user-assigned-device-name</key>
++       <true/>
  </dict>
  </plist>

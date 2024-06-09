@@ -1,0 +1,10 @@
+diff --git a/Configuration/HomeAssistant.beta.xcconfig b/Configuration/HomeAssistant.beta.xcconfig
+index 91fda4cd..e6ba25b7 100644
+--- a/Configuration/HomeAssistant.beta.xcconfig
++++ b/Configuration/HomeAssistant.beta.xcconfig
+@@ -1,4 +1,4 @@
+ #include "HomeAssistant.release.xcconfig"
+ 
+-BUNDLE_ID_SUFFIX = .beta-nc
++BUNDLE_ID_SUFFIX = .beta
+ OTHER_SWIFT_FLAGS = $(inherited) -DBETA -DRELEASE
