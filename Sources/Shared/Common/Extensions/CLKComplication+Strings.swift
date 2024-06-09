@@ -69,6 +69,21 @@ public enum ComplicationGroup: String, Comparable {
             ]
         }
     }
+
+    public var isLegacy: Bool {
+        switch self {
+        case .circularSmall:
+            return true
+        case .extraLarge:
+            return true
+        case .graphic:
+            return false
+        case .modular:
+            return true
+        case .utilitarian:
+            return false
+        }
+    }
 }
 
 extension ComplicationGroup: CaseIterable {}
@@ -310,6 +325,33 @@ public enum ComplicationGroupMember: String, Comparable {
             return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmall.description
         case .graphicRectangular:
             return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmallFlat.description
+        }
+    }
+
+    public var isLegacy: Bool {
+        switch self {
+        case .circularSmall:
+            return true
+        case .extraLarge:
+            return true
+        case .modularSmall:
+            return true
+        case .modularLarge:
+            return true
+        case .utilitarianSmall:
+            return true
+        case .utilitarianSmallFlat:
+            return false
+        case .utilitarianLarge:
+            return false
+        case .graphicCorner:
+            return false
+        case .graphicCircular:
+            return false
+        case .graphicBezel:
+            return true
+        case .graphicRectangular:
+            return false
         }
     }
 

@@ -10,7 +10,8 @@ class ComplicationListViewController: HAFormViewController {
     @objc private func add(_ sender: UIBarButtonItem) {
         let editListViewController = ComplicationFamilySelectViewController(
             allowMultiple: supportsMultipleComplications,
-            currentFamilies: Set(Current.realm().objects(WatchComplication.self).map(\.Family))
+            currentFamilies: Set(Current.realm().objects(WatchComplication.self).map(\.Family)),
+            showLecacyTemplates: prefs.bool(forKey: "showLecacyTemplates")
         )
         editListViewController.onDismissCallback = { $0.dismiss(animated: true, completion: nil) }
         let navigationController = UINavigationController(rootViewController: editListViewController)
@@ -32,6 +33,8 @@ class ComplicationListViewController: HAFormViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        var showLecacyTemplates = prefs.bool(forKey: "showLecacyTemplates")
 
         title = L10n.SettingsDetails.Watch.title
 
@@ -114,10 +117,23 @@ class ComplicationListViewController: HAFormViewController {
                 }
             }
 
+        form +++ Section(
+            header: "Legacy templates",
+            footer: "Legacy templates are not suported as of watchOS 9.")
+
+        <<< SwitchRow {
+            $0.title = "Show legacy templates"
+            $0.tag = "showLegacyTemplates"
+            $0.value = prefs.bool(forKey: "showLecacyTemplates")
+        }.onChange { row in
+            prefs.setValue(row.value, forKey: "showLecacyTemplates")
+        }
+
+
         let allComplications = Current.realm()
             .objects(WatchComplication.self)
 
-        for group in ComplicationGroup.allCases.sorted() {
+        for group in ComplicationGroup.allCases.sorted().filter({ !$0.isLegacy || showLecacyTemplates }) {
             let familyItems = allComplications
                 .filter("rawFamily in %@", group.members.map(\.rawValue))
                 .sorted(byKeyPath: "rawFamily")
