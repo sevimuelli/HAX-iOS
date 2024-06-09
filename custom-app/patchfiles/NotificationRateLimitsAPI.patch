@@ -1,0 +1,13 @@
+diff --git a/Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift b/Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift
+index df077099..2d6f06ae 100644
+--- a/Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift
++++ b/Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift
+@@ -24,7 +24,7 @@ class NotificationRateLimitsAPI {
+         firstly { () -> Promise<URLRequest> in
+             do {
+                 var urlRequest = URLRequest(url: URL(
+-                    string: "https://mobile-apps.home-assistant.io/api/checkRateLimits"
++                    string: "https://us-central1-hax-mobile-apps.cloudfunctions.net/checkRateLimits"
+                 )!)
+                 urlRequest.httpMethod = "POST"
+                 urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")

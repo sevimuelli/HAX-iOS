@@ -1,0 +1,13 @@
+diff --git a/Sources/Shared/API/HAAPI.swift b/Sources/Shared/API/HAAPI.swift
+index a730f271..73ef22c6 100644
+--- a/Sources/Shared/API/HAAPI.swift
++++ b/Sources/Shared/API/HAAPI.swift
+@@ -453,7 +453,7 @@ public class HomeAssistantAPI {
+         with(MobileAppRegistrationRequest()) {
+             if let pushID = Current.settingsStore.pushID {
+                 $0.AppData = [
+-                    "push_url": "https://mobile-apps.home-assistant.io/api/sendPushNotification",
++                    "push_url": "https://us-central1-hax-mobile-apps.cloudfunctions.net/sendPushNotification",
+                     "push_token": pushID,
+                 ]
+             }
