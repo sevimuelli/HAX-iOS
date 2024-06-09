@@ -60,11 +60,13 @@ git update-index --assume-unchanged Sources/WatchApp/Info.plist
 git update-index --assume-unchanged Sources/MacBridge/Resources/Info.plist
 git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Info.plist
 git update-index --assume-unchanged Podfile
+git update-index --assume-unchanged Podfile.lock
 git update-index --assume-unchanged Configuration/HomeAssistant.beta.xcconfig
 git update-index --assume-unchanged Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/Contents.json
 git update-index --assume-unchanged Sources/App/Settings/SettingsDetailViewController.swift
 git update-index --assume-unchanged Sources/App/Settings/AboutViewController.swift
+git update-index --assume-unchanged Sources/PushServer/Package.resolved 
 cd custom-app
 
 

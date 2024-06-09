@@ -21,7 +21,7 @@ git apply custom-app/patchfiles/MacBridge_Info_plist.patch
 git apply custom-app/patchfiles/HomeAssistant_beta_xcconfig.patch
 git apply custom-app/patchfiles/HAAPI.patch
 git apply custom-app/patchfiles/NotificationRateLimitsAPI.patch
-
+git apply custom-app/patchfiles/LaunchScreen_Storyboard.patch
 cd -
 
 # copy HomeAssistant.overrides.xcconfig

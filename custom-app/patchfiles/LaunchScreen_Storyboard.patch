@@ -1,0 +1,45 @@
+diff --git a/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard b/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
+index 2a541577..fa7c9d0a 100644
+--- a/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
++++ b/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
+@@ -1,9 +1,9 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+-    <device id="retina6_1" orientation="portrait" appearance="light"/>
++<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
++    <device id="retina6_7" orientation="portrait" appearance="light"/>
+     <dependencies>
+         <deployment identifier="iOS"/>
+-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
++        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
+         <capability name="Named colors" minToolsVersion="9.0"/>
+         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+@@ -14,11 +14,11 @@
+             <objects>
+                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
++                        <rect key="frame" x="0.0" y="0.0" width="428" height="926"/>
+                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                         <subviews>
+                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" misplaced="YES" image="launchScreen-logo" translatesAutoresizingMaskIntoConstraints="NO" id="mQh-tn-BC1" userLabel="Icon">
+-                                <rect key="frame" x="134" y="361" width="147" height="174"/>
++                                <rect key="frame" x="116" y="310" width="196" height="229"/>
+                                 <constraints>
+                                     <constraint firstAttribute="width" constant="256" id="Qth-YB-gY0"/>
+                                     <constraint firstAttribute="height" constant="256" id="h4K-N1-xO4"/>
+@@ -40,11 +40,11 @@
+                 </viewController>
+                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+             </objects>
+-            <point key="canvasLocation" x="50.724637681159422" y="374.33035714285711"/>
++            <point key="canvasLocation" x="50.467289719626166" y="373.86609071274302"/>
+         </scene>
+     </scenes>
+     <resources>
+-        <image name="launchScreen-logo" width="180" height="271"/>
++        <image name="launchScreen-logo" width="135" height="259"/>
+         <namedColor name="launchScreen-background">
+             <color red="0.98039215686274506" green="0.98039215686274506" blue="0.98039215686274506" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+         </namedColor>
