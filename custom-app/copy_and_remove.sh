@@ -12,12 +12,15 @@ git apply custom-app/patchfiles/App-catalyst.entitlements
 git apply custom-app/patchfiles/App-ios.entitlements.patch
 git apply custom-app/patchfiles/Extension-catalyst.entitlements.patch
 git apply custom-app/patchfiles/Extension-ios.entitlements.patch
-git apply custom-app/patchfiles/Extensions_Watch__Info_plist.patch
+git apply custom-app/patchfiles/Extensions_Watch_Info_plist.patch
 git apply custom-app/patchfiles/Podfile.patch
 git apply custom-app/patchfiles/SettingsDetailViewController.patch
 git apply custom-app/patchfiles/WatchApp_Info_plist.patch
 git apply custom-app/patchfiles/Launcher_Info_plist.patch
 git apply custom-app/patchfiles/MacBridge_Info_plist.patch
+git apply custom-app/patchfiles/HomeAssistant_beta_xcconfig.patch
+git apply custom-app/patchfiles/HAAPI.patch
+git apply custom-app/patchfiles/NotificationRateLimitsAPI.patch
 
 cd -
 

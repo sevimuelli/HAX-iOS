@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # ignore changed files on git
+# this is only for coninience and has no functional effect
 cd ..
 echo "Ignoring changed git files"
 
@@ -52,6 +53,18 @@ git update-index --assume-unchanged Sources/Shared/Assets/SharedAssets.xcassets/
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/WatchIcon.appiconset/*
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/WatchIcon.beta.appiconset/*
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/WatchIcon.dev.appiconset/*
+git update-index --assume-unchanged Configuration/Entitlements/*
+git update-index --assume-unchanged Sources/App/Resources/GoogleService-Info-*
+git update-index --assume-unchanged Sources/Launcher/Info.plist
+git update-index --assume-unchanged Sources/WatchApp/Info.plist
+git update-index --assume-unchanged Sources/MacBridge/Resources/Info.plist
+git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Info.plist
+git update-index --assume-unchanged Podfile
+git update-index --assume-unchanged Configuration/HomeAssistant.beta.xcconfig
+git update-index --assume-unchanged Sources/App/Settings/Notifications/NotificationRateLimitsAPI.swift
+git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/Contents.json
+git update-index --assume-unchanged Sources/App/Settings/SettingsDetailViewController.swift
+git update-index --assume-unchanged Sources/App/Settings/AboutViewController.swift
 cd custom-app
 
 
