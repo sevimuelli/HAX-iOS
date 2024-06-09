@@ -5,10 +5,12 @@ import Shared
 class ComplicationFamilySelectViewController: HAFormViewController, RowControllerType {
     let allowMultiple: Bool
     let currentFamilies: Set<ComplicationGroupMember>
+    let showLecacyTemplates: Bool
 
-    init(allowMultiple: Bool, currentFamilies: Set<ComplicationGroupMember>) {
+    init(allowMultiple: Bool, currentFamilies: Set<ComplicationGroupMember>, showLecacyTemplates: Bool) {
         self.allowMultiple = allowMultiple
         self.currentFamilies = currentFamilies
+        self.showLecacyTemplates = showLecacyTemplates
         super.init()
     }
 
@@ -37,9 +39,9 @@ class ComplicationFamilySelectViewController: HAFormViewController, RowControlle
     }
 
     private func setupForm() {
-        form.append(contentsOf: ComplicationGroup.allCases.sorted().map { group in
+        form.append(contentsOf: ComplicationGroup.allCases.sorted().filter({ !$0.isLegacy || showLecacyTemplates }).map { group in
             let section = Section(header: group.name, footer: group.description)
-            section.append(contentsOf: group.members.sorted().map { family in
+            section.append(contentsOf: group.members.sorted().filter({ !$0.isLegacy || showLecacyTemplates }).map { family in
                 ButtonRow {
                     $0.title = family.shortName
                     $0.cellStyle = .subtitle
