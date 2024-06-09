@@ -66,7 +66,8 @@ git update-index --assume-unchanged Sources/App/Settings/Notifications/Notificat
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/Contents.json
 git update-index --assume-unchanged Sources/App/Settings/SettingsDetailViewController.swift
 git update-index --assume-unchanged Sources/App/Settings/AboutViewController.swift
-git update-index --assume-unchanged Sources/PushServer/Package.resolved 
+git update-index --assume-unchanged Sources/PushServer/Package.resolved
+git update-index --assume-unchanged Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
 cd custom-app
 
 

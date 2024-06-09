@@ -1,5 +1,5 @@
 diff --git a/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard b/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
-index 2a541577..fa7c9d0a 100644
+index 2a541577..3cf672b3 100644
 --- a/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
 +++ b/Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
 @@ -1,9 +1,9 @@
@@ -25,7 +25,7 @@ index 2a541577..fa7c9d0a 100644
                          <subviews>
                              <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" misplaced="YES" image="launchScreen-logo" translatesAutoresizingMaskIntoConstraints="NO" id="mQh-tn-BC1" userLabel="Icon">
 -                                <rect key="frame" x="134" y="361" width="147" height="174"/>
-+                                <rect key="frame" x="116" y="310" width="196" height="229"/>
++                                <rect key="frame" x="43" y="234" width="342" height="327"/>
                                  <constraints>
                                      <constraint firstAttribute="width" constant="256" id="Qth-YB-gY0"/>
                                      <constraint firstAttribute="height" constant="256" id="h4K-N1-xO4"/>
@@ -39,7 +39,7 @@ index 2a541577..fa7c9d0a 100644
      </scenes>
      <resources>
 -        <image name="launchScreen-logo" width="180" height="271"/>
-+        <image name="launchScreen-logo" width="135" height="259"/>
++        <image name="launchScreen-logo" width="135" height="218"/>
          <namedColor name="launchScreen-background">
              <color red="0.98039215686274506" green="0.98039215686274506" blue="0.98039215686274506" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
          </namedColor>
