@@ -80,6 +80,8 @@ abstract_target 'iOS' do
     pod 'SwiftMessages'
     pod 'ViewRow', git: 'https://github.com/EurekaCommunity/ViewRow', branch: 'master'
 
+    pod 'PasscodeKit'
+
     support_modules
 
     target 'Tests-App' do
