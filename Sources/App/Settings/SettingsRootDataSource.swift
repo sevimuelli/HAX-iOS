@@ -24,6 +24,7 @@ enum SettingsRootDataSource {
         case location
         case notifications
         case thread
+        case passcode
         case actions
         case sensors
         case complications
@@ -42,6 +43,7 @@ enum SettingsRootDataSource {
                 case .location: return SettingsRootDataSource.location()
                 case .notifications: return SettingsRootDataSource.notifications()
                 case .thread: return SettingsRootDataSource.thread()
+                case .passcode: return SettingsRootDataSource.passcode()
                 case .actions: return SettingsRootDataSource.actions()
                 case .sensors: return SettingsRootDataSource.sensors()
                 case .complications: return SettingsRootDataSource.complications()
@@ -110,6 +112,19 @@ enum SettingsRootDataSource {
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 guard #available(iOS 17, *) else { return UIViewController() }
                 return UIHostingController(rootView: ThreadCredentialsManagementView.build())
+            }, onDismiss: nil)
+        }
+    }
+
+    private static func passcode() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = "Passcode"
+            $0.icon = .lockOpenOutlineIcon
+            $0.isAvailableForMac = false
+            $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
+                let view = SettingsDetailViewController()
+                view.detailGroup = .passcode
+                return view
             }, onDismiss: nil)
         }
     }

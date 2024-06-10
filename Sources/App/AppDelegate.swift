@@ -13,6 +13,7 @@ import SafariServices
 import Shared
 import UIKit
 import XCGLogger
+import PasscodeKit
 
 let keychain = Constants.Keychain
 
@@ -86,6 +87,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupModels()
         setupLocalization()
         setupMenus()
+        setupPasscode()
 
         let launchingForLocation = launchOptions?[.location] != nil
         let event = ClientEvent(
@@ -110,6 +112,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if NSClassFromString("XCTest") != nil {
             return true
         }
+
+        PasscodeKit.start()
 
         lifecycleManager.didFinishLaunching()
 
@@ -473,6 +477,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             name: SettingsStore.menuRelatedSettingDidChange,
             object: nil
         )
+    }
+
+    func setupPasscode() {
+        PasscodeKit.passcodeLength = Current.settingsStore.passcodeLength
+        PasscodeKit.biometric(Current.settingsStore.faceIdEnabled)
     }
 
     @objc private func menuRelatedSettingDidChange(_ note: Notification) {

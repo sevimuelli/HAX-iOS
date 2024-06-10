@@ -377,6 +377,24 @@ public class SettingsStore {
         }
     }
 
+    public var passcodeLength: Int {
+        get {
+            prefs.integer(forKey: "passcodeLength")
+        }
+        set {
+            prefs.set(newValue, forKey: "passcodeLength")
+        }
+    }
+
+    public var faceIdEnabled: Bool {
+        get {
+            prefs.bool(forKey: "faceIdEnabled")
+        }
+        set {
+            prefs.set(newValue, forKey: "faceIdEnabled")
+        }
+    }
+
     // MARK: - Private helpers
 
     private var defaultDeviceID: String {
