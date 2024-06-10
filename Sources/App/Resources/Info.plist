@@ -236,5 +236,7 @@
 	<array>
 		<string>D2760000850101</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>YES</string>
 </dict>
 </plist>

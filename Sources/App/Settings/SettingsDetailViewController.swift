@@ -8,12 +8,14 @@ import RealmSwift
 import Shared
 import UIKit
 import Version
+import PasscodeKit
 
 enum SettingsDetailsGroup: String {
     case display
     case actions
     case general
     case location
+    case passcode
     case privacy
 }
 
@@ -540,6 +542,67 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                     $0.value = Current.settingsStore.privacy.analytics
                 }.onChange { row in
                     Current.settingsStore.privacy.analytics = row.value ?? true
+                }
+
+        case .passcode:
+            title = "Passcode"
+
+            let selectPasscodeLenght = PushRow<Int>("passcodeLenth")
+            with(selectPasscodeLenght) {
+                $0.title = "Passcode length"
+                $0.selectorTitle = "Select Passcode length"
+                $0.options = [4, 6, 8]
+                $0.disabled = Condition(booleanLiteral: PasscodeKit.enabled())
+                $0.value = PasscodeKit.passcodeLength
+            }
+            selectPasscodeLenght.onChange { row in
+                guard let passcodeLenght = row.value else { return }
+                PasscodeKit.passcodeLength = passcodeLenght
+                Current.settingsStore.passcodeLength = passcodeLenght
+            }
+
+            form
+
+                +++ Section(footer: "Passcode lenght can only be changed when Passcode is disabled.\nNote: If you forget you passcode, you will need to reinstall the app. All settings will be lost.")
+
+                <<< ButtonRow("togglePasscode") {
+                    $0.title = PasscodeKit.enabled() ? "Turn Passcode off" : "Turn Passcode on"
+                }.onCellSelection { cell, row  in
+                    if (PasscodeKit.enabled()) {
+                        PasscodeKit.removePasscode(self)
+                        selectPasscodeLenght.disabled = false
+                        selectPasscodeLenght.evaluateDisabled()
+                    } else {
+                        PasscodeKit.createPasscode(self)
+                        selectPasscodeLenght.disabled = true
+                        selectPasscodeLenght.evaluateDisabled()
+                    }
+
+                }.cellUpdate { cell, _ in
+                    cell.textLabel?.text = PasscodeKit.enabled() ? "Turn Passcode off" : "Turn Passcode on"
+                }
+
+                <<< ButtonRow("changePasscode") {
+                    $0.title = "Change Passcode"
+                }.onCellSelection { cell, row in
+                    if (PasscodeKit.enabled()) {
+                        PasscodeKit.changePasscode(self)
+                    }
+                }
+
+                <<< selectPasscodeLenght
+
+                +++ Section(
+                footer: "Allows to use Face ID (or Touch ID) to unlock the app.")
+
+                <<< SwitchRow {
+
+                    $0.title = "Unlock with Face ID"
+                    $0.value = PasscodeKit.biometric()
+                    $0.onChange { row in
+                        PasscodeKit.biometric(row.value ?? false)
+                        Current.settingsStore.faceIdEnabled = row.value ?? false
+                    }
                 }
 
         default:
