@@ -15,6 +15,10 @@ struct WidgetAssistView: View {
         return entry.pipeline?.displayString ?? L10n.Widgets.Assist.unknownConfiguration
     }
 
+    init(entry: WidgetAssistEntry) {
+        self.entry = entry
+    }
+
     var body: some View {
         content
     }
@@ -30,16 +34,7 @@ struct WidgetAssistView: View {
     }
 
     private var accessoryCircular: some View {
-        VStack {
-            Image(uiImage: MaterialDesignIcons.messageProcessingOutlineIcon.image(
-                ofSize: .init(width: 30, height: 30),
-                color: .white
-            ))
-            .foregroundStyle(.ultraThickMaterial)
-            .padding(Spaces.one)
-        }
-        .background(Color(uiColor: .secondarySystemBackground))
-        .clipShape(Circle())
+        WidgetCircularView(icon: MaterialDesignIcons.messageProcessingOutlineIcon)
     }
 
     private var singleHomeScreenItem: some View {

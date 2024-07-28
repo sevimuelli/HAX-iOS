@@ -3,7 +3,9 @@ import SwiftUI
 import UIKit
 
 struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtocol {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: ViewModel
+    @State private var showAssist = false
 
     private let stateIconSize: CGSize = .init(width: 60, height: 60)
     private let stateIconColor: UIColor = .white
@@ -15,43 +17,64 @@ struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtoco
     }
 
     var body: some View {
-        ZStack {
-            list
-            noActionsView
-            stateView
-        }
-        .onAppear {
-            viewModel.onAppear()
-        }
-        .onDisappear {
-            viewModel.onDisappear()
+        navigation
+            .onAppear {
+                viewModel.onAppear()
+            }
+            .onDisappear {
+                viewModel.onDisappear()
+            }
+            .fullScreenCover(isPresented: $showAssist, content: {
+                WatchAssistView.build()
+            })
+            .onReceive(NotificationCenter.default.publisher(for: AssistDefaultComplication.launchNotification)) { _ in
+                showAssist = true
+            }
+            .onChange(of: scenePhase) { newScenePhase in
+                switch newScenePhase {
+                case .active:
+                    viewModel.fetchNetworkInfo(completion: nil)
+                default:
+                    break
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var navigation: some View {
+        if #available(watchOS 10, *) {
+            NavigationStack {
+                content
+            }
+        } else {
+            NavigationView {
+                content
+            }
         }
     }
 
     @ViewBuilder
-    private var stateView: some View {
-        VStack {
-            switch viewModel.state {
-            case .loading:
-                ProgressView()
-                    .progressViewStyle(.circular)
-            case .success:
-                Image(uiImage: MaterialDesignIcons.checkCircleIcon.image(ofSize: stateIconSize, color: stateIconColor))
-                    .onAppear {
-                        interfaceDevice.play(.success)
+    private var content: some View {
+        list
+            .navigationTitle("")
+            .modify {
+                if #available(watchOS 10, *) {
+                    $0.toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(action: {
+                                showAssist = true
+                            }, label: {
+                                Image(uiImage: MaterialDesignIcons.messageProcessingOutlineIcon.image(
+                                    ofSize: .init(width: 24, height: 24),
+                                    color: Asset.Colors.haPrimary.color
+                                ))
+                            })
+                        }
                     }
-            case .failure:
-                Image(uiImage: MaterialDesignIcons.closeIcon.image(ofSize: stateIconSize, color: stateIconColor))
-                    .onAppear {
-                        interfaceDevice.play(.failure)
-                    }
-            case .idle:
-                EmptyView()
+                } else {
+                    $0
+                }
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(stateViewBackground)
-        .opacity(viewModel.state != .idle ? 1 : 0)
     }
 
     private var stateViewBackground: some ShapeStyle {
@@ -63,75 +86,29 @@ struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtoco
     }
 
     private var list: some View {
-        List(viewModel.actions, id: \.id) { action in
-            Button {
-                viewModel.runActionId(action.id)
-            } label: {
-                HStack(spacing: Spaces.one) {
-                    Image(uiImage: MaterialDesignIcons(named: action.iconName).image(
-                        ofSize: .init(width: 24, height: 24),
-                        color: .init(hex: action.iconColor)
-                    ))
-                    Text(action.name)
-                        .foregroundStyle(Color(uiColor: .init(hex: action.textColor)))
-                }
+        List {
+            ForEach(viewModel.actions, id: \.id) { action in
+                WatchActionButtonView<ViewModel>(action: action)
+                    .environmentObject(viewModel)
             }
-            .listRowBackground(
-                Color(uiColor: .init(hex: action.backgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            )
+            if viewModel.actions.isEmpty {
+                noActionsView
+            }
         }
         .animation(.easeInOut, value: viewModel.actions)
+        // This improves how the overlayed assist view looks
+        .opacity(showAssist ? 0.5 : 1)
     }
 
     private var noActionsView: some View {
         Text(L10n.Watch.Labels.noAction)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(.easeInOut, value: viewModel.actions)
-            .opacity(viewModel.actions.isEmpty ? 1 : 0)
+            .font(.footnote)
+            .padding(.vertical)
     }
 }
 
 #if DEBUG
 #Preview {
     WatchHomeView(viewModel: MockWatchHomeViewModel())
-}
-
-final class MockWatchHomeViewModel: WatchHomeViewModelProtocol {
-    func runActionId(_ actionId: String) {
-        DispatchQueue.main.async {
-            self.state = .loading
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.state = .success
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.state = .failure
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            self.state = .idle
-        }
-    }
-
-    @Published var actions: [WatchActionItem] = []
-    @Published var state: WatchHomeViewState = .idle
-
-    func onAppear() {
-        actions = [
-            .init(
-                id: "1",
-                name: "Hello",
-                iconName: "ab_testing",
-                backgroundColor: "#34eba8",
-                iconColor: "#4479b3",
-                textColor: "#4479b3"
-            ),
-        ]
-    }
-
-    func onDisappear() {}
 }
 #endif

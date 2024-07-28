@@ -5,7 +5,8 @@ import SafariServices
 import Shared
 
 class IncomingURLHandler {
-    let windowController: WebViewWindowController
+    private(set) weak var windowController: WebViewWindowController!
+
     init(windowController: WebViewWindowController) {
         self.windowController = windowController
         registerCallbackURLKitHandlers()
@@ -58,11 +59,12 @@ class IncomingURLHandler {
                 return false
             }
 
-            if let presenting = windowController.presentedViewController,
-               presenting is SFSafariViewController {
+            if
+                let presenting = windowController.presentedViewController,
+                presenting is SFSafariViewController {
                 // Dismiss my.* controller if it's on top - we don't get any other indication
                 presenting.dismiss(animated: true, completion: { [windowController] in
-                    windowController.openSelectingServer(
+                    windowController?.openSelectingServer(
                         from: .deeplink,
                         urlString: rawURL,
                         skipConfirm: true,
@@ -91,20 +93,20 @@ class IncomingURLHandler {
         Current.Log.info(userActivity)
 
         if let assistInAppIntent = userActivity.interaction?.intent as? AssistInAppIntent {
-            guard let server = Current.servers.server(for: assistInAppIntent) else { return false }
+            guard let server = Current.servers.server(for: assistInAppIntent) ?? Current.servers.all.first else { return false }
             let pipeline = assistInAppIntent.pipeline
             let autoStartRecording = Bool(exactly: assistInAppIntent.withVoice ?? 0) ?? false
 
             windowController.webViewControllerPromise.pipe { result in
                 switch result {
                 case let .fulfilled(webView):
-                    webView.showAssist(
+                    webView.webViewExternalMessageHandler.showAssist(
                         server: server,
                         pipeline: pipeline?.identifier ?? "",
                         autoStartRecording: autoStartRecording
                     )
                 case let .rejected(error):
-                    Current.Log.error("Failed to obtain webview to open Assist In App")
+                    Current.Log.error("Failed to obtain webview to open Assist In App: \(error.localizedDescription)")
                 }
             }
 
@@ -136,8 +138,9 @@ class IncomingURLHandler {
             if let url = userActivity.webpageURL, url.host?.lowercased() == "my.home-assistant.io" {
                 return showMy(for: url)
             } else if let interaction = userActivity.interaction {
-                if let intent = interaction.intent as? OpenPageIntent,
-                   let panel = intent.page, let path = panel.identifier {
+                if
+                    let intent = interaction.intent as? OpenPageIntent,
+                    let panel = intent.page, let path = panel.identifier {
                     Current.Log.info("launching from shortcuts with panel \(panel)")
 
                     let urlString = "/" + path
@@ -176,8 +179,9 @@ class IncomingURLHandler {
                     })
                 }.asVoid()
             } else {
-                if let action = Current.realm().object(ofType: Action.self, forPrimaryKey: shortcutItem.type),
-                   let server = Current.servers.server(for: action) {
+                if
+                    let action = Current.realm().object(ofType: Action.self, forPrimaryKey: shortcutItem.type),
+                    let server = Current.servers.server(for: action) {
                     Current.sceneManager.showFullScreenConfirm(
                         icon: MaterialDesignIcons(named: action.IconName),
                         text: action.Text,
@@ -220,7 +224,7 @@ class IncomingURLHandler {
             }
         ))
 
-        windowController.webViewControllerPromise.done {
+        windowController?.webViewControllerPromise.done {
             $0.present(alert, animated: true, completion: nil)
         }
     }
@@ -232,7 +236,7 @@ class IncomingURLHandler {
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: L10n.okLabel, style: .default, handler: nil))
-        windowController.webViewControllerPromise.done {
+        windowController?.webViewControllerPromise.done {
             $0.present(alert, animated: true, completion: nil)
         }
     }
@@ -252,7 +256,7 @@ class IncomingURLHandler {
         }
 
         // not animated in because it looks weird during the app launch animation
-        windowController.present(SFSafariViewController(url: updatedURL), animated: false, completion: nil)
+        windowController?.present(SFSafariViewController(url: updatedURL), animated: false, completion: nil)
 
         return true
     }
@@ -516,8 +520,9 @@ extension IncomingURLHandler {
         }
 
         let source: HomeAssistantAPI.ActionSource = {
-            if let sourceString = serviceData["source"],
-               let source = HomeAssistantAPI.ActionSource(rawValue: sourceString) {
+            if
+                let sourceString = serviceData["source"],
+                let source = HomeAssistantAPI.ActionSource(rawValue: sourceString) {
                 return source
             } else {
                 return .URLHandler
@@ -526,8 +531,9 @@ extension IncomingURLHandler {
 
         let actionID = url.pathComponents[1]
 
-        guard let action = Current.realm().object(ofType: Action.self, forPrimaryKey: actionID),
-              let server = Current.servers.server(for: action) else {
+        guard
+            let action = Current.realm().object(ofType: Action.self, forPrimaryKey: actionID),
+            let server = Current.servers.server(for: action) else {
             Current.sceneManager.showFullScreenConfirm(
                 icon: .alertCircleIcon,
                 text: L10n.UrlHandler.Error.actionNotFound,

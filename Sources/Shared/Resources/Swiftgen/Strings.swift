@@ -252,6 +252,12 @@ public enum L10n {
   }
 
   public enum AppIntents {
+    public enum Assist {
+      public enum PreferredPipeline {
+        /// Preferred
+        public static var title: String { return L10n.tr("Localizable", "app_intents.assist.preferred_pipeline.title") }
+      }
+    }
     public enum PerformAction {
       /// Which action?
       public static var actionParameterConfiguration: String { return L10n.tr("Localizable", "app_intents.perform_action.action_parameter_configuration") }
@@ -277,9 +283,27 @@ public enum L10n {
   }
 
   public enum Assist {
+    public enum Error {
+      /// Failed to obtain Assist pipelines, please check your pipelines configuration.
+      public static var pipelinesResponse: String { return L10n.tr("Localizable", "assist.error.pipelines_response") }
+    }
     public enum PipelinesPicker {
       /// Assist Pipelines
       public static var title: String { return L10n.tr("Localizable", "assist.pipelines_picker.title") }
+    }
+    public enum Watch {
+      public enum MicButton {
+        /// Tap to 
+        public static var title: String { return L10n.tr("Localizable", "assist.watch.mic_button.title") }
+      }
+      public enum NotReachable {
+        /// Assist requires iPhone connectivity. Your iPhone is currently unreachable.
+        public static var title: String { return L10n.tr("Localizable", "assist.watch.not_reachable.title") }
+      }
+      public enum Volume {
+        /// Volume control
+        public static var title: String { return L10n.tr("Localizable", "assist.watch.volume.title") }
+      }
     }
   }
 
@@ -568,6 +592,65 @@ public enum L10n {
       public static var unknown: String { return L10n.tr("Localizable", "ha_api.api_error.unknown") }
       /// Operation could not be performed.
       public static var updateNotPossible: String { return L10n.tr("Localizable", "ha_api.api_error.update_not_possible") }
+    }
+  }
+
+  public enum Improv {
+    public enum Button {
+      /// Continue
+      public static var `continue`: String { return L10n.tr("Localizable", "improv.button.continue") }
+    }
+    public enum ConnectionState {
+      /// Setting up Wi-Fi
+      public static var authorized: String { return L10n.tr("Localizable", "improv.connection_state.authorized") }
+      /// Please authorize your device to continue
+      public static var autorizationRequired: String { return L10n.tr("Localizable", "improv.connection_state.autorization_required") }
+      /// Connecting to Wi-Fi
+      public static var provisioning: String { return L10n.tr("Localizable", "improv.connection_state.provisioning") }
+    }
+    public enum ErrorState {
+      /// Invalid RPC Packet
+      public static var invalidRpcPacket: String { return L10n.tr("Localizable", "improv.error_state.invalid_rpc_packet") }
+      /// Not authorized
+      public static var notAuthorized: String { return L10n.tr("Localizable", "improv.error_state.not_authorized") }
+      /// Unable to connect
+      public static var unableToConnect: String { return L10n.tr("Localizable", "improv.error_state.unable_to_connect") }
+      /// Unknown error, please try again.
+      public static var unknown: String { return L10n.tr("Localizable", "improv.error_state.unknown") }
+      /// Unknown command
+      public static var unknownCommand: String { return L10n.tr("Localizable", "improv.error_state.unknown_command") }
+    }
+    public enum List {
+      /// Devices ready to set up
+      public static var title: String { return L10n.tr("Localizable", "improv.list.title") }
+    }
+    public enum State {
+      /// Connected
+      public static var connected: String { return L10n.tr("Localizable", "improv.state.connected") }
+      /// Connecting...
+      public static var connecting: String { return L10n.tr("Localizable", "improv.state.connecting") }
+      /// Wi-Fi connected successfully
+      public static var success: String { return L10n.tr("Localizable", "improv.state.success") }
+    }
+    public enum Toast {
+      /// There are devices available to setup.
+      public static var title: String { return L10n.tr("Localizable", "improv.toast.title") }
+    }
+    public enum Wifi {
+      public enum Alert {
+        /// Cancel
+        public static var cancelButton: String { return L10n.tr("Localizable", "improv.wifi.alert.cancel_button") }
+        /// Connect
+        public static var connectButton: String { return L10n.tr("Localizable", "improv.wifi.alert.connect_button") }
+        /// Please enter your SSID and password.
+        public static var description: String { return L10n.tr("Localizable", "improv.wifi.alert.description") }
+        /// Password
+        public static var passwordPlaceholder: String { return L10n.tr("Localizable", "improv.wifi.alert.password_placeholder") }
+        /// Network Name
+        public static var ssidPlaceholder: String { return L10n.tr("Localizable", "improv.wifi.alert.ssid_placeholder") }
+        /// Connect to WiFi
+        public static var title: String { return L10n.tr("Localizable", "improv.wifi.alert.title") }
+      }
     }
   }
 
@@ -1407,6 +1490,10 @@ public enum L10n {
       /// What's new?
       public static var title: String { return L10n.tr("Localizable", "settings.whats_new.title") }
     }
+    public enum Widgets {
+      /// Widgets
+      public static var title: String { return L10n.tr("Localizable", "settings.widgets.title") }
+    }
   }
 
   public enum SettingsDetails {
@@ -1450,6 +1537,12 @@ public enum L10n {
         public static var selectAll: String { return L10n.tr("Localizable", "settings_details.actions.scenes.select_all") }
         /// Scene Actions
         public static var title: String { return L10n.tr("Localizable", "settings_details.actions.scenes.title") }
+      }
+      public enum ServerControlled {
+        public enum Update {
+          /// Update server Actions
+          public static var title: String { return L10n.tr("Localizable", "settings_details.actions.server_controlled.update.title") }
+        }
       }
       public enum Watch {
         public enum Available {
@@ -1929,6 +2022,14 @@ public enum L10n {
     public enum Watch {
       /// Apple Watch
       public static var title: String { return L10n.tr("Localizable", "settings_details.watch.title") }
+    }
+    public enum Widgets {
+      public enum ReloadAll {
+        /// This will reload all widgets timelines, use this in case your widgets are stuck in a blank state or not updating for some reason.
+        public static var description: String { return L10n.tr("Localizable", "settings_details.widgets.reload_all.description") }
+        /// Reload all widgets
+        public static var title: String { return L10n.tr("Localizable", "settings_details.widgets.reload_all.title") }
+      }
     }
   }
 
@@ -2823,6 +2924,10 @@ public enum L10n {
       public static var notConfigured: String { return L10n.tr("Localizable", "widgets.actions.not_configured") }
       /// Actions
       public static var title: String { return L10n.tr("Localizable", "widgets.actions.title") }
+      public enum Parameters {
+        /// Action
+        public static var action: String { return L10n.tr("Localizable", "widgets.actions.parameters.action") }
+      }
     }
     public enum Assist {
       /// Ask Assist
@@ -2838,6 +2943,56 @@ public enum L10n {
       /// Reload all widgets
       public static var reloadTimeline: String { return L10n.tr("Localizable", "widgets.button.reload_timeline") }
     }
+    public enum Details {
+      /// Display states using from Home Assistant in text
+      public static var description: String { return L10n.tr("Localizable", "widgets.details.description") }
+      /// Details
+      public static var title: String { return L10n.tr("Localizable", "widgets.details.title") }
+      public enum Parameters {
+        /// Action
+        public static var action: String { return L10n.tr("Localizable", "widgets.details.parameters.action") }
+        /// Details Text Template (only in rectangular family)
+        public static var detailsTemplate: String { return L10n.tr("Localizable", "widgets.details.parameters.details_template") }
+        /// Lower Text Template
+        public static var lowerTemplate: String { return L10n.tr("Localizable", "widgets.details.parameters.lower_template") }
+        /// Run Action (only in rectangular family)
+        public static var runAction: String { return L10n.tr("Localizable", "widgets.details.parameters.run_action") }
+        /// Server
+        public static var server: String { return L10n.tr("Localizable", "widgets.details.parameters.server") }
+        /// Upper Text Template
+        public static var upperTemplate: String { return L10n.tr("Localizable", "widgets.details.parameters.upper_template") }
+      }
+    }
+    public enum Gauge {
+      /// Display numeric states from Home Assistant in a gauge
+      public static var description: String { return L10n.tr("Localizable", "widgets.gauge.description") }
+      /// Gauge
+      public static var title: String { return L10n.tr("Localizable", "widgets.gauge.title") }
+      public enum Parameters {
+        /// Action
+        public static var action: String { return L10n.tr("Localizable", "widgets.gauge.parameters.action") }
+        /// Gauge Type
+        public static var gaugeType: String { return L10n.tr("Localizable", "widgets.gauge.parameters.gauge_type") }
+        /// Max Label Template
+        public static var maxLabelTemplate: String { return L10n.tr("Localizable", "widgets.gauge.parameters.max_label_template") }
+        /// Min Label Template
+        public static var minLabelTemplate: String { return L10n.tr("Localizable", "widgets.gauge.parameters.min_label_template") }
+        /// Run Action
+        public static var runAction: String { return L10n.tr("Localizable", "widgets.gauge.parameters.run_action") }
+        /// Server
+        public static var server: String { return L10n.tr("Localizable", "widgets.gauge.parameters.server") }
+        /// Value Label Template
+        public static var valueLabelTemplate: String { return L10n.tr("Localizable", "widgets.gauge.parameters.value_label_template") }
+        /// Value Template (0-1)
+        public static var valueTemplate: String { return L10n.tr("Localizable", "widgets.gauge.parameters.value_template") }
+        public enum GaugeType {
+          /// Capacity
+          public static var capacity: String { return L10n.tr("Localizable", "widgets.gauge.parameters.gauge_type.capacity") }
+          /// Normal
+          public static var normal: String { return L10n.tr("Localizable", "widgets.gauge.parameters.gauge_type.normal") }
+        }
+      }
+    }
     public enum OpenPage {
       /// Open a frontend page in Home Assistant.
       public static var description: String { return L10n.tr("Localizable", "widgets.open_page.description") }
@@ -2845,6 +3000,14 @@ public enum L10n {
       public static var notConfigured: String { return L10n.tr("Localizable", "widgets.open_page.not_configured") }
       /// Open Page
       public static var title: String { return L10n.tr("Localizable", "widgets.open_page.title") }
+    }
+    public enum ReloadWidgets {
+      public enum AppIntent {
+        /// Reload all widgets timelines.
+        public static var description: String { return L10n.tr("Localizable", "widgets.reload_widgets.app_intent.description") }
+        /// Reload widgets
+        public static var title: String { return L10n.tr("Localizable", "widgets.reload_widgets.app_intent.title") }
+      }
     }
   }
 }

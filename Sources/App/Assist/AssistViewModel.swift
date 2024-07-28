@@ -10,7 +10,8 @@ final class AssistViewModel: NSObject, ObservableObject {
     @Published var showScreenLoader = false
     @Published var inputText = ""
     @Published var isRecording = false
-    @Published var showPipelineErrorAlert = false
+    @Published var showError = false
+    @Published var errorMessage = ""
 
     private var server: Server
     private var audioRecorder: AudioRecorderProtocol
@@ -18,6 +19,7 @@ final class AssistViewModel: NSObject, ObservableObject {
     private var assistService: AssistServiceProtocol
     private(set) var autoStartRecording: Bool
     private(set) var audioTask: Task<Void, Error>?
+    private(set) var routineTask: Task<Void, Error>?
 
     private(set) var canSendAudioData = false
 
@@ -42,31 +44,27 @@ final class AssistViewModel: NSObject, ObservableObject {
     }
 
     @MainActor
-    func onAppear() {
+    func initialRoutine() {
         AssistSession.shared.delegate = self
-        checkForAutoRecordingAndStart()
-        fetchPipelines()
+        routineTask?.cancel()
+        routineTask = Task.detached { [weak self] in
+            await self?.fetchPipelines()
+            self?.checkForAutoRecordingAndStart()
+        }
     }
 
     func onDisappear() {
         audioRecorder.stopRecording()
         audioPlayer.pause()
         audioTask?.cancel()
+        routineTask?.cancel()
     }
 
     @MainActor
     func assistWithText() {
         audioPlayer.pause()
         stopStreaming()
-
-        guard !inputText.isEmpty else { return }
-        guard !pipelines.isEmpty, !preferredPipelineId.isEmpty else {
-            fetchPipelines()
-            return
-        }
-
         assistService.assist(source: .text(input: inputText, pipelineId: preferredPipelineId))
-
         appendToChat(.init(content: inputText, itemType: .input))
         inputText = ""
     }
@@ -84,11 +82,14 @@ final class AssistViewModel: NSObject, ObservableObject {
         inputText = ""
 
         audioRecorder.startRecording()
+        // Wait until green light from recorder delegate 'didStartRecording'
+    }
 
+    private func startAssistAudioPipeline(audioSampleRate: Double) {
         assistService.assist(
             source: .audio(
                 pipelineId: preferredPipelineId,
-                audioSampleRate: audioRecorder.audioSampleRate
+                audioSampleRate: audioSampleRate
             )
         )
     }
@@ -104,18 +105,22 @@ final class AssistViewModel: NSObject, ObservableObject {
     }
 
     @MainActor
-    private func fetchPipelines() {
+    private func fetchPipelines() async {
         showScreenLoader = true
-        assistService.fetchPipelines { [weak self] response in
-            self?.showScreenLoader = false
-            guard let self, let response else {
-                self?.showPipelineError()
-                return
+        await withCheckedContinuation { [weak self] continuation in
+            self?.assistService.fetchPipelines { [weak self] response in
+                self?.showScreenLoader = false
+                guard let self, let response else {
+                    self?.showError(message: L10n.Assist.Error.pipelinesResponse)
+                    continuation.resume()
+                    return
+                }
+                if preferredPipelineId.isEmpty {
+                    preferredPipelineId = response.preferredPipeline
+                }
+                pipelines = response.pipelines
+                continuation.resume()
             }
-            if preferredPipelineId.isEmpty {
-                preferredPipelineId = response.preferredPipeline
-            }
-            pipelines = response.pipelines
         }
     }
 
@@ -136,9 +141,10 @@ final class AssistViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func showPipelineError() {
+    private func showError(message: String) {
         DispatchQueue.main.async { [weak self] in
-            self?.showPipelineErrorAlert = true
+            self?.errorMessage = message
+            self?.showError = true
         }
     }
 
@@ -151,13 +157,23 @@ final class AssistViewModel: NSObject, ObservableObject {
 }
 
 extension AssistViewModel: AudioRecorderDelegate {
+    func didFailToRecord(error: any Error) {
+        showError(message: error.localizedDescription)
+    }
+
     func didOutputSample(data: Data) {
         guard canSendAudioData else { return }
         assistService.sendAudioData(data)
     }
 
-    func didStartRecording() {
-        isRecording = true
+    func didStartRecording(with sampleRate: Double) {
+        DispatchQueue.main.async { [weak self] in
+            self?.isRecording = true
+            #if DEBUG
+            self?.appendToChat(.init(content: "didStartRecording(with sampleRate: \(sampleRate)", itemType: .info))
+            #endif
+        }
+        startAssistAudioPipeline(audioSampleRate: sampleRate)
     }
 
     func didStopRecording() {
@@ -189,6 +205,12 @@ extension AssistViewModel: AssistServiceDelegate {
     func didReceiveTtsMediaUrl(_ mediaUrl: URL) {
         audioPlayer.play(url: mediaUrl)
     }
+
+    @MainActor
+    func didReceiveError(code: String, message: String) {
+        Current.Log.error("Assist error: \(code)")
+        appendToChat(.init(content: message, itemType: .error))
+    }
 }
 
 extension AssistViewModel: AssistSessionDelegate {
@@ -201,7 +223,7 @@ extension AssistViewModel: AssistSessionDelegate {
             }
             preferredPipelineId = context.pipelineId
             autoStartRecording = context.autoStartRecording
-            onAppear()
+            initialRoutine()
         }
     }
 }

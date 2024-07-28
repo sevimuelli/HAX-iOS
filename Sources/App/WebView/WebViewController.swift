@@ -1,6 +1,6 @@
-import Alamofire
 import AVFoundation
 import AVKit
+import Alamofire
 import CoreLocation
 import HAKit
 import KeychainAccess
@@ -12,6 +12,19 @@ import SwiftUI
 import UIKit
 import WebKit
 
+protocol WebViewControllerProtocol: AnyObject {
+    var server: Server { get }
+    var overlayAppController: UIViewController? { get set }
+
+    func presentOverlayController(controller: UIViewController)
+    func presentController(_ controller: UIViewController, animated: Bool)
+    func evaluateJavaScript(_ script: String, completion: ((Any?, (any Error)?) -> Void)?)
+    func dismissOverlayController(animated: Bool, completion: (() -> Void)?)
+    func dismissControllerAboveOverlayController()
+    func updateSettingsButton(state: String)
+    func navigateToPath(path: String)
+}
+
 final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     var webView: WKWebView!
 
@@ -22,36 +35,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     private let refreshControl = UIRefreshControl()
     private let sidebarGestureRecognizer: UIScreenEdgePanGestureRecognizer
+    let webViewExternalMessageHandler = WebViewExternalMessageHandler.build()
 
     private var initialURL: URL?
 
     /// A view controller presented by a request from the webview
-    private weak var overlayAppController: UIViewController?
-
-    private let settingsButton: UIButton = {
-        let button = UIButton()
-        button.setImage(
-            MaterialDesignIcons.cogIcon.image(ofSize: CGSize(width: 36, height: 36), color: .white),
-            for: .normal
-        )
-        button.accessibilityLabel = L10n.Settings.NavigationBar.title
-        button.contentEdgeInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        button.setBackgroundImage(
-            UIImage(size: CGSize(width: 1, height: 1), color: UIColor(red: 1.00, green: 0.60, blue: 0.00, alpha: 1.0)),
-            for: .normal
-        )
-
-        // size isn't affected by any trait changes, so we can grab the height once and not worry about it changing
-        let desiredSize = button.systemLayoutSizeFitting(.zero)
-        button.layer.cornerRadius = ceil(desiredSize.height / 2.0)
-        button.layer.masksToBounds = true
-
-        button.translatesAutoresizingMaskIntoConstraints = false
-        if Current.appConfiguration == .fastlaneSnapshot {
-            button.alpha = 0
-        }
-        return button
-    }()
+    var overlayAppController: UIViewController?
 
     enum RestorableStateKey: String {
         case lastURL
@@ -68,6 +57,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        webViewExternalMessageHandler.webViewController = self
 
         becomeFirstResponder()
 
@@ -90,9 +80,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             object: nil
         )
 
-        tokens.append(server.observe { [weak self] _ in
-            self?.connectionInfoDidChange()
-        })
+        tokens.append(
+            server.observe { [weak self] _ in
+                self?.connectionInfoDidChange()
+            })
 
         let statusBarView = UIView()
         statusBarView.tag = 111
@@ -102,59 +93,65 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         statusBarView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
         statusBarView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         statusBarView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        statusBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        statusBarView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
+            .isActive = true
 
         statusBarView.translatesAutoresizingMaskIntoConstraints = false
 
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+
         let userContentController = WKUserContentController()
-        userContentController.add(self, name: "getExternalAuth")
-        userContentController.add(self, name: "revokeExternalAuth")
-        userContentController.add(self, name: "externalBus")
-        userContentController.add(self, name: "updateThemeColors")
-        userContentController.add(self, name: "logError")
+        let safeScriptMessageHandler = SafeScriptMessageHandler(delegate: self)
+        userContentController.add(safeScriptMessageHandler, name: "getExternalAuth")
+        userContentController.add(safeScriptMessageHandler, name: "revokeExternalAuth")
+        userContentController.add(safeScriptMessageHandler, name: "externalBus")
+        userContentController.add(safeScriptMessageHandler, name: "updateThemeColors")
+        userContentController.add(safeScriptMessageHandler, name: "logError")
 
         guard let wsBridgeJSPath = Bundle.main.path(forResource: "WebSocketBridge", ofType: "js"),
-              let wsBridgeJS = try? String(contentsOfFile: wsBridgeJSPath) else {
+            let wsBridgeJS = try? String(contentsOfFile: wsBridgeJSPath)
+        else {
             fatalError("Couldn't load WebSocketBridge.js for injection to WKWebView!")
         }
 
-        userContentController.addUserScript(WKUserScript(
-            source: wsBridgeJS,
-            injectionTime: .atDocumentEnd,
-            forMainFrameOnly: false
-        ))
+        userContentController.addUserScript(
+            WKUserScript(
+                source: wsBridgeJS,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: false
+            ))
 
-        userContentController.addUserScript(.init(
-            source: """
-                window.addEventListener("error", (e) => {
-                    window.webkit.messageHandlers.logError.postMessage({
-                        "message": JSON.stringify(e.message),
-                        "filename": JSON.stringify(e.filename),
-                        "lineno": JSON.stringify(e.lineno),
-                        "colno": JSON.stringify(e.colno),
-                    });
-                });
-            """,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: false
-        ))
+        userContentController.addUserScript(
+            .init(
+                source: """
+                        window.addEventListener("error", (e) => {
+                            window.webkit.messageHandlers.logError.postMessage({
+                                "message": JSON.stringify(e.message),
+                                "filename": JSON.stringify(e.filename),
+                                "lineno": JSON.stringify(e.lineno),
+                                "colno": JSON.stringify(e.colno),
+                            });
+                        });
+                    """,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false
+            ))
 
         config.userContentController = userContentController
-        // "Mobile/BUILD_NUMBER" is what CodeMirror sniffs for to decide iOS or not; other things likely look for Safari
-        config.applicationNameForUserAgent = HomeAssistantAPI.userAgent + " Mobile/HomeAssistant, like Safari"
+        config.applicationNameForUserAgent = HomeAssistantAPI.applicationNameForUserAgent
 
         webView = WKWebView(frame: view!.frame, configuration: config)
         webView.isOpaque = false
         view!.addSubview(webView)
 
         for direction: UISwipeGestureRecognizer.Direction in [.left, .right] {
-            webView.addGestureRecognizer(with(UISwipeGestureRecognizer(target: self, action: #selector(swipe(_:)))) {
-                $0.numberOfTouchesRequired = 2
-                $0.direction = direction
-            })
+            webView.addGestureRecognizer(
+                with(UISwipeGestureRecognizer(target: self, action: #selector(swipe(_:)))) {
+                    $0.numberOfTouchesRequired = 2
+                    $0.direction = direction
+                })
         }
 
         webView.addGestureRecognizer(sidebarGestureRecognizer)
@@ -162,13 +159,17 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         urlObserver = webView.observe(\.url) { [weak self] webView, _ in
             guard let self else { return }
 
-            guard let currentURL = webView.url?.absoluteString.replacingOccurrences(of: "?external_auth=1", with: ""),
-                  let cleanURL = URL(string: currentURL), let scheme = cleanURL.scheme else {
+            guard
+                let currentURL = webView.url?.absoluteString.replacingOccurrences(
+                    of: "?external_auth=1", with: ""),
+                let cleanURL = URL(string: currentURL), let scheme = cleanURL.scheme
+            else {
                 return
             }
 
             guard ["http", "https"].contains(scheme) else {
-                Current.Log.warning("Was going to provide invalid URL to NSUserActivity! \(currentURL)")
+                Current.Log.warning(
+                    "Was going to provide invalid URL to NSUserActivity! \(currentURL)")
                 return
             }
 
@@ -199,12 +200,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             webView.scrollView.bounces = true
         }
 
-        settingsButton.addTarget(self, action: #selector(openSettingsView(_:)), for: .touchDown)
+        WebViewAccessoryViews.settingsButton.addTarget(
+            self, action: #selector(openSettingsView(_:)), for: .touchDown)
+        view.addSubview(WebViewAccessoryViews.settingsButton)
 
-        view.addSubview(settingsButton)
-
-        view.bottomAnchor.constraint(equalTo: settingsButton.bottomAnchor, constant: 16.0).isActive = true
-        view.rightAnchor.constraint(equalTo: settingsButton.rightAnchor, constant: 16.0).isActive = true
+        NSLayoutConstraint.activate([
+            view.bottomAnchor.constraint(
+                equalTo: WebViewAccessoryViews.settingsButton.bottomAnchor, constant: 16.0),
+            view.rightAnchor.constraint(
+                equalTo: WebViewAccessoryViews.settingsButton.rightAnchor, constant: 16.0),
+        ])
 
         NotificationCenter.default.addObserver(
             self,
@@ -218,9 +223,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         updateWebViewForServerValues()
 
         #if DEBUG
-        if #available(iOS 16.4, *) {
-            webView.isInspectable = true
-        }
+            if #available(iOS 16.4, *) {
+                webView.isInspectable = true
+            }
         #endif
     }
 
@@ -231,17 +236,20 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             let settingsView = SettingsViewController()
             settingsView.hidesBottomBarWhenPushed = true
             let navController = UINavigationController(rootViewController: settingsView)
-            navigationController?.present(navController, animated: true, completion: nil)
+            presentOverlayController(controller: navController)
         }
     }
 
     // Workaround for webview rotation issues: https://github.com/Telerik-Verified-Plugins/WKWebView/pull/263
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    override func viewWillTransition(
+        to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator
+    ) {
         super.viewWillTransition(to: size, with: coordinator)
-        coordinator.animate(alongsideTransition: { _ in
-            self.webView?.setNeedsLayout()
-            self.webView?.layoutIfNeeded()
-        }, completion: nil)
+        coordinator.animate(
+            alongsideTransition: { _ in
+                self.webView?.setNeedsLayout()
+                self.webView?.layoutIfNeeded()
+            }, completion: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -271,7 +279,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             case let .userActivity(userActivity):
                 return userActivity.userInfo?[RestorableStateKey.lastURL.rawValue] as? URL
             case let .coder(coder):
-                return coder.decodeObject(of: NSURL.self, forKey: RestorableStateKey.lastURL.rawValue) as URL?
+                return coder.decodeObject(
+                    of: NSURL.self, forKey: RestorableStateKey.lastURL.rawValue) as URL?
             case .server:
                 return nil
             }
@@ -282,12 +291,14 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
             switch self {
             case let .userActivity(userActivity):
-                serverRawValue = userActivity.userInfo?[RestorableStateKey.server.rawValue] as? String
+                serverRawValue =
+                    userActivity.userInfo?[RestorableStateKey.server.rawValue] as? String
             case let .coder(coder):
-                serverRawValue = coder.decodeObject(
-                    of: NSString.self,
-                    forKey: RestorableStateKey.server.rawValue
-                ) as String?
+                serverRawValue =
+                    coder.decodeObject(
+                        of: NSString.self,
+                        forKey: RestorableStateKey.server.rawValue
+                    ) as String?
             case let .server(server):
                 return server
             }
@@ -345,12 +356,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         webView?.scrollView.backgroundColor = cachedColors[.primaryBackgroundColor]
 
         if let statusBarView = view.viewWithTag(111) {
-            statusBarView.backgroundColor = cachedColors[.appHeaderBackgroundColor]
+            statusBarView.backgroundColor = cachedColors[.appThemeColor]
         }
 
         refreshControl.tintColor = cachedColors[.primaryColor]
 
-        let headerBackgroundIsLight = cachedColors[.appHeaderBackgroundColor].isLight
+        let headerBackgroundIsLight = cachedColors[.appThemeColor].isLight
         underlyingPreferredStatusBarStyle = headerBackgroundIsLight ? .darkContent : .lightContent
 
         setNeedsStatusBarAppearanceUpdate()
@@ -419,7 +430,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    func webView(
+        _ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
+        withError error: Error
+    ) {
         refreshControl.endRefreshing()
         if let err = error as? URLError {
             if err.code != .cancelled {
@@ -454,7 +468,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             return
         }
 
-        guard let httpResponse = navigationResponse.response as? HTTPURLResponse, httpResponse.statusCode >= 400 else {
+        guard let httpResponse = navigationResponse.response as? HTTPURLResponse,
+            httpResponse.statusCode >= 400
+        else {
             // not an error response, we don't need to inspect at all
             decisionHandler(.allow)
             return
@@ -474,7 +490,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
             if let webviewURL = server.info.connection.webviewURL() {
                 decisionHandler(.cancel)
-                webView.load(addHeaders(request: URLRequest(url: webviewURL), urlToCheck: webviewURL))
+                webView.load(
+                    addHeaders(request: URLRequest(url: webviewURL), urlToCheck: webviewURL))
             } else {
                 // we don't have anything we can do about this
                 decisionHandler(.allow)
@@ -495,7 +512,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 return .actionSheet
             case .mac:
                 return .alert
-            case .pad, .unspecified:
+            case .pad, .unspecified, .vision:
                 // without a touch to tell us where, an action sheet in the middle of the screen isn't great
                 return .alert
             @unknown default:
@@ -505,13 +522,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
         let alertController = UIAlertController(title: nil, message: message, preferredStyle: style)
 
-        alertController.addAction(UIAlertAction(title: L10n.Alerts.Confirm.ok, style: .default, handler: { _ in
-            completionHandler(true)
-        }))
+        alertController.addAction(
+            UIAlertAction(
+                title: L10n.Alerts.Confirm.ok, style: .default,
+                handler: { _ in
+                    completionHandler(true)
+                }))
 
-        alertController.addAction(UIAlertAction(title: L10n.Alerts.Confirm.cancel, style: .cancel, handler: { _ in
-            completionHandler(false)
-        }))
+        alertController.addAction(
+            UIAlertAction(
+                title: L10n.Alerts.Confirm.cancel, style: .cancel,
+                handler: { _ in
+                    completionHandler(false)
+                }))
 
         if presentedViewController != nil {
             Current.Log.error("attempted to present an alert when already presenting, bailing")
@@ -534,17 +557,23 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             textField.text = defaultText
         }
 
-        alertController.addAction(UIAlertAction(title: L10n.Alerts.Prompt.ok, style: .default, handler: { _ in
-            if let text = alertController.textFields?.first?.text {
-                completionHandler(text)
-            } else {
-                completionHandler(defaultText)
-            }
-        }))
+        alertController.addAction(
+            UIAlertAction(
+                title: L10n.Alerts.Prompt.ok, style: .default,
+                handler: { _ in
+                    if let text = alertController.textFields?.first?.text {
+                        completionHandler(text)
+                    } else {
+                        completionHandler(defaultText)
+                    }
+                }))
 
-        alertController.addAction(UIAlertAction(title: L10n.Alerts.Prompt.cancel, style: .cancel, handler: { _ in
-            completionHandler(nil)
-        }))
+        alertController.addAction(
+            UIAlertAction(
+                title: L10n.Alerts.Prompt.cancel, style: .cancel,
+                handler: { _ in
+                    completionHandler(nil)
+                }))
 
         if presentedViewController != nil {
             Current.Log.error("attempted to present an alert when already presenting, bailing")
@@ -560,11 +589,15 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         initiatedByFrame frame: WKFrameInfo,
         completionHandler: @escaping () -> Void
     ) {
-        let alertController = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        let alertController = UIAlertController(
+            title: nil, message: message, preferredStyle: .alert)
 
-        alertController.addAction(UIAlertAction(title: L10n.Alerts.Alert.ok, style: .default, handler: { _ in
-            completionHandler()
-        }))
+        alertController.addAction(
+            UIAlertAction(
+                title: L10n.Alerts.Alert.ok, style: .default,
+                handler: { _ in
+                    completionHandler()
+                }))
 
         alertController.popoverPresentationController?.sourceView = self.webView
 
@@ -605,7 +638,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
         guard webView.url == nil || webView.url?.baseIsEqual(to: webviewURL) == false else {
             // we also tell the webview -- maybe it failed to connect itself? -- to refresh if needed
-            webView.evaluateJavaScript("checkForMissingHassConnectionAndReload()", completionHandler: nil)
+            webView.evaluateJavaScript(
+                "checkForMissingHassConnectionAndReload()", completionHandler: nil)
             return
         }
 
@@ -618,7 +652,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         var request: URLRequest
 
         if Current.settingsStore.restoreLastURL,
-           let initialURL, initialURL.baseIsEqual(to: webviewURL) {
+            let initialURL, initialURL.baseIsEqual(to: webviewURL)
+        {
             Current.Log.info("restoring initial url path: \(initialURL.path)")
             request = addHeaders(request: URLRequest(url: initialURL), urlToCheck: initialURL)
         } else {
@@ -635,7 +670,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             if webView.url?.baseIsEqual(to: webviewURL) == true, !lastNavigationWasServerError {
                 webView.reload()
             } else {
-                webView.load(addHeaders(request: URLRequest(url: webviewURL), urlToCheck: webviewURL))
+                webView.load(
+                    addHeaders(request: URLRequest(url: webviewURL), urlToCheck: webviewURL))
             }
         }
     }
@@ -666,7 +702,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     @objc private func showSidebar(_ gesture: UIScreenEdgePanGestureRecognizer) {
         switch gesture.state {
         case .began:
-            sendExternalBus(message: .init(command: "sidebar/show"))
+            webViewExternalMessageHandler.sendExternalBus(message: .init(command: "sidebar/show"))
         default:
             break
         }
@@ -766,6 +802,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         showSettingsViewController()
     }
 
+    @objc func openImprovOnboard(_ sender: UIButton) {
+        webViewExternalMessageHandler.presentImprov()
+    }
+
     private var underlyingPreferredStatusBarStyle: UIStatusBarStyle = .lightContent
     override var preferredStatusBarStyle: UIStatusBarStyle {
         underlyingPreferredStatusBarStyle
@@ -794,7 +834,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
         if !Current.isCatalyst {
             let zoomValue = Current.settingsStore.pinchToZoom ? "true" : "false"
-            webView.evaluateJavaScript("setOverrideZoomEnabled(\(zoomValue))", completionHandler: nil)
+            webView.evaluateJavaScript(
+                "setOverrideZoomEnabled(\(zoomValue))", completionHandler: nil)
         }
 
         if reason == .settingChange {
@@ -831,7 +872,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             repeats: true,
             block: { [weak self] timer in
                 if let self, Current.date().timeIntervalSince(timer.fireDate) > 30.0 {
-                    sendExternalBus(message: .init(command: "restart"))
+                    webViewExternalMessageHandler.sendExternalBus(
+                        message: .init(command: "restart"))
                 }
 
                 if UIApplication.shared.applicationState == .active {
@@ -846,22 +888,23 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             showActionAutomationEditorNotAvailable()
             return
         }
-        sendExternalBus(message: .init(
-            command: WebViewExternalBusOutgoingMessage.showAutomationEditor.rawValue,
-            payload: [
-                "config": [
-                    "trigger": [
-                        [
-                            "platform": "event",
-                            "event_type": "ios.action_fired",
-                            "event_data": [
-                                "actionID": actionId,
-                            ],
-                        ],
-                    ],
-                ],
-            ]
-        ))
+        webViewExternalMessageHandler.sendExternalBus(
+            message: .init(
+                command: WebViewExternalBusOutgoingMessage.showAutomationEditor.rawValue,
+                payload: [
+                    "config": [
+                        "trigger": [
+                            [
+                                "platform": "event",
+                                "event_type": "ios.action_fired",
+                                "event_data": [
+                                    "actionID": actionId
+                                ],
+                            ]
+                        ]
+                    ]
+                ]
+            ))
     }
 
     private func showActionAutomationEditorNotAvailable() {
@@ -874,12 +917,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         present(alert, animated: true)
     }
 
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        webViewExternalMessageHandler.stopImprovScanIfNeeded()
+    }
+
     private func addHeaders(request: URLRequest, urlToCheck: URL) -> URLRequest {
         var request = request
         if server.info.connection.activeURL().baseIsEqual(to: urlToCheck) {
             if let headers = server.info.connection.activeCustomHeaders() {
                 for header in headers {
-                   request.setValue(header.value, forHTTPHeaderField: header.key)
+                    request.setValue(header.value, forHTTPHeaderField: header.key)
                 }
             }
         }
@@ -893,7 +940,7 @@ extension String {
         let nsString = self as NSString
         let results = regex.matches(in: self, range: NSRange(location: 0, length: nsString.length))
         return results.map { result in
-            (0 ..< result.numberOfRanges).map {
+            (0..<result.numberOfRanges).map {
                 result.range(at: $0).location != NSNotFound
                     ? nsString.substring(with: result.range(at: $0))
                     : ""
@@ -903,9 +950,12 @@ extension String {
 }
 
 extension WebViewController: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    func userContentController(
+        _ userContentController: WKUserContentController, didReceive message: WKScriptMessage
+    ) {
         guard let messageBody = message.body as? [String: Any] else {
-            Current.Log.error("received message for \(message.name) but of type: \(type(of: message.body))")
+            Current.Log.error(
+                "received message for \(message.name) but of type: \(type(of: message.body))")
             return
         }
 
@@ -913,7 +963,7 @@ extension WebViewController: WKScriptMessageHandler {
 
         switch message.name {
         case "externalBus":
-            handleExternalMessage(messageBody)
+            webViewExternalMessageHandler.handleExternalMessage(messageBody)
         case "updateThemeColors":
             handleThemeUpdate(messageBody)
         case "getExternalAuth":
@@ -930,13 +980,18 @@ extension WebViewController: WKScriptMessageHandler {
                 if let jsonString = String(data: jsonData!, encoding: .utf8) {
                     // Current.Log.verbose("Responding to getExternalAuth with: \(callbackName)(true, \(jsonString))")
                     let script = "\(callbackName)(true, \(jsonString))"
-                    self.webView.evaluateJavaScript(script, completionHandler: { result, error in
-                        if let error {
-                            Current.Log.error("Failed to trigger getExternalAuth callback: \(error)")
-                        }
+                    self.webView.evaluateJavaScript(
+                        script,
+                        completionHandler: { result, error in
+                            if let error {
+                                Current.Log.error(
+                                    "Failed to trigger getExternalAuth callback: \(error)")
+                            }
 
-                        Current.Log.verbose("Success on getExternalAuth callback: \(String(describing: result))")
-                    })
+                            Current.Log.verbose(
+                                "Success on getExternalAuth callback: \(String(describing: result))"
+                            )
+                        })
                 }
             }.catch { error in
                 self.webView.evaluateJavaScript("\(callbackName)(false, 'Token unavailable')")
@@ -956,20 +1011,24 @@ extension WebViewController: WKScriptMessageHandler {
 
                 Current.Log.verbose("Running revoke external auth callback \(script)")
 
-                self.webView.evaluateJavaScript(script, completionHandler: { _, error in
-                    Current.onboardingObservation.needed(.logout)
+                self.webView.evaluateJavaScript(
+                    script,
+                    completionHandler: { _, error in
+                        Current.onboardingObservation.needed(.logout)
 
-                    if let error {
-                        Current.Log.error("Failed calling sign out callback: \(error)")
-                    }
+                        if let error {
+                            Current.Log.error("Failed calling sign out callback: \(error)")
+                        }
 
-                    Current.Log.verbose("Successfully informed web client of log out.")
-                })
+                        Current.Log.verbose("Successfully informed web client of log out.")
+                    })
             }.catch { error in
                 Current.Log.error("Failed to revoke token: \(error)")
             }
         case "logError":
-            Current.Log.error("WebView error: \(messageBody.description.replacingOccurrences(of: "\n", with: " "))")
+            Current.Log.error(
+                "WebView error: \(messageBody.description.replacingOccurrences(of: "\n", with: " "))"
+            )
         default:
             Current.Log.error("unknown message: \(message.name)")
         }
@@ -978,242 +1037,6 @@ extension WebViewController: WKScriptMessageHandler {
     func handleThemeUpdate(_ messageBody: [String: Any]) {
         ThemeColors.updateCache(with: messageBody, for: traitCollection)
         styleUI()
-    }
-
-    func handleHaptic(_ hapticType: String) {
-        Current.Log.verbose("Handle haptic type \(hapticType)")
-        switch hapticType {
-        case "success":
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        case "error", "failure":
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
-        case "warning":
-            UINotificationFeedbackGenerator().notificationOccurred(.warning)
-        case "light":
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        case "medium":
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        case "heavy":
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-        case "selection":
-            UISelectionFeedbackGenerator().selectionChanged()
-        default:
-            Current.Log.verbose("Unknown haptic type \(hapticType)")
-        }
-    }
-
-    func handleExternalMessage(_ dictionary: [String: Any]) {
-        guard let incomingMessage = WebSocketMessage(dictionary) else {
-            Current.Log.error("Received invalid external message \(dictionary)")
-            return
-        }
-
-        var response: Guarantee<WebSocketMessage>?
-
-        if let externalBusMessage = WebViewExternalBusMessage(rawValue: incomingMessage.MessageType) {
-            switch externalBusMessage {
-            case .configGet:
-                response = Guarantee { seal in
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        seal(WebSocketMessage(
-                            id: incomingMessage.ID!,
-                            type: "result",
-                            result: [
-                                "hasSettingsScreen": !Current.isCatalyst,
-                                "canWriteTag": Current.tags.isNFCAvailable,
-                                "canCommissionMatter": Current.matter.isAvailable,
-                                "canImportThreadCredentials": Current.matter.threadCredentialsSharingEnabled,
-                                "hasBarCodeScanner": true,
-                                "canTransferThreadCredentialsToKeychain": Current.matter
-                                    .threadCredentialsStoreInKeychainEnabled,
-                                "hasAssist": true,
-                            ]
-                        ))
-                    }
-                }
-            case .configScreenShow:
-                showSettingsViewController()
-            case .haptic:
-                guard let hapticType = incomingMessage.Payload?["hapticType"] as? String else {
-                    Current.Log.error("Received haptic via bus but hapticType was not string! \(incomingMessage)")
-                    return
-                }
-                handleHaptic(hapticType)
-            case .connectionStatus:
-                guard let connEvt = incomingMessage.Payload?["event"] as? String else {
-                    Current.Log.error("Received connection-status via bus but event was not string! \(incomingMessage)")
-                    return
-                }
-                // Possible values: connected, disconnected, auth-invalid
-                UIView.animate(withDuration: 1.0, delay: 0, options: .curveEaseInOut, animations: {
-                    self.settingsButton.alpha = connEvt == "connected" ? 0.0 : 1.0
-                }, completion: nil)
-            case .tagRead:
-                response = Current.tags.readNFC().map { tag in
-                    WebSocketMessage(id: incomingMessage.ID!, type: "result", result: ["success": true, "tag": tag])
-                }.recover { _ in
-                    .value(WebSocketMessage(id: incomingMessage.ID!, type: "result", result: ["success": false]))
-                }
-            case .tagWrite:
-                let (promise, seal) = Guarantee<Bool>.pending()
-                response = promise.map { success in
-                    WebSocketMessage(id: incomingMessage.ID!, type: "result", result: ["success": success])
-                }
-
-                firstly { () throws -> Promise<(tag: String, name: String?)> in
-                    if let tag = incomingMessage.Payload?["tag"] as? String, tag.isEmpty == false {
-                        return .value((tag: tag, name: incomingMessage.Payload?["name"] as? String))
-                    } else {
-                        throw HomeAssistantAPI.APIError.invalidResponse
-                    }
-                }.then { tagInfo in
-                    Current.tags.writeNFC(value: tagInfo.tag)
-                }.done { _ in
-                    Current.Log.info("wrote tag via external bus")
-                    seal(true)
-                }.catch { error in
-                    Current.Log.error("couldn't write tag via external bus: \(error)")
-                    seal(false)
-                }
-            case .themeUpdate:
-                webView.evaluateJavaScript("notifyThemeColors()", completionHandler: nil)
-            case .matterCommission:
-                Current.matter.commission(server).done {
-                    Current.Log.info("commission call completed")
-                }.catch { error in
-                    // we don't show a user-visible error because even a successful operation will return 'cancelled'
-                    // but the errors aren't public, so we can't compare -- the apple ui shows errors visually though
-                    Current.Log.error(error)
-                }
-            case .threadImportCredentials:
-                transferKeychainThreadCredentialsToHARequested()
-            case .barCodeScanner:
-                guard let title = incomingMessage.Payload?["title"] as? String,
-                      let description = incomingMessage.Payload?["description"] as? String,
-                      let incomingMessageId = incomingMessage.ID else { return }
-                barcodeScannerRequested(
-                    title: title,
-                    description: description,
-                    alternativeOptionLabel: incomingMessage.Payload?["alternative_option_label"] as? String,
-                    incomingMessageId: incomingMessageId
-                )
-            case .barCodeScannerClose:
-                if let barCodeController = overlayAppController as? BarcodeScannerHostingController {
-                    barCodeController.dismissAllViewControllersAbove()
-                    barCodeController.dismiss(animated: true)
-                }
-            case .barCodeScannerNotify:
-                guard let message = incomingMessage.Payload?["message"] as? String else { return }
-                let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-                alert.addAction(.init(title: L10n.okLabel, style: .default))
-                let controller = overlayAppController ?? self
-                controller.present(alert, animated: false, completion: nil)
-            case .threadStoreCredentialInAppleKeychain:
-                guard let macExtendedAddress = incomingMessage.Payload?["mac_extended_address"] as? String,
-                      let activeOperationalDataset = incomingMessage.Payload?["active_operational_dataset"] as? String else { return }
-                transferHAThreadCredentialsToKeychain(
-                    macExtendedAddress: macExtendedAddress,
-                    activeOperationalDataset: activeOperationalDataset
-                )
-            case .assistShow:
-                showAssist(server: server, pipeline: "")
-            }
-        } else {
-            Current.Log.error("unknown: \(incomingMessage.MessageType)")
-        }
-
-        response?.then { [self] outgoing in
-            sendExternalBus(message: outgoing)
-        }.cauterize()
-    }
-
-    @discardableResult
-    public func sendExternalBus(message: WebSocketMessage) -> Promise<Void> {
-        Promise<Void> { seal in
-            DispatchQueue.main.async { [self] in
-                do {
-                    let encodedMsg = try JSONEncoder().encode(message)
-                    let jsonString = String(decoding: encodedMsg, as: UTF8.self)
-                    let script = "window.externalBus(\(jsonString))"
-                    Current.Log.verbose("sending \(jsonString)")
-                    webView.evaluateJavaScript(script, completionHandler: { _, error in
-                        if let error {
-                            Current.Log.error("failed to fire message to externalBus: \(error)")
-                        }
-                        seal.resolve(error)
-                    })
-                } catch {
-                    Current.Log.error("failed to send \(message): \(error)")
-                    seal.reject(error)
-                }
-            }
-        }
-    }
-
-    func showAssist(server: Server, pipeline: String = "", autoStartRecording: Bool = false) {
-        if AssistSession.shared.inProgress {
-            AssistSession.shared.requestNewSession(.init(
-                server: server,
-                pipelineId: pipeline,
-                autoStartRecording: autoStartRecording
-            ))
-            return
-        }
-        let assistView = UIHostingController(rootView: AssistView.build(
-            server: server,
-            preferredPipelineId: pipeline,
-            autoStartRecording: autoStartRecording
-        ))
-        present(assistView, animated: true, completion: nil)
-        overlayAppController = assistView
-    }
-
-    private func transferKeychainThreadCredentialsToHARequested() {
-        if #available(iOS 16.4, *) {
-            let threadManagementView =
-                UIHostingController(
-                    rootView: ThreadCredentialsSharingView<ThreadTransferCredentialToHAViewModel>
-                        .buildTransferToHomeAssistant(server: server)
-                )
-            threadManagementView.view.backgroundColor = .clear
-            threadManagementView.modalPresentationStyle = .overFullScreen
-            threadManagementView.modalTransitionStyle = .crossDissolve
-            present(threadManagementView, animated: true)
-        }
-    }
-
-    private func transferHAThreadCredentialsToKeychain(macExtendedAddress: String, activeOperationalDataset: String) {
-        if #available(iOS 16.4, *) {
-            let threadManagementView =
-                UIHostingController(
-                    rootView: ThreadCredentialsSharingView<ThreadTransferCredentialToKeychainViewModel>
-                        .buildTransferToAppleKeychain(
-                            macExtendedAddress: macExtendedAddress,
-                            activeOperationalDataset: activeOperationalDataset
-                        )
-                )
-            threadManagementView.view.backgroundColor = .clear
-            threadManagementView.modalPresentationStyle = .overFullScreen
-            threadManagementView.modalTransitionStyle = .crossDissolve
-            present(threadManagementView, animated: true)
-        }
-    }
-
-    private func barcodeScannerRequested(
-        title: String,
-        description: String,
-        alternativeOptionLabel: String?,
-        incomingMessageId: Int
-    ) {
-        overlayAppController = BarcodeScannerHostingController(rootView: BarcodeScannerView(
-            title: title,
-            description: description,
-            alternativeOptionLabel: alternativeOptionLabel,
-            incomingMessageId: incomingMessageId
-        ))
-        overlayAppController?.modalPresentationStyle = .fullScreen
-        guard let overlayAppController else { return }
-        present(overlayAppController, animated: true)
     }
 }
 
@@ -1245,7 +1068,8 @@ extension ConnectionInfo {
     }
 
     mutating func webviewURL(from raw: String) -> URL? {
-        guard let baseURLComponents = webviewURLComponents(), let baseURL = baseURLComponents.url else {
+        guard let baseURLComponents = webviewURLComponents(), let baseURL = baseURLComponents.url
+        else {
             return nil
         }
 
@@ -1269,6 +1093,50 @@ extension ConnectionInfo {
             return url
         } else {
             return nil
+        }
+    }
+}
+
+extension WebViewController: WebViewControllerProtocol {
+    func presentOverlayController(controller: UIViewController) {
+        overlayAppController?.dismiss(animated: false, completion: nil)
+        overlayAppController = controller
+        present(controller, animated: true, completion: nil)
+    }
+
+    func evaluateJavaScript(_ script: String, completion: ((Any?, (any Error)?) -> Void)?) {
+        webView.evaluateJavaScript(script, completionHandler: completion)
+    }
+
+    func presentController(_ controller: UIViewController, animated: Bool) {
+        let mainController = overlayAppController ?? self
+        mainController.present(controller, animated: animated)
+    }
+
+    func dismissOverlayController(animated: Bool, completion: (() -> Void)?) {
+        if let overlayAppController {
+            overlayAppController.dismiss(animated: animated, completion: completion)
+        } else {
+            completion?()
+        }
+    }
+
+    func dismissControllerAboveOverlayController() {
+        overlayAppController?.dismissAllViewControllersAbove()
+    }
+
+    func updateSettingsButton(state: String) {
+        // Possible values: connected, disconnected, auth-invalid
+        UIView.animate(
+            withDuration: 1.0, delay: 0, options: .curveEaseInOut,
+            animations: {
+                WebViewAccessoryViews.settingsButton.alpha = state == "connected" ? 0 : 1
+            }, completion: nil)
+    }
+
+    func navigateToPath(path: String) {
+        if let url = URL(string: server.info.connection.activeURL().absoluteString + path) {
+            webView.load(URLRequest(url: url))
         }
     }
 }
