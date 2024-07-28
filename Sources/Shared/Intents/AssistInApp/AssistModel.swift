@@ -9,6 +9,11 @@ public struct PipelineResponse: HADataDecodable {
         self.preferredPipeline = try data.decode("preferred_pipeline")
         self.pipelines = try data.decode("pipelines")
     }
+
+    public init(preferredPipeline: String, pipelines: [Pipeline]) {
+        self.preferredPipeline = preferredPipeline
+        self.pipelines = pipelines
+    }
 }
 
 public struct Pipeline: HADataDecodable {
@@ -85,6 +90,8 @@ public struct AssistResponse: HADataDecodable {
         public let runnerData: RunnerData?
         public let sttOutput: SttOutput?
         public let ttsOutput: TtsOutput?
+        public let code: String?
+        public let message: String?
 
         public init(data: HAData) throws {
             self.pipeline = try? data.decode("data")
@@ -93,6 +100,8 @@ public struct AssistResponse: HADataDecodable {
             self.runnerData = try? data.decode("runner_data")
             self.sttOutput = try? data.decode("stt_output")
             self.ttsOutput = try? data.decode("tts_output")
+            self.code = try? data.decode("code")
+            self.message = try? data.decode("message")
         }
 
         public struct SttOutput: HADataDecodable {
@@ -123,9 +132,11 @@ public struct AssistResponse: HADataDecodable {
         public struct IntentOutput: HADataDecodable {
             public init(data: HAData) throws {
                 self.response = try? data.decode("response")
+                self.conversationId = try? data.decode("conversation_id")
             }
 
             public let response: Response?
+            public let conversationId: String?
         }
 
         public struct Response: HADataDecodable {

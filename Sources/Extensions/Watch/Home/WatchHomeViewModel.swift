@@ -1,4 +1,7 @@
+import Communicator
 import Foundation
+import NetworkExtension
+import PromiseKit
 import RealmSwift
 import Shared
 
@@ -6,17 +9,15 @@ struct WatchActionItem: Equatable {
     let id: String
     let name: String
     let iconName: String
-    let backgroundColor: String
     let iconColor: String
-    let textColor: String
 }
 
 protocol WatchHomeViewModelProtocol: ObservableObject {
-    var actions: [WatchActionItem] { get set }
-    var state: WatchHomeViewState { get set }
+    var actions: [WatchActionItem] { get }
     func onAppear()
     func onDisappear()
-    func runActionId(_ actionId: String)
+    func runActionId(_ actionId: String, completion: @escaping (Bool) -> Void)
+    func fetchNetworkInfo(completion: (() -> Void)?)
 }
 
 enum WatchHomeViewState {
@@ -26,18 +27,19 @@ enum WatchHomeViewState {
     case idle
 }
 
-final class WatchHomeViewModel: WatchHomeViewModelProtocol {
-    @Published var actions: [WatchActionItem] = []
-    @Published var state: WatchHomeViewState = .idle {
-        didSet {
-            resetStateToIdleIfNeeded()
-        }
-    }
+enum WatchSendError: Error {
+    case notImmediate
+    case phoneFailed
+    case wrongAudioURLData
+}
 
+final class WatchHomeViewModel: WatchHomeViewModelProtocol {
+    @Published private(set) var actions: [WatchActionItem] = []
     private var actionsToken: NotificationToken?
     private var realmActions: [Action] = []
 
     func onAppear() {
+        fetchNetworkInfo()
         setupActionsObservation()
     }
 
@@ -45,32 +47,65 @@ final class WatchHomeViewModel: WatchHomeViewModelProtocol {
         actionsToken?.invalidate()
     }
 
-    func runActionId(_ actionId: String) {
-        guard let selectedAction = realmActions.first(where: { $0.ID == actionId }) else { return }
-
-        Current.Log.verbose("Selected action id: \(actionId)")
-
-        guard let server = Current.servers.server(for: selectedAction) else {
-            Current.Log.verbose("Failed to get server for action id: \(actionId)")
+    func runActionId(_ actionId: String, completion: @escaping (Bool) -> Void) {
+        guard let selectedAction = realmActions.first(where: { $0.ID == actionId }) else {
+            completion(false)
             return
         }
 
-        setState(.loading)
+        Current.Log.verbose("Selected action id: \(actionId)")
+        fetchNetworkInfo {
+            firstly { () -> Promise<Void> in
+                Promise { seal in
+                    guard Communicator.shared.currentReachability == .immediatelyReachable else {
+                        seal.reject(WatchSendError.notImmediate)
+                        return
+                    }
 
-        Current.api(for: server).HandleAction(actionID: actionId, source: .Watch).pipe { [weak self] result in
-            switch result {
-            case .fulfilled:
-                self?.setState(.success)
-            case let .rejected(error):
-                Current.Log.info(error)
-                self?.setState(.failure)
+                    Current.Log.verbose("Signaling action pressed via phone")
+                    let actionMessage = InteractiveImmediateMessage(
+                        identifier: InteractiveImmediateMessages.actionRowPressed.rawValue,
+                        content: ["ActionID": selectedAction.ID],
+                        reply: { message in
+                            Current.Log.verbose("Received reply dictionary \(message)")
+                            if message.content["fired"] as? Bool == true {
+                                seal.fulfill(())
+                            } else {
+                                seal.reject(WatchSendError.phoneFailed)
+                            }
+                        }
+                    )
+
+                    Current.Log
+                        .verbose(
+                            "Sending \(InteractiveImmediateMessages.actionRowPressed.rawValue) message \(actionMessage)"
+                        )
+                    Communicator.shared.send(actionMessage, errorHandler: { error in
+                        Current.Log.error("Received error when sending immediate message \(error)")
+                        seal.reject(error)
+                    })
+                }
+            }.recover { error -> Promise<Void> in
+                guard error == WatchSendError.notImmediate,
+                      let server = Current.servers.server(for: selectedAction) else {
+                    throw error
+                }
+
+                Current.Log.error("recovering error \(error) by trying locally")
+                return Current.api(for: server).HandleAction(actionID: selectedAction.ID, source: .Watch)
+            }.done {
+                completion(true)
+            }.catch { err in
+                Current.Log.error("Error during action event fire: \(err)")
+                completion(false)
             }
         }
     }
 
-    private func setState(_ state: WatchHomeViewState) {
-        DispatchQueue.main.async { [weak self] in
-            self?.state = state
+    func fetchNetworkInfo(completion: (() -> Void)? = nil) {
+        NEHotspotNetwork.fetchCurrent { hotspotNetwork in
+            WatchUserDefaults.shared.set(hotspotNetwork?.ssid, key: .watchSSID)
+            completion?()
         }
     }
 
@@ -96,28 +131,15 @@ final class WatchHomeViewModel: WatchHomeViewModelProtocol {
             }
         }
     }
-
-    private func resetStateToIdleIfNeeded() {
-        switch state {
-        case .success, .failure:
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                self?.state = .idle
-            }
-        default:
-            break
-        }
-    }
 }
 
 private extension Action {
     func toWatchActionItem() -> WatchActionItem {
         .init(
             id: ID,
-            name: Name,
+            name: Text,
             iconName: IconName,
-            backgroundColor: BackgroundColor,
-            iconColor: IconColor,
-            textColor: TextColor
+            iconColor: IconColor
         )
     }
 }

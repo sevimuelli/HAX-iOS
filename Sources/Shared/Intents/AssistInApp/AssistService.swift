@@ -3,6 +3,7 @@ import HAKit
 
 public protocol AssistServiceProtocol {
     var delegate: AssistServiceDelegate? { get set }
+    func replaceServer(server: Server)
     func fetchPipelines(completion: @escaping (PipelineResponse?) -> Void)
     func assist(source: AssistSource)
     func sendAudioData(_ data: Data)
@@ -15,11 +16,12 @@ public protocol AssistServiceDelegate: AnyObject {
     func didReceiveIntentEndContent(_ content: String)
     func didReceiveGreenLightForAudioInput()
     func didReceiveTtsMediaUrl(_ mediaUrl: URL)
+    func didReceiveError(code: String, message: String)
 }
 
 public enum AssistSource: Equatable {
-    case text(input: String, pipelineId: String)
-    case audio(pipelineId: String, audioSampleRate: Double)
+    case text(input: String, pipelineId: String?)
+    case audio(pipelineId: String?, audioSampleRate: Double)
 
     public static func == (lhs: AssistSource, rhs: AssistSource) -> Bool {
         switch (lhs, rhs) {
@@ -36,11 +38,22 @@ public enum AssistSource: Equatable {
 public final class AssistService: AssistServiceProtocol {
     public weak var delegate: AssistServiceDelegate?
 
-    private let connection: HAConnection
-    private let server: Server
+    private var connection: HAConnection
+    private var server: Server
 
     private var cancellable: HACancellable?
     private var sttBinaryHandlerId: UInt8?
+
+    /// Conversation Id that is provided after first interation if available, this keeps context
+    private var conversationId: String?
+    /// This exists to reset conversationId when pipelineId changes
+    private var lastPipelineIdUsed: String? {
+        didSet {
+            if oldValue != lastPipelineIdUsed {
+                conversationId = nil
+            }
+        }
+    }
 
     public init(
         server: Server
@@ -51,6 +64,11 @@ public final class AssistService: AssistServiceProtocol {
 
     deinit {
         cancellable?.cancel()
+    }
+
+    public func replaceServer(server: Server) {
+        self.server = server
+        connection = Current.api(for: server).connection
     }
 
     public func assist(source: AssistSource) {
@@ -87,10 +105,13 @@ public final class AssistService: AssistServiceProtocol {
         _ = connection.send(.init(type: .sttData(.init(rawValue: sttBinaryHandlerId))))
     }
 
-    private func assistWithAudio(pipelineId: String, audioSampleRate: Double) {
+    private func assistWithAudio(pipelineId: String?, audioSampleRate: Double) {
+        lastPipelineIdUsed = pipelineId
         connection.subscribe(to: AssistRequests.assistByVoiceTypedSubscription(
             preferredPipelineId: pipelineId,
-            audioSampleRate: audioSampleRate
+            audioSampleRate: audioSampleRate,
+            conversationId: conversationId,
+            hassDeviceId: server.info.hassDeviceId
         )) { [weak self] cancellable, data in
             guard let self else { return }
             self.cancellable = cancellable
@@ -98,10 +119,13 @@ public final class AssistService: AssistServiceProtocol {
         }
     }
 
-    private func assistWithText(input: String, pipelineId: String) {
+    private func assistWithText(input: String, pipelineId: String?) {
+        lastPipelineIdUsed = pipelineId
         connection.subscribe(to: AssistRequests.assistByTextTypedSubscription(
             preferredPipelineId: pipelineId,
-            inputText: input
+            inputText: input,
+            conversationId: conversationId,
+            hassDeviceId: server.info.hassDeviceId
         )) { [weak self] cancellable, data in
             guard let self else { return }
             self.cancellable = cancellable
@@ -140,6 +164,7 @@ public final class AssistService: AssistServiceProtocol {
         case .intentStart:
             break
         case .intentEnd:
+            conversationId = data.data?.intentOutput?.conversationId
             delegate?.didReceiveIntentEndContent(data.data?.intentOutput?.response?.speech.plain.speech ?? "Unknown")
         case .ttsStart:
             break
@@ -150,6 +175,7 @@ public final class AssistService: AssistServiceProtocol {
         case .error:
             sttBinaryHandlerId = nil
             Current.Log.error("Received error while interating with Assist: \(data)")
+            delegate?.didReceiveError(code: data.data?.code ?? "-1", message: data.data?.message ?? "Unknown error")
             cancellable.cancel()
         }
     }

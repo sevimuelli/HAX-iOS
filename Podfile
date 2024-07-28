@@ -21,13 +21,12 @@ end
 
 plugin 'cocoapods-acknowledgements'
 
-system('./Tools/BuildMaterialDesignIconsFont.sh')
-
 pod 'Alamofire', '~> 5.8'
 pod 'Communicator', git: 'https://github.com/zacwest/Communicator.git', branch: 'observation-memory-direct'
 pod 'KeychainAccess'
 pod 'ObjectMapper', git: 'https://github.com/tristanhimmelman/ObjectMapper.git', branch: 'master'
 pod 'PromiseKit'
+pod 'Improv-iOS', '~> 0.0.6'
 
 pod 'RealmSwift'
 pod 'UIColor_Hex_Swift'
@@ -36,9 +35,9 @@ pod 'XCGLogger'
 
 # Keep Starscream reference even though HAKit already install it, because it defines our fork with the necessary fix
 pod 'Starscream', git: 'https://github.com/bgoncal/starscream', branch: 'ha-URLSession-fix'
-pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
-pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
-pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.1'
+pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
+pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
+pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
 
 def test_pods
   pod 'OHHTTPStubs/Swift'
@@ -96,7 +95,6 @@ abstract_target 'iOS' do
   target 'Extensions-NotificationService'
   target 'Extensions-PushProvider'
   target 'Extensions-Share'
-  target 'Extensions-Today'
   target 'Extensions-Widgets'
 end
 

@@ -21,7 +21,9 @@ struct AssistView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: .zero) {
-                pipelinesPicker
+                if !Current.isCatalyst {
+                    pipelinesPicker
+                }
                 chatList
                 bottomBar
             }
@@ -31,16 +33,29 @@ struct AssistView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     closeButton
                 }
+
+                #if targetEnvironment(macCatalyst)
+                ToolbarItem(placement: .topBarTrailing) {
+                    macPicker
+                }
+                #endif
             }
         }
         .navigationViewStyle(.stack)
         .onAppear {
             assistSession.inProgress = true
-            viewModel.onAppear()
+            viewModel.initialRoutine()
         }
         .onDisappear {
             assistSession.inProgress = false
             viewModel.onDisappear()
+        }
+        .alert(isPresented: $viewModel.showError) {
+            .init(
+                title: Text(L10n.errorLabel),
+                message: Text(viewModel.errorMessage),
+                dismissButton: .default(Text(L10n.okLabel))
+            )
         }
     }
 
@@ -52,10 +67,7 @@ struct AssistView: View {
         }
         .buttonStyle(.plain)
         .tint(Color(uiColor: .label))
-    }
-
-    private var pickerMaxWidth: CGFloat? {
-        Current.isCatalyst ? 320 : nil
+        .keyboardShortcut(.cancelAction)
     }
 
     private var pipelinesPicker: some View {
@@ -68,12 +80,25 @@ struct AssistView: View {
                 }
             }
             .pickerStyle(.menu)
-            .frame(maxWidth: pickerMaxWidth)
             .tint(.gray)
         }
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 25))
         .padding(.bottom)
+    }
+
+    private var macPicker: some View {
+        VStack {
+            Picker(L10n.Assist.PipelinesPicker.title, selection: $viewModel.preferredPipelineId) {
+                ForEach(viewModel.pipelines, id: \.id) { pipeline in
+                    Text(pipeline.name)
+                        .font(.footnote)
+                        .tag(pipeline.id)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+        .frame(maxWidth: 200, alignment: .trailing)
     }
 
     private func makeChatBubble(item: AssistChatItem) -> some View {
@@ -164,6 +189,7 @@ struct AssistView: View {
         .font(.system(size: 32))
         .tint(Color.asset(Asset.Colors.haPrimary))
         .animation(.smooth, value: viewModel.isRecording)
+        .keyboardShortcut(.defaultAction)
     }
 
     private var assistMicButton: some View {

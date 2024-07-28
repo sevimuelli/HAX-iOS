@@ -29,6 +29,7 @@ enum SettingsRootDataSource {
         case sensors
         case complications
         case nfc
+        case widgets
         case help
         case privacy
         case debugging
@@ -47,6 +48,7 @@ enum SettingsRootDataSource {
                 case .sensors: return SettingsRootDataSource.sensors()
                 case .complications: return SettingsRootDataSource.complications()
                 case .nfc: return SettingsRootDataSource.nfc()
+                case .widgets: return SettingsRootDataSource.widgets()
                 case .help: return SettingsRootDataSource.help()
                 case .privacy: return SettingsRootDataSource.privacy()
                 case .debugging: return SettingsRootDataSource.debugging()
@@ -105,7 +107,7 @@ enum SettingsRootDataSource {
     private static func thread() -> SettingsButtonRow {
         SettingsButtonRow {
             $0.title = L10n.SettingsDetails.Thread.title
-            $0.image = .sharedAssetsImage(named: "thread")
+            $0.image = Asset.SharedAssets.thread.image
             $0.isAvailableForMac = false
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 guard #available(iOS 17, *) else { return UIViewController() }
@@ -173,6 +175,16 @@ enum SettingsRootDataSource {
         }
     }
 
+    private static func widgets() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = L10n.Settings.Widgets.title
+            $0.icon = .widgetsIcon
+            $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
+                UIHostingController(rootView: WidgetsSettingsView.build())
+            }, onDismiss: nil)
+        }
+    }
+
     private static func help() -> SettingsButtonRow {
         SettingsButtonRow {
             $0.title = L10n.helpLabel
@@ -213,6 +225,7 @@ enum SettingsRootDataSource {
             $0.title = L10n.Settings.WhatsNew.title
             $0.icon = .starIcon
             $0.accessoryIcon = .openInNewIcon
+            $0.isAvailableForMac = false
             $0.onCellSelection { cell, row in
                 openURLInBrowser(
                     URL(string: "https://www.home-assistant.io/latest-ios-release-notes/")!,
