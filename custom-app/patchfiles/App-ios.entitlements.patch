@@ -1,5 +1,5 @@
 diff --git a/Configuration/Entitlements/App-ios.entitlements b/Configuration/Entitlements/App-ios.entitlements
-index 153010f7..299410f9 100644
+index 153010f7..01d22bec 100644
 --- a/Configuration/Entitlements/App-ios.entitlements
 +++ b/Configuration/Entitlements/App-ios.entitlements
 @@ -4,12 +4,16 @@
@@ -19,27 +19,25 @@ index 153010f7..299410f9 100644
  	<key>com.apple.developer.networking.wifi-info</key>
  	<true/>
  	<key>com.apple.developer.nfc.readersession.formats</key>
-@@ -20,15 +24,17 @@
+@@ -20,15 +24,19 @@
  	<true/>
  	<key>com.apple.developer.usernotifications.communication</key>
  	<true/>
 +	<key>com.apple.developer.usernotifications.critical-alerts</key>
-+	<true/>
-+	<key>com.apple.developer.usernotifications.time-sensitive</key>
 +	<true/>
  	<key>com.apple.security.application-groups</key>
  	<array>
 -		<string>group.$(BUNDLE_ID_PREFIX).homeassistant$(BUNDLE_ID_SUFFIX)</string>
 +		<string>group.$(BUNDLE_ID_PREFIX).hax$(BUNDLE_ID_SUFFIX)</string>
  	</array>
--	<key>com.apple.developer.usernotifications.time-sensitive</key>
--	<true/>
+ 	<key>com.apple.developer.usernotifications.time-sensitive</key>
+ 	<true/>
  	<key>keychain-access-groups</key>
  	<array>
 -		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HomeAssistant$(BUNDLE_ID_SUFFIX)</string>
 +		<string>$(AppIdentifierPrefix)$(BUNDLE_ID_PREFIX).HAX$(BUNDLE_ID_SUFFIX)</string>
  	</array>
-+       <key>com.apple.developer.device-information.user-assigned-device-name</key>
-+       <true/>
++	<key>com.apple.developer.device-information.user-assigned-device-name</key>
++    <true/>
  </dict>
  </plist>

@@ -46,8 +46,8 @@ git update-index --assume-unchanged Sources/App/Resources/Assets.xcassets/AppIco
 git update-index --assume-unchanged Sources/App/Resources/Assets.xcassets/LaunchScreen/launchScreen-logo.imageset/*
 git update-index --assume-unchanged fastlane/metadata/*png
 git update-index --assume-unchanged fastlane/metadata/*jpg
-git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Assets.xcassets/RoundLogo.imageset/*
-git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Assets.xcassets/TemplateLogo.imageset/*
+#git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Assets.xcassets/RoundLogo.imageset/*
+#git update-index --assume-unchanged Sources/Extensions/Watch/Resources/Assets.xcassets/TemplateLogo.imageset/*
 git update-index --assume-unchanged Sources/Shared/Assets/SharedAssets.xcassets/Logo.imageset/*
 git update-index --assume-unchanged Sources/Shared/Assets/SharedAssets.xcassets/statusItemIcon.imageset/*
 git update-index --assume-unchanged Sources/WatchApp/Assets.xcassets/WatchIcon.appiconset/*
@@ -68,6 +68,7 @@ git update-index --assume-unchanged Sources/App/Settings/SettingsDetailViewContr
 git update-index --assume-unchanged Sources/App/Settings/AboutViewController.swift
 git update-index --assume-unchanged Sources/PushServer/Package.resolved
 git update-index --assume-unchanged Sources/App/Resources/Base.lproj/LaunchScreen.storyboard
+git update-index --assume-unchanged Sources/App/Resources/Info.plist
 cd custom-app
 
 

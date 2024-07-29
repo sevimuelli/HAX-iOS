@@ -8,7 +8,7 @@ cd ..
 #git am --stat custom-app/patchfiles/*
 git apply --check custom-app/patchfiles/*
 git apply custom-app/patchfiles/AboutViewController.patch
-git apply custom-app/patchfiles/App-catalyst.entitlements
+git apply custom-app/patchfiles/App-catalyst.entitlements.patch
 git apply custom-app/patchfiles/App-ios.entitlements.patch
 git apply custom-app/patchfiles/Extension-catalyst.entitlements.patch
 git apply custom-app/patchfiles/Extension-ios.entitlements.patch
@@ -22,6 +22,7 @@ git apply custom-app/patchfiles/HomeAssistant_beta_xcconfig.patch
 git apply custom-app/patchfiles/HAAPI.patch
 git apply custom-app/patchfiles/NotificationRateLimitsAPI.patch
 git apply custom-app/patchfiles/LaunchScreen_Storyboard.patch
+git apply custom-app/patchfiles/Source_App_Resources_plist.patch
 cd -
 
 # copy HomeAssistant.overrides.xcconfig
@@ -44,33 +45,13 @@ yes | cp -rf ../custom-app/icons/base_logos/square_1024.png ../fastlane/metadata
 yes | cp -rf ../custom-app/icons/base_logos/square_1024.jpg ../fastlane/metadata/app_icon.jpg
 yes | cp -rf ../custom-app/icons/base_logos/square_1024.jpg ../fastlane/metadata/watch_icon.jpg
 
-# replace watch icons
-# release
-rm -rf ./tmp/*
-cp -rf ./icons/watch_icons/* ./tmp
-cd ./tmp/
-rename 's/(.*)\.png/release-$1.png/' *.png
-cd -
-yes | cp -rf ./tmp/* ../WatchApp/Assets.xcassets/WatchIcon.appiconset/
+# yes | cp -rf "../custom-app/icons/watch_pdf/ha-logo-black (2).pdf" "../Sources/Extensions/Watch/Resources/Assets.xcassets/TemplateLogo.imageset/ha-logo-black (2).pdf"
+# yes | cp -rf ../custom-app/icons/watch_pdf/ha-logo-round.pdf ../Sources/Extensions/Watch/Resources/Assets.xcassets/RoundLogo.imageset/ha-logo-round.pdf
 
-# beta
-rm -rf ./tmp/*
-cp -rf ./icons/watch_icons/* ./tmp
-cd ./tmp/
-rename 's/(.*)\.png/beta-$1.png/' *.png
-cd -
-yes | cp -rf ./tmp/* ../WatchApp/Assets.xcassets/WatchIcon.beta.appiconset/
-
-# debug
-rm -rf ./tmp/*
-cp -rf ./icons/watch_icons/* ./tmp
-cd ./tmp/
-rename 's/(.*)\.png/dev-$1.png/' *.png
-cd -
-yes | cp -rf ./tmp/* ../WatchApp/Assets.xcassets/WatchIcon.dev.appiconset/
-
-yes | cp -rf "../custom-app/icons/watch_pdf/ha-logo-black (2).pdf" "../Sources/Extensions/Watch/Resources/Assets.xcassets/TemplateLogo.imageset/ha-logo-black (2).pdf"
-yes | cp -rf ../custom-app/icons/watch_pdf/ha-logo-round.pdf ../Sources/Extensions/Watch/Resources/Assets.xcassets/RoundLogo.imageset/ha-logo-round.pdf
+# replace WatchApp Logo
+yes | cp -rf ../custom-app/icons/base_logos/square_1024.png ../Sources/WatchApp/Assets.xcassets/WatchIcon.appiconset/Apple_Watch_App_Icon.png
+yes | cp -rf ../custom-app/icons/base_logos/square_1024.png ../Sources/WatchApp/Assets.xcassets/WatchIcon.beta.appiconset/Apple_Watch_App_Icon-1.png
+yes | cp -rf ../custom-app/icons/base_logos/square_1024.png ../Sources/WatchApp/Assets.xcassets/WatchIcon.dev.appiconset/Apple_Watch_App_Icon-2.png
 
 
 # replace app icons
