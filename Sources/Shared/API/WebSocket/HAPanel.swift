@@ -37,6 +37,14 @@ public struct HAPanel: HADataDecodable, Codable, Equatable {
 
         self.title = Current.localized.frontend(possibleFrontendKey) ?? title
     }
+
+    public init(icon: String?, title: String, path: String, component: String, showInSidebar: Bool) {
+        self.icon = icon
+        self.title = title
+        self.path = path
+        self.component = component
+        self.showInSidebar = showInSidebar
+    }
 }
 
 public struct HAPanels: HADataDecodable, Codable, Equatable {
@@ -110,7 +118,7 @@ public extension HATypedRequest {
 }
 
 private struct HAPanelsCacheKey: HACacheKey {
-    static func create(connection: HAConnection) -> HACache<HAPanels> {
+    static func create(connection: HAConnection, data: [String: Any]) -> HACache<HAPanels> {
         HACache(
             connection: connection,
             populate: .init(

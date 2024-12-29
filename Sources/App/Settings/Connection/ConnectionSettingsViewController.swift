@@ -34,7 +34,7 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
             self?.title = info.name
         })
 
-        let connection = Current.api(for: server).connection
+        let connection = Current.api(for: server)?.connection
 
         if Current.servers.all.count > 1 {
             form +++ Section(footer: L10n.Settings.ConnectionSection.activateSwipeHint) {
@@ -42,8 +42,14 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
             } <<< ButtonRow {
                 $0.title = L10n.Settings.ConnectionSection.activateServer
                 $0.onCellSelection { [server] _, _ in
-                    Current.sceneManager.webViewWindowControllerPromise.done {
-                        $0.open(server: server)
+                    if Current.isCatalyst, Current.settingsStore.macNativeFeaturesOnly {
+                        if let url = server.info.connection.activeURL() {
+                            UIApplication.shared.open(url)
+                        }
+                    } else {
+                        Current.sceneManager.webViewWindowControllerPromise.done {
+                            $0.open(server: server)
+                        }
                     }
                 }
             }
@@ -107,10 +113,12 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
             <<< LabelRow { row in
                 row.title = L10n.Settings.ConnectionSection.loggedInAs
 
-                tokens.append(connection.caches.user.subscribe { _, user in
-                    row.value = user.name
-                    row.updateCell()
-                })
+                if let connection {
+                    tokens.append(connection.caches.user.subscribe { _, user in
+                        row.value = user.name
+                        row.updateCell()
+                    })
+                }
             }
 
             +++ Section(L10n.Settings.ConnectionSection.details)
@@ -146,7 +154,14 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
                 row.cellStyle = .value1
                 row.title = L10n.Settings.ConnectionSection.InternalBaseUrl.title
                 row.displayValueFor = { [server] _ in
-                    server.info.connection.address(for: .internal)?.absoluteString ?? "—"
+                    if server.info.connection.internalSSIDs?.isEmpty ?? true,
+                       server.info.connection.internalHardwareAddresses?.isEmpty ?? true,
+                       !server.info.connection.alwaysFallbackToInternalURL,
+                       !ConnectionInfo.shouldFallbackToInternalURL {
+                        return "‼️ \(L10n.Settings.ConnectionSection.InternalBaseUrl.RequiresSetup.title)"
+                    } else {
+                        return server.info.connection.address(for: .internal)?.absoluteString ?? "—"
+                    }
                 }
                 row.presentationMode = .show(controllerProvider: .callback(builder: { [server] in
                     ConnectionURLViewController(server: server, urlType: .internal, row: row)
@@ -220,7 +235,7 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
                 }
                 $0.onChange { [server] row in
                     server.info.setSetting(value: row.value, for: .sensorPrivacy)
-                    Current.api(for: server).registerSensors().cauterize()
+                    Current.api(for: server)?.registerSensors().cauterize()
                 }
             }
 
@@ -259,7 +274,7 @@ class ConnectionSettingsViewController: HAFormViewController, RowControllerType 
                                 }.then {
                                     waitAtLeast
                                 }.get {
-                                    Current.api(for: server).connection.disconnect()
+                                    Current.api(for: server)?.connection.disconnect()
                                     Current.servers.remove(identifier: server.identifier)
                                 }.ensure {
                                     hud.hide(animated: true)

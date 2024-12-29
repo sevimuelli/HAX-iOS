@@ -5,16 +5,17 @@ extension ServerInfo {
         var value = ServerInfo(
             name: "Fake Server",
             connection: .init(
-                externalURL: nil,
-                internalURL: URL(string: "http://homeassistant.local:8123")!,
+                externalURL: URL(string: "http://homeassistant.local:8123")!,
+                internalURL: nil,
                 cloudhookURL: nil,
                 remoteUIURL: nil,
                 webhookID: "FakeWebhookID",
                 webhookSecret: nil,
-                internalSSIDs: nil,
+                internalSSIDs: ["MyWifi"],
                 internalHardwareAddresses: nil,
                 isLocalPushEnabled: true,
-                securityExceptions: .init()
+                securityExceptions: .init(),
+                alwaysFallbackToInternalURL: false
             ),
             token: .init(
                 accessToken: "FakeAccessToken",

@@ -53,6 +53,8 @@
 		<string>WidgetOpenPageIntent</string>
 		<string>AssistInAppIntent</string>
 		<string>AssistIntent</string>
+		<string>ReloadWidgetsAppIntent</string>
+		<string>ScriptAppIntent</string>
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
@@ -95,8 +97,8 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Locate and communicate with your Home Assistant instance.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We suggest selecting "Always Allow" for the best location experience.
-			Selecting "Only While Using the App" will disable iBeacons, geofences,
+	<string>We suggest selecting &quot;Always Allow&quot; for the best location experience.
+			Selecting &quot;Only While Using the App&quot; will disable iBeacons, geofences,
 			background location updates and accurate reporting.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>We always need access to your location for features like iBeacons, geofences,
@@ -125,6 +127,8 @@
 	<string>We use Siri to allow created shortcuts to interact with the app.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Used to dictate text to Assist.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Used to scan for Improv devices</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>AssistInAppIntent</string>
@@ -135,7 +139,9 @@
 		<string>INSendMessageIntent</string>
 		<string>OpenPageIntent</string>
 		<string>PerformActionIntent</string>
+		<string>ReloadWidgetsAppIntent</string>
 		<string>RenderTemplateIntent</string>
+		<string>ScriptAppIntent</string>
 		<string>SendLocationIntent</string>
 		<string>UpdateSensorsIntent</string>
 		<string>WidgetActionsIntent</string>

@@ -51,17 +51,20 @@ PODS:
     - GoogleUtilities/Logger
   - GoogleUtilities/UserDefaults (7.11.0):
     - GoogleUtilities/Logger
-  - HAKit (0.4.2):
-    - HAKit/Core (= 0.4.2)
-  - HAKit/Core (0.4.2):
+  - GRDB.swift (6.29.3):
+    - GRDB.swift/standard (= 6.29.3)
+  - GRDB.swift/standard (6.29.3)
+  - HAKit (0.4.4):
+    - HAKit/Core (= 0.4.4)
+  - HAKit/Core (0.4.4):
     - Starscream (~> 4.0.4)
-  - HAKit/Mocks (0.4.2):
+  - HAKit/Mocks (0.4.4):
     - HAKit/Core
-  - HAKit/PromiseKit (0.4.2):
+  - HAKit/PromiseKit (0.4.4):
     - HAKit/Core
-    - PromiseKit (~> 6.13)
+    - PromiseKit (~> 8.1.1)
+  - Improv-iOS (0.0.6)
   - KeychainAccess (4.2.2)
-  - lottie-ios (4.1.2)
   - MBProgressHUD (1.2.0)
   - nanopb (2.30909.0):
     - nanopb/decode (= 2.30909.0)
@@ -85,14 +88,14 @@ PODS:
   - OHHTTPStubs/OHPathHelpers (9.1.0)
   - OHHTTPStubs/Swift (9.1.0):
     - OHHTTPStubs/Default
-  - PromiseKit (6.18.1):
-    - PromiseKit/CorePromise (= 6.18.1)
-    - PromiseKit/Foundation (= 6.18.1)
-    - PromiseKit/UIKit (= 6.18.1)
-  - PromiseKit/CorePromise (6.18.1)
-  - PromiseKit/Foundation (6.18.1):
+  - PromiseKit (8.1.2):
+    - PromiseKit/CorePromise (= 8.1.2)
+    - PromiseKit/Foundation (= 8.1.2)
+    - PromiseKit/UIKit (= 8.1.2)
+  - PromiseKit/CorePromise (8.1.2)
+  - PromiseKit/Foundation (8.1.2):
     - PromiseKit/CorePromise
-  - PromiseKit/UIKit (6.18.1):
+  - PromiseKit/UIKit (8.1.2):
     - PromiseKit/CorePromise
   - PromisesObjC (2.1.1)
   - ReachabilitySwift (5.0.0)
@@ -101,15 +104,16 @@ PODS:
   - Realm/Headers (10.35.0)
   - RealmSwift (10.35.0):
     - Realm (= 10.35.0)
+  - SFSafeSymbols (5.3.0)
   - Sodium (0.9.1)
   - Starscream (4.0.4)
   - SwiftFormat/CLI (0.53.1)
   - SwiftGen (6.5.1)
   - SwiftLint (0.54.0)
-  - SwiftMessages (9.0.6):
-    - SwiftMessages/App (= 9.0.6)
-  - SwiftMessages/App (9.0.6)
-  - UIColor_Hex_Swift (5.1.7)
+  - SwiftMessages (10.0.1):
+    - SwiftMessages/App (= 10.0.1)
+  - SwiftMessages/App (10.0.1)
+  - UIColor_Hex_Swift (5.1.9)
   - Version (0.8.0)
   - ViewRow (0.8):
     - Eureka (>= 5.0.0)
@@ -128,23 +132,25 @@ DEPENDENCIES:
   - EMTLoadingIndicator (from `https://github.com/hirokimu/EMTLoadingIndicator`, branch `master`)
   - Eureka (from `https://github.com/xmartlabs/Eureka`, branch `master`)
   - FirebaseMessaging
-  - HAKit (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.2`)
-  - HAKit/Mocks (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.2`)
-  - HAKit/PromiseKit (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.2`)
+  - GRDB.swift (from `https://github.com/groue/GRDB.swift.git`, tag `v6.29.3`)
+  - HAKit (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.4`)
+  - HAKit/Mocks (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.4`)
+  - HAKit/PromiseKit (from `https://github.com/home-assistant/HAKit.git`, tag `0.4.4`)
+  - Improv-iOS (~> 0.0.6)
   - KeychainAccess
-  - lottie-ios
   - MBProgressHUD (~> 1.2.0)
   - ObjectMapper (from `https://github.com/tristanhimmelman/ObjectMapper.git`, branch `master`)
   - OHHTTPStubs/Swift
-  - PromiseKit
+  - PromiseKit (~> 8.1.1)
   - ReachabilitySwift
   - RealmSwift
+  - SFSafeSymbols (~> 5.3)
   - Sodium (from `https://github.com/zacwest/swift-sodium.git`, branch `xcode-14.0.1`)
   - Starscream (from `https://github.com/bgoncal/starscream`, branch `ha-URLSession-fix`)
   - SwiftFormat/CLI (= 0.53.1)
   - SwiftGen (~> 6.5.0)
   - SwiftLint (= 0.54.0)
-  - SwiftMessages
+  - SwiftMessages (~> 10.0.1)
   - UIColor_Hex_Swift
   - Version
   - ViewRow (from `https://github.com/EurekaCommunity/ViewRow`, branch `master`)
@@ -161,8 +167,8 @@ SPEC REPOS:
     - FirebaseMessaging
     - GoogleDataTransport
     - GoogleUtilities
+    - Improv-iOS
     - KeychainAccess
-    - lottie-ios
     - MBProgressHUD
     - nanopb
     - ObjcExceptionBridging
@@ -172,6 +178,7 @@ SPEC REPOS:
     - ReachabilitySwift
     - Realm
     - RealmSwift
+    - SFSafeSymbols
     - SwiftFormat
     - SwiftGen
     - SwiftLint
@@ -197,9 +204,12 @@ EXTERNAL SOURCES:
   Eureka:
     :branch: master
     :git: https://github.com/xmartlabs/Eureka
+  GRDB.swift:
+    :git: https://github.com/groue/GRDB.swift.git
+    :tag: v6.29.3
   HAKit:
     :git: https://github.com/home-assistant/HAKit.git
-    :tag: 0.4.2
+    :tag: 0.4.4
   ObjectMapper:
     :branch: master
     :git: https://github.com/tristanhimmelman/ObjectMapper.git
@@ -229,9 +239,12 @@ CHECKOUT OPTIONS:
   Eureka:
     :commit: ba4ebbcc4e368e901de666870fc2a4524474a4c7
     :git: https://github.com/xmartlabs/Eureka
+  GRDB.swift:
+    :git: https://github.com/groue/GRDB.swift.git
+    :tag: v6.29.3
   HAKit:
     :git: https://github.com/home-assistant/HAKit.git
-    :tag: 0.4.2
+    :tag: 0.4.4
   ObjectMapper:
     :commit: a593b4d647a970b3d184d046f8f52b945083ccf9
     :git: https://github.com/tristanhimmelman/ObjectMapper.git
@@ -259,31 +272,33 @@ SPEC CHECKSUMS:
   FirebaseMessaging: 35ecbbc68ff547fca80f9326c9622e79288c7149
   GoogleDataTransport: ea169759df570f4e37bdee1623ec32a7e64e67c4
   GoogleUtilities: c2bdc4cf2ce786c4d2e6b3bcfd599a25ca78f06f
-  HAKit: 92e9bd30717270df15025184b608b7902a773286
+  GRDB.swift: 764235dee4a4fbe3ddcb4f85c61752e8d8da9ad0
+  HAKit: d5c0028afd8c5053537fcbc4b0ed2e6e27d3bc2b
+  Improv-iOS: 8973990c1b1f3e3aed7fc600c8efce95359cadd0
   KeychainAccess: c0c4f7f38f6fc7bbe58f5702e25f7bd2f65abf51
-  lottie-ios: b3846a9fa8ca1a1a3bebfa256ebe8b6fd4aaaaad
   MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
   nanopb: b552cce312b6c8484180ef47159bc0f65a1f0431
   ObjcExceptionBridging: c30e00eb3700467e695faeea30e26e18bd445001
   ObjectMapper: 5a6c9f063ef67e7fc0d7eb8958919e3121396a96
   OHHTTPStubs: 90eac6d8f2c18317baeca36698523dc67c513831
-  PromiseKit: 49d70c53d5d20e346beaea4b276b5dd2ab446bb4
+  PromiseKit: e057b5b3c0ce9a0145674d633930924234104ee3
   PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
   ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
   Realm: e6b04f15a814cb22aae621e7e15f2ccb27ac8f95
   RealmSwift: b358779c10ba6d2648d541f8a1bcd671f73485c1
+  SFSafeSymbols: c0244d55ef543c7b2c01f3af2d3d2dd9e26dd00c
   Sodium: a7d42cb46e789d2630fa552d35870b416ed055ae
   Starscream: c5d70811b01d9ada7fdeb2132bc47fc893b6b0c9
   SwiftFormat: a8623113c7adcbeb4289a013cac68ec801e1ed24
   SwiftGen: a6d22010845f08fe18fbdf3a07a8e380fd22e0ea
   SwiftLint: c1de071d9d08c8aba837545f6254315bc900e211
-  SwiftMessages: f0c7ef4705a570ad6c5e208b611f4333e660ed92
-  UIColor_Hex_Swift: 31cd3e47440f07a20d2503a36bb0437a445b3c29
+  SwiftMessages: 759b4a0bf5c3a116a0d7e8a34b098ba83c458625
+  UIColor_Hex_Swift: 20cb4e8d51b63e168a9da6933bc5d39cd8fb4ab5
   Version: de5907f2c5d0f3cf21708db7801d1d5401139486
   ViewRow: 8da541e9c019f3be63f4e28f311a62cac2045ecf
   XCGLogger: 1943831ef907df55108b0b18657953f868de973b
   ZIPFoundation: d170fa8e270b2a32bef9dcdcabff5b8f1a5deced
 
-PODFILE CHECKSUM: 1d5c1036260125718d79a049e4c2a69bdf1b4aff
+PODFILE CHECKSUM: 9bace27ccfcc32ab1a602221366738bacf658272
 
 COCOAPODS: 1.15.2

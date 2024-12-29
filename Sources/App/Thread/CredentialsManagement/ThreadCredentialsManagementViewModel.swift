@@ -53,6 +53,22 @@ final class ThreadCredentialsManagementViewModel: ObservableObject {
         }
     }
 
+    func deleteCredential(_ credential: ThreadCredential?) {
+        guard let credential else {
+            Current.Log.error("No credential provided to be deleted")
+            return
+        }
+
+        threadClientService.deleteCredential(macExtendedAddress: credential.macExtendedAddress) { [weak self] error in
+            if let error {
+                Current.Log.error("Failed to delete credential with error: \(error)")
+            }
+            Task.detached {
+                await self?.loadCredentials()
+            }
+        }
+    }
+
     @MainActor
     private func shareCredentialWithHomeAssistant(credential: String, completion: @escaping (Bool) -> Void) {
         var remainingServers = Current.servers.all.count
@@ -64,7 +80,7 @@ final class ThreadCredentialsManagementViewModel: ObservableObject {
         ])
 
         for server in Current.servers.all {
-            Current.api(for: server).connection.send(request).promise.pipe { result in
+            Current.api(for: server)?.connection.send(request).promise.pipe { result in
                 switch result {
                 case .fulfilled:
                     successCount += 1

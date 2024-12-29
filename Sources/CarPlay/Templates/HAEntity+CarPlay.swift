@@ -60,11 +60,12 @@ extension HAEntity {
             default:
                 break
             }
-        case .none:
+        case .none, .sensor, .binarySensor, .zone, .person:
             break
         }
         if let request {
-            return api.connection.send(request).promise.map { _ in () }
+            return api.connection.send(request).promise
+                .map { _ in () }
         } else {
             return .value
         }
@@ -97,12 +98,20 @@ extension HAEntity {
                 image = MaterialDesignIcons.scriptTextOutlineIcon
             case .switch:
                 image = getSwitchIcon()
+            case .sensor:
+                image = MaterialDesignIcons.eyeIcon
+            case .binarySensor:
+                image = MaterialDesignIcons.eyeIcon
+            case .zone:
+                image = MaterialDesignIcons.mapIcon
+            case .person:
+                image = MaterialDesignIcons.accountIcon
             }
         }
 
         if let state = Domain.State(rawValue: state) {
             if [.on, .open, .opening, .unlocked, .unlocking].contains(state) {
-                tint = Constants.lighterTintColor
+                tint = AppConstants.lighterTintColor
             } else if [.unavailable, .unknown].contains(state) {
                 tint = .gray
             } else {
@@ -225,28 +234,10 @@ extension HAEntity {
 
     var localizedState: String {
         if let domain = Domain(rawValue: domain) {
-            switch domain {
-            case .button, .inputButton, .scene:
-                if let relativeDate = isoDateToRelativeTimeString(state) {
-                    return relativeDate
-                }
-            default:
-                break
-            }
+            return domain.localizedState(for: state)
         }
 
         return CoreStrings.getDomainStateLocalizedTitle(state: state) ?? FrontendStrings
             .getDefaultStateLocalizedTitle(state: state) ?? state
-    }
-
-    private func isoDateToRelativeTimeString(_ isoDateString: String) -> String? {
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = dateFormatter.date(from: isoDateString) else {
-            return nil
-        }
-
-        let relativeFormatter = RelativeDateTimeFormatter()
-        return relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }

@@ -188,10 +188,6 @@ public enum CoreStrings {
   public static var componentHueEntitySensorZigbeeConnectivityStateConnected: String { return CoreStrings.tr("Core", "component::hue::entity::sensor::zigbee_connectivity::state::connected") }
   /// Disconnected
   public static var componentHueEntitySensorZigbeeConnectivityStateDisconnected: String { return CoreStrings.tr("Core", "component::hue::entity::sensor::zigbee_connectivity::state::disconnected") }
-  /// Disabled
-  public static var componentHueEntitySwitchAutomationStateOff: String { return CoreStrings.tr("Core", "component::hue::entity::switch::automation::state::off") }
-  /// Enabled
-  public static var componentHueEntitySwitchAutomationStateOn: String { return CoreStrings.tr("Core", "component::hue::entity::switch::automation::state::on") }
   /// Off
   public static var componentHumidifierEntityComponentStateOff: String { return CoreStrings.tr("Core", "component::humidifier::entity_component::_::state::off") }
   /// On
@@ -202,6 +198,50 @@ public enum CoreStrings {
   public static var componentHumidifierEntityComponentStateAttributesActionStateOff: String { return CoreStrings.tr("Core", "component::humidifier::entity_component::_::state_attributes::action::state::off") }
   /// Home
   public static var componentHumidifierEntityComponentStateAttributesModeStateHome: String { return CoreStrings.tr("Core", "component::humidifier::entity_component::_::state_attributes::mode::state::home") }
+  /// Device is already configured
+  public static var componentImprovBleConfigAbortAlreadyConfigured: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::already_configured") }
+  /// Failed to connect
+  public static var componentImprovBleConfigAbortCannotConnect: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::cannot_connect") }
+  /// The device is either already connected to Wi-Fi, or no longer able to connect to Wi-Fi. If you want to connect it to another network, try factory resetting it first.
+  public static var componentImprovBleConfigAbortCharacteristicMissing: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::characteristic_missing") }
+  /// No devices found on the network
+  public static var componentImprovBleConfigAbortNoDevicesFound: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::no_devices_found") }
+  /// The device has successfully connected to the Wi-Fi network.
+  public static var componentImprovBleConfigAbortProvisionSuccessful: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::provision_successful") }
+  /// The device has successfully connected to the Wi-Fi network.
+  /// 
+  /// Please visit {url} to finish setup.
+  public static var componentImprovBleConfigAbortProvisionSuccessfulUrl: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::provision_successful_url") }
+  /// Unexpected error
+  public static var componentImprovBleConfigAbortUnknown: String { return CoreStrings.tr("Core", "component::improv_ble::config::abort::unknown") }
+  /// The device could not connect to the Wi-Fi network. Check that the SSID and password are correct and try again.
+  public static var componentImprovBleConfigErrorUnableToConnect: String { return CoreStrings.tr("Core", "component::improv_ble::config::error::unable_to_connect") }
+  /// {name}
+  public static var componentImprovBleConfigFlowTitle: String { return CoreStrings.tr("Core", "component::improv_ble::config::flow_title") }
+  /// The device requires authorization, please press its authorization button or consult the device's manual for how to proceed.
+  public static var componentImprovBleConfigProgressAuthorize: String { return CoreStrings.tr("Core", "component::improv_ble::config::progress::authorize") }
+  /// The device is connecting to the Wi-Fi network.
+  public static var componentImprovBleConfigProgressProvisioning: String { return CoreStrings.tr("Core", "component::improv_ble::config::progress::provisioning") }
+  /// Do you want to set up {name}?
+  public static var componentImprovBleConfigStepBluetoothConfirmDescription: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::bluetooth_confirm::description") }
+  /// The device is now identifying itself, for example by blinking or beeping.
+  public static var componentImprovBleConfigStepIdentifyDescription: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::identify::description") }
+  /// Choose next step.
+  public static var componentImprovBleConfigStepMainMenuDescription: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::main_menu::description") }
+  /// Identify device
+  public static var componentImprovBleConfigStepMainMenuMenuOptionsIdentify: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::main_menu::menu_options::identify") }
+  /// Connect device to a Wi-Fi network
+  public static var componentImprovBleConfigStepMainMenuMenuOptionsProvision: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::main_menu::menu_options::provision") }
+  /// Password
+  public static var componentImprovBleConfigStepProvisionDataPassword: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::provision::data::password") }
+  /// SSID
+  public static var componentImprovBleConfigStepProvisionDataSsid: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::provision::data::ssid") }
+  /// Enter Wi-Fi credentials to connect the device to your network.
+  public static var componentImprovBleConfigStepProvisionDescription: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::provision::description") }
+  /// Device
+  public static var componentImprovBleConfigStepUserDataAddress: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::user::data::address") }
+  /// Choose a device to set up
+  public static var componentImprovBleConfigStepUserDescription: String { return CoreStrings.tr("Core", "component::improv_ble::config::step::user::description") }
   /// Off
   public static var componentInputBooleanEntityComponentStateOff: String { return CoreStrings.tr("Core", "component::input_boolean::entity_component::_::state::off") }
   /// On
@@ -316,8 +356,6 @@ public enum CoreStrings {
   public static var componentPrusalinkEntitySensorPrinterStateStateIdle: String { return CoreStrings.tr("Core", "component::prusalink::entity::sensor::printer_state::state::idle") }
   /// Paused
   public static var componentPrusalinkEntitySensorPrinterStateStatePaused: String { return CoreStrings.tr("Core", "component::prusalink::entity::sensor::printer_state::state::paused") }
-  /// Idle
-  public static var componentQbittorrentEntitySensorTransmissionStatusStateIdle: String { return CoreStrings.tr("Core", "component::qbittorrent::entity::sensor::transmission_status::state::idle") }
   /// Off
   public static var componentRemoteEntityComponentStateOff: String { return CoreStrings.tr("Core", "component::remote::entity_component::_::state::off") }
   /// On
@@ -474,8 +512,6 @@ public enum CoreStrings {
   public static var componentTuyaEntitySelectVacuumModeStateStandby: String { return CoreStrings.tr("Core", "component::tuya::entity::select::vacuum_mode::state::standby") }
   /// Standby
   public static var componentTuyaEntitySensorSousVideStatusStateStandby: String { return CoreStrings.tr("Core", "component::tuya::entity::sensor::sous_vide_status::state::standby") }
-  /// Standby
-  public static var componentTuyaEntitySensorStatusStateStandby: String { return CoreStrings.tr("Core", "component::tuya::entity::sensor::status::state::standby") }
   /// Off
   public static var componentTuyaPlatformSelectStateTuyaLightModeNone: String { return CoreStrings.tr("Core", "component::tuya::platform::select::state::tuya__light_mode::none") }
   /// Off

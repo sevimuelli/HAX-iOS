@@ -8,7 +8,7 @@ import WidgetKit
 struct WidgetActions: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
-            kind: WidgetActionsIntent.widgetKind,
+            kind: WidgetsKind.actions.rawValue,
             provider: WidgetActionsAppIntentTimelineProvider()
         ) { timelineEntry in
             WidgetBasicContainerView(
@@ -24,9 +24,11 @@ struct WidgetActions: Widget {
                         icon: MaterialDesignIcons(serversideValueNamed: action.IconName),
                         textColor: .init(hex: action.TextColor),
                         iconColor: .init(hex: action.IconColor),
-                        backgroundColor: .init(hex: action.BackgroundColor)
+                        backgroundColor: .init(hex: action.BackgroundColor),
+                        useCustomColors: action.useCustomColors
                     )
-                }
+                },
+                type: .button
             )
         }
         .contentMarginsDisabledIfAvailable()
@@ -39,7 +41,7 @@ struct WidgetActions: Widget {
 struct LegacyWidgetActions: Widget {
     var body: some WidgetConfiguration {
         IntentConfiguration(
-            kind: WidgetActionsIntent.widgetKind,
+            kind: WidgetsKind.actions.rawValue,
             intent: WidgetActionsIntent.self,
             provider: WidgetActionsProvider(),
             content: {
@@ -56,16 +58,18 @@ struct LegacyWidgetActions: Widget {
                             icon: MaterialDesignIcons(serversideValueNamed: action.IconName),
                             textColor: .init(hex: action.TextColor),
                             iconColor: .init(hex: action.IconColor),
-                            backgroundColor: .init(hex: action.BackgroundColor)
+                            backgroundColor: .init(hex: action.BackgroundColor),
+                            useCustomColors: action.useCustomColors
                         )
-                    }
+                    },
+                    type: .button
                 )
             }
         )
         .contentMarginsDisabledIfAvailable()
         .configurationDisplayName(L10n.Widgets.Actions.title)
         .description(L10n.Widgets.Actions.description)
-        .supportedFamilies(WidgetActionSupportedFamilies.families)
+        .supportedFamilies(WidgetActionSupportedFamilies.legacyFamilies)
         .onBackgroundURLSessionEvents(matching: nil) { identifier, completion in
             Current.webhooks.handleBackground(for: identifier, completionHandler: completion)
         }
@@ -73,5 +77,19 @@ struct LegacyWidgetActions: Widget {
 }
 
 enum WidgetActionSupportedFamilies {
-    static let families: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge]
+    @available(iOS 16.0, *)
+    static let families: [WidgetFamily] = [
+        .systemSmall,
+        .systemMedium,
+        .systemLarge,
+        .systemExtraLarge,
+        .accessoryCircular,
+    ]
+
+    static let legacyFamilies: [WidgetFamily] = [
+        .systemSmall,
+        .systemMedium,
+        .systemLarge,
+        .systemExtraLarge,
+    ]
 }

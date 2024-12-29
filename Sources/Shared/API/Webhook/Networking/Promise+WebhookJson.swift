@@ -12,7 +12,9 @@ enum WebhookJsonParseError: Error, Equatable {
 extension Promise where T == Data? {
     func webhookJson(
         on queue: DispatchQueue? = nil,
+        server: Server,
         statusCode: Int? = nil,
+        requestURL: URL?,
         sodium: Sodium = Sodium(),
         secretGetter: @escaping () -> [UInt8]?,
         options: JSONSerialization.ReadingOptions = [.allowFragments]
@@ -21,7 +23,9 @@ extension Promise where T == Data? {
             if let data = optionalData {
                 return Promise<Data>.value(data).definitelyWebhookJson(
                     on: queue,
+                    server: server,
                     statusCode: statusCode,
+                    requestURL: requestURL,
                     sodium: sodium,
                     secretGetter: secretGetter,
                     options: options
@@ -36,14 +40,18 @@ extension Promise where T == Data? {
 extension Promise where T == Data {
     func webhookJson(
         on queue: DispatchQueue? = nil,
+        server: Server,
         statusCode: Int? = nil,
+        requestURL: URL?,
         sodium: Sodium = Sodium(),
         secretGetter: @escaping () -> [UInt8]?,
         options: JSONSerialization.ReadingOptions = [.allowFragments]
     ) -> Promise<Any> {
         definitelyWebhookJson(
             on: queue,
+            server: server,
             statusCode: statusCode,
+            requestURL: requestURL,
             sodium: sodium,
             secretGetter: secretGetter,
             options: options
@@ -53,7 +61,9 @@ extension Promise where T == Data {
     // Exists so that the Data? -> Data one doesn't accidentally refer to itself
     fileprivate func definitelyWebhookJson(
         on queue: DispatchQueue?,
+        server: Server,
         statusCode: Int?,
+        requestURL: URL?,
         sodium: Sodium,
         secretGetter: @escaping () -> [UInt8]?,
         options: JSONSerialization.ReadingOptions = [.allowFragments]
@@ -64,8 +74,26 @@ extension Promise where T == Data {
                 return .value(())
             case 400...:
                 // some other error occurred that we don't want to parse as success
+                let text: String = {
+                    let message = "Webhook failed, server %@, with status code %@ - URL: %@"
+                    if let requestURL {
+                        return String(
+                            format: message,
+                            server.info.name,
+                            String(statusCode),
+                            URLComponents(url: requestURL, resolvingAgainstBaseURL: false)?.host ?? "Unknown"
+                        )
+                    } else {
+                        return String(
+                            format: message,
+                            server.info.name,
+                            String(statusCode),
+                            "Unknown URL"
+                        )
+                    }
+                }()
                 Current.clientEventStore.addEvent(ClientEvent(
-                    text: "Webhook failed with status code \(statusCode)",
+                    text: text,
                     type: .networkRequest,
                     payload: nil
                 )).cauterize()

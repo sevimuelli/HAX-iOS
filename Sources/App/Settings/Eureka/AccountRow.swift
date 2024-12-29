@@ -64,6 +64,7 @@ class AccountCell: Cell<AccountRowValue>, CellType {
             let userName = accountRow?.cachedUserName
             let locationName = server.info.name
             let size = AccountInitialsImage.defaultSize
+            let showHACloudBadge = server.info.connection.canUseCloud
 
             if let imageView {
                 if let image = accountRow?.cachedImage {
@@ -80,7 +81,21 @@ class AccountCell: Cell<AccountRowValue>, CellType {
                     imageView.image = AccountInitialsImage.image(for: userName ?? "?")
                 }
 
-                imageView.layer.cornerRadius = ceil(size.height / 2.0)
+                // Cropping image instead of image view to avoid cropping HA cloud badge too
+                imageView.image = imageView.image?.croppedToCircle()
+
+                if showHACloudBadge {
+                    let badgeImage = Asset.SharedAssets.haCloudLogo.image
+                    let haCloudBadge = UIImageView(image: badgeImage)
+                    imageView.addSubview(haCloudBadge)
+                    imageView.contentMode = .scaleAspectFit
+                    haCloudBadge.translatesAutoresizingMaskIntoConstraints = false
+                    haCloudBadge.clipsToBounds = false
+                    NSLayoutConstraint.activate([
+                        haCloudBadge.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
+                        haCloudBadge.trailingAnchor.constraint(equalTo: imageView.trailingAnchor),
+                    ])
+                }
             }
 
             accessoryType = .disclosureIndicator
@@ -148,7 +163,7 @@ final class HomeAssistantAccountRow: Row<AccountCell>, RowType {
 
     enum FetchAvatarError: Error, CancellableError {
         case missingPerson
-        case missingURL
+        case missingURLForUserEntityPicture
         case alreadySet
         case couldntDecode
 
@@ -169,10 +184,12 @@ final class HomeAssistantAccountRow: Row<AccountCell>, RowType {
             return
         }
 
-        let api = Current.api(for: server)
-        let connection = api.connection
+        guard let api = Current.api(for: server) else {
+            Current.Log.error("No API available to fetch avatar")
+            return
+        }
 
-        accountSubscription = connection.caches.user.subscribe { [weak self] _, user in
+        accountSubscription = api.connection.caches.user.once { [weak self] user in
             guard let self else { return }
             Current.Log.verbose("got user from user \(user)")
             cachedUserName = user.name
@@ -185,7 +202,7 @@ final class HomeAssistantAccountRow: Row<AccountCell>, RowType {
                 }
             }
 
-            avatarSubscription = connection.caches.states.subscribe { [weak self] _, states in
+            avatarSubscription = api.connection.caches.states().once { [weak self] states in
                 firstly { () -> Guarantee<Set<HAEntity>> in
                     Guarantee.value(states.all)
                 }.map { states throws -> HAEntity in
@@ -198,10 +215,12 @@ final class HomeAssistantAccountRow: Row<AccountCell>, RowType {
                     if let urlString = entity.attributes["entity_picture"] as? String {
                         return urlString
                     } else {
-                        throw FetchAvatarError.missingURL
+                        throw FetchAvatarError.missingURLForUserEntityPicture
                     }
                 }.map { path throws -> URL in
-                    let url = server.info.connection.activeURL().appendingPathComponent(path)
+                    guard let url = server.info.connection.activeURL()?.appendingPathComponent(path) else {
+                        throw ServerConnectionError.noActiveURL(server.info.name)
+                    }
                     if let lastTask, lastTask.error == nil, lastTask.request?.url == url {
                         throw FetchAvatarError.alreadySet
                     }

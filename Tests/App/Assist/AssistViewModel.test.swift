@@ -1,4 +1,5 @@
 @testable import HomeAssistant
+@testable import Shared
 import XCTest
 
 final class AssistViewModelTests: XCTestCase {
@@ -31,7 +32,6 @@ final class AssistViewModelTests: XCTestCase {
     func testOnAppearFetchPipelines() async throws {
         sut.initialRoutine()
         mockAssistService.pipelineResponse = .init(preferredPipeline: "", pipelines: [])
-        try await sut.routineTask?.value
         XCTAssert(mockAssistService.fetchPipelinesCalled)
         XCTAssertEqual(AssistSession.shared.delegate.debugDescription, sut.debugDescription)
     }
@@ -42,9 +42,6 @@ final class AssistViewModelTests: XCTestCase {
         mockAssistService.pipelineResponse = .init(preferredPipeline: "", pipelines: [])
 
         sut.initialRoutine()
-        try await sut.routineTask?.value
-        try await sut.audioTask?.value
-        XCTAssertNotNil(sut.audioTask)
         XCTAssertTrue(mockAudioPlayer.pauseCalled)
         XCTAssertFalse(sut.autoStartRecording)
         XCTAssertEqual(sut.inputText, "")
@@ -56,13 +53,9 @@ final class AssistViewModelTests: XCTestCase {
         sut = makeSut(autoStartRecording: true)
 
         sut.initialRoutine()
-        try await sut.routineTask?.value
-        try await sut.audioTask?.value
         sut.onDisappear()
         XCTAssertTrue(mockAudioRecorder.stopRecordingCalled)
         XCTAssertTrue(mockAudioPlayer.pauseCalled)
-        XCTAssertTrue(sut.audioTask!.isCancelled)
-        XCTAssertTrue(sut.routineTask!.isCancelled)
     }
 
     @MainActor

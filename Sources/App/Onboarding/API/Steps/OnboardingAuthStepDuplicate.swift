@@ -22,7 +22,7 @@ struct OnboardingAuthStepDuplicate: OnboardingAuthPostStep {
 
     func perform(point: OnboardingAuthStepPoint) -> Promise<Void> {
         let devices = firstly { () -> Promise<[HAData]> in
-            api.connection.send(.init(type: "config/device_registry/list")).promise.map {
+            api.connection.send(.init(type: "config/device_registry/list")).promise.compactMap {
                 if case let .array(value) = $0 {
                     return value
                 } else {

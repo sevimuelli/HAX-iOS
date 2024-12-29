@@ -26,7 +26,29 @@ class MatterRequestHandler: MatterAddDeviceExtensionRequestHandler {
     override func selectThreadNetwork(from threadScanResults: [
         MatterAddDeviceExtensionRequestHandler.ThreadScanResult
     ]) async throws -> MatterAddDeviceExtensionRequestHandler.ThreadNetworkAssociation {
-        .defaultSystemNetwork
+        Current.Log
+            .verbose(
+                "preferredNetworkMacExtendedAddress: \(String(describing: Current.settingsStore.matterLastPreferredNetWorkMacExtendedAddress))"
+            )
+        Current.Log
+            .verbose(
+                "threadScanResults: \(threadScanResults.map { "Network name: \($0.networkName), Extended PAN ID: \($0.extendedPANID), Mac extended address: \($0.extendedAddress.hexadecimal)" })"
+            )
+        Current.Log
+            .verbose(
+                "Preferred Extended PAN ID (UInt64): \(String(describing: UInt64(Current.settingsStore.matterLastPreferredNetWorkExtendedPANID ?? "", radix: 16)))"
+            )
+        if let matterLastPreferredNetWorkExtendedPANID = Current.settingsStore.matterLastPreferredNetWorkExtendedPANID,
+           let preferredExtendedPANID = UInt64(matterLastPreferredNetWorkExtendedPANID, radix: 16),
+           let selectedNetwork = threadScanResults.first(where: { result in
+               result.extendedPANID == preferredExtendedPANID
+           }) {
+            Current.Log.verbose("Using selected thread network, name: \(selectedNetwork.networkName)")
+            return .network(extendedPANID: selectedNetwork.extendedPANID)
+        } else {
+            Current.Log.verbose("Using default thread network")
+            return .defaultSystemNetwork
+        }
     }
 
     override func commissionDevice(
@@ -44,7 +66,12 @@ class MatterRequestHandler: MatterAddDeviceExtensionRequestHandler {
             throw RequestError.missingServer
         }
 
-        try await Current.api(for: server).connection
+        guard let connection = Current.api(for: server)?.connection else {
+            Current.Log.error("No server available to comission matter device")
+            throw HomeAssistantAPI.APIError.noAPIAvailable
+        }
+
+        try await connection
             .send(.matterCommission(code: onboardingPayload))
             .promise
             .map { _ in () }

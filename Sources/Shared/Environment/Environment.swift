@@ -1,6 +1,8 @@
+import CoreBluetooth
 import CoreLocation
 import CoreMotion
 import Foundation
+import GRDB
 import HAKit
 import PromiseKit
 import RealmSwift
@@ -98,6 +100,32 @@ public class AppEnvironment {
         Realm.getRealm(objectTypes: objectTypes)
     }
 
+    public var database: DatabaseQueue = .appDatabase
+
+    public var watchConfig: () throws -> WatchConfig? = {
+        try WatchConfig.config()
+    }
+
+    public var carPlayConfig: () throws -> CarPlayConfig? = {
+        try CarPlayConfig.config()
+    }
+
+    public var magicItemProvider: () -> MagicItemProviderProtocol = {
+        MagicItemProvider()
+    }
+
+    public var appEntitiesModel: () -> AppEntitiesModelProtocol = {
+        AppEntitiesModel.shared
+    }
+
+    public var periodicAppEntitiesUpdater: () -> PeriodicAppEntitiesModelUpdaterProtocol = {
+        PeriodicAppEntitiesModelUpdater.shared
+    }
+
+    public var panelsUpdater: () -> PanelsUpdaterProtocol = {
+        PanelsUpdater.shared
+    }
+
     #if os(iOS)
     public var realmFatalPresentation: ((UIViewController) -> Void)?
     #endif
@@ -108,9 +136,14 @@ public class AppEnvironment {
 
     public var cachedApis = [Identifier<Server>: HomeAssistantAPI]()
 
-    public var apis: [HomeAssistantAPI] { servers.all.map(api(for:)) }
+    public var apis: [HomeAssistantAPI] { servers.all.compactMap(api(for:)) }
 
-    public func api(for server: Server) -> HomeAssistantAPI {
+    private var lastActiveURLForServer = [Identifier<Server>: URL?]()
+    public func api(for server: Server) -> HomeAssistantAPI? {
+        guard server.info.connection.activeURL() != nil else {
+            return nil
+        }
+
         if let existing = cachedApis[server.identifier] {
             return existing
         } else {
@@ -122,7 +155,7 @@ public class AppEnvironment {
 
     private var underlyingAPI: Promise<HomeAssistantAPI>?
 
-    public var modelManager = ModelManager()
+    public var modelManager = LegacyModelManager()
 
     public var settingsStore = SettingsStore()
 
@@ -147,6 +180,10 @@ public class AppEnvironment {
         $0.register(provider: FrontmostAppSensor.self)
         $0.register(provider: FocusSensor.self)
         $0.register(provider: LastUpdateSensor.self)
+        $0.register(provider: WatchBatterySensor.self)
+        $0.register(provider: AppVersionSensor.self)
+        $0.register(provider: LocationPermissionSensor.self)
+        $0.register(provider: AudioOutputSensor.self)
     }
 
     public var localized = LocalizedManager()
@@ -180,7 +217,7 @@ public class AppEnvironment {
 
     public lazy var activeState: ActiveStateManager = .init()
 
-    public lazy var clientVersion: () -> Version = { Constants.clientVersion }
+    public lazy var clientVersion: () -> Version = { AppConstants.clientVersion }
 
     public var onboardingObservation = OnboardingStateObservation()
 
@@ -191,7 +228,7 @@ public class AppEnvironment {
     // Use of 'appConfiguration' is preferred, but sometimes Beta builds are done as releases.
     public var isTestFlight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
     #if os(iOS)
-    public var isAppExtension = Constants.BundleID != Bundle.main.bundleIdentifier
+    public var isAppExtension = AppConstants.BundleID != Bundle.main.bundleIdentifier
     #elseif os(watchOS)
     public var isAppExtension = false
     #endif
@@ -218,7 +255,7 @@ public class AppEnvironment {
         #endif
     }()
 
-    private let isFastlaneSnapshot = UserDefaults(suiteName: Constants.AppGroupID)!.bool(forKey: "FASTLANE_SNAPSHOT")
+    private let isFastlaneSnapshot = UserDefaults(suiteName: AppConstants.AppGroupID)!.bool(forKey: "FASTLANE_SNAPSHOT")
 
     // This can be used to add debug statements.
     public var isDebug: Bool {
@@ -283,7 +320,7 @@ public class AppEnvironment {
         })
         #endif
 
-        let logPath = Constants.LogsDirectory.appendingPathComponent(
+        let logPath = AppConstants.LogsDirectory.appendingPathComponent(
             ProcessInfo.processInfo.processName + ".txt",
             isDirectory: false
         )
@@ -393,4 +430,8 @@ public class AppEnvironment {
     public var focusStatus = FocusStatusWrapper()
 
     public var diskCache: DiskCache = DiskCacheImpl()
+
+    public var bluetoothPermissionStatus: CBManagerAuthorization {
+        CBCentralManager.authorization
+    }
 }

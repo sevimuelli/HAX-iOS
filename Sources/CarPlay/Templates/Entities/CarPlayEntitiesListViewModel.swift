@@ -16,27 +16,24 @@ final class CarPlayEntitiesListViewModel {
 
     private let filterType: FilterType
     private var server: Server
-    private let entitiesCachedStates: HACache<HACachedStates>
+    private var entitiesCachedStates: HACachedStates
 
-    private var entitiesSubscriptionToken: HACancellable?
     private var entityProviders: [CarPlayEntityListItem] = []
     weak var templateProvider: CarPlayEntitiesListTemplate?
 
     private var sortedEntities: [HAEntity] {
-        guard let entities = entitiesCachedStates.map({ cachedState in
-            cachedState.all.filter { [self] entity in
-                switch self.filterType {
-                case let .domain(domain):
-                    return entity.domain == domain
-                case let .areaId(entityIdsAllowed):
-                    if let domain = Domain(rawValue: entity.domain) {
-                        return entityIdsAllowed.contains(entity.entityId) && domain.isCarPlaySupported
-                    } else {
-                        return false
-                    }
+        let entities = entitiesCachedStates.all.filter({ entity in
+            switch self.filterType {
+            case let .domain(domain):
+                return entity.domain == domain
+            case let .areaId(entityIdsAllowed):
+                if let domain = Domain(rawValue: entity.domain) {
+                    return entityIdsAllowed.contains(entity.entityId) && domain.isCarPlaySupported
+                } else {
+                    return false
                 }
             }
-        }).value else { return [] }
+        })
 
         let entitiesSorted = entities.sorted(by: { e1, e2 in
             let lowPriorityStates: Set<String> = [Domain.State.unknown.rawValue, Domain.State.unavailable.rawValue]
@@ -63,37 +60,32 @@ final class CarPlayEntitiesListViewModel {
         return entitiesSorted
     }
 
-    init(filterType: FilterType, server: Server, entitiesCachedStates: HACache<HACachedStates>) {
+    init(
+        filterType: FilterType,
+        server: Server,
+        entitiesCachedStates: HACachedStates
+    ) {
         self.filterType = filterType
         self.server = server
         self.entitiesCachedStates = entitiesCachedStates
     }
 
-    func cancelSubscriptionToken() {
-        entitiesSubscriptionToken?.cancel()
-    }
-
-    func subscribe() {
-        entitiesSubscriptionToken = entitiesCachedStates.subscribe { [weak self] _, _ in
-            self?.updateStates()
-        }
-    }
-
     func update() {
         entityProviders = sortedEntities.map { entity in
-            CarPlayEntityListItem(entity: entity)
+            CarPlayEntityListItem(serverId: server.identifier.rawValue, entity: entity)
         }
 
         templateProvider?.updateItems(entityProviders: entityProviders)
     }
 
-    private func updateStates() {
+    func updateStates(entities: HACachedStates) {
+        entitiesCachedStates = entities
         // Avoid computing property several times
         let sortedEntities = sortedEntities
         entityProviders.forEach { item in
             guard let updatedEntity = sortedEntities.first(where: { $0.entityId == item.entity.entityId }),
                   item.entity.state != updatedEntity.state else { return }
-            item.update(entity: updatedEntity)
+            item.update(serverId: server.identifier.rawValue, entity: updatedEntity)
         }
     }
 
@@ -101,7 +93,10 @@ final class CarPlayEntitiesListViewModel {
         firstly { [weak self] () -> Promise<Void> in
             guard let self else { return .init(error: CPEntityError.unknown) }
 
-            let api = Current.api(for: server)
+            guard let api = Current.api(for: server) else {
+                Current.Log.error("No API available to handle CarPlay entity tap")
+                return .init(error: HomeAssistantAPI.APIError.noAPIAvailable)
+            }
 
             if let domain = Domain(rawValue: entity.domain), domain == .lock {
                 templateProvider?.displayLockConfirmation(entity: entity, completion: {

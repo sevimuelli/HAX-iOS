@@ -12,11 +12,12 @@ import RealmSwift
 import SafariServices
 import Shared
 import UIKit
+import WidgetKit
 import XCGLogger
 
-let keychain = Constants.Keychain
+let keychain = AppConstants.Keychain
 
-let prefs = UserDefaults(suiteName: Constants.AppGroupID)!
+let prefs = UserDefaults(suiteName: AppConstants.AppGroupID)!
 
 private extension UIApplication {
     var typedDelegate: AppDelegate {
@@ -48,6 +49,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
     }
+
+    private var watchCommunicatorService: WatchCommunicatorService?
 
     func application(
         _ application: UIApplication,
@@ -99,6 +102,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
 
         setupWatchCommunicator()
+        setupUIApplicationShortcutItems()
 
         return true
     }
@@ -204,6 +208,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) {
         let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .full)
         Current.Log.verbose("Background fetch activated at \(timestamp)!")
+
+        DataWidgetsUpdater.update()
+
+        #if !targetEnvironment(macCatalyst)
+        if UIDevice.current.userInterfaceIdiom == .phone, case .paired = Communicator.shared.currentWatchState {
+            Current.Log.verbose("Requesting watch sync from background fetch")
+            Communicator.shared.send(GuaranteedMessage(identifier: GuaranteedMessages.sync.rawValue)) { error in
+                Current.Log.error("Failed to request watch sync from background fetch: \(error)")
+            }
+        }
+        #endif
 
         Current.backgroundTask(withName: "background-fetch") { remaining in
             let updatePromise: Promise<Void>
@@ -318,113 +333,39 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        when(fulfilled: Current.apis.map { $0.connection.caches.user.once().promise }).done { [sceneManager] users in
-            guard users.contains(where: \.isAdmin) else {
-                Current.Log.info("not showing because not an admin anywhere")
-                return
-            }
-
-            let alert = UIAlertController(
-                title: L10n.Alerts.Deprecations.NotificationCategory.title,
-                message: L10n.Alerts.Deprecations.NotificationCategory.message("iOS-2022.4"),
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: L10n.Nfc.List.learnMore, style: .default, handler: { _ in
-                userDefaults.set(true, forKey: seenKey)
-                openURLInBrowser(
-                    URL(string: "https://companion.home-assistant.io/app/ios/actionable-notifications")!,
-                    nil
-                )
-            }))
-            alert.addAction(UIAlertAction(title: L10n.okLabel, style: .cancel, handler: { _ in
-                userDefaults.set(true, forKey: seenKey)
-            }))
-            sceneManager.webViewWindowControllerPromise.done {
-                $0.present(alert)
-            }
-        }.catch { error in
-            Current.Log.error("couldn't check for if user: \(error)")
-        }
-    }
-
-    private func setupWatchCommunicator() {
-        Current.servers.add(observer: self)
-
-        // This directly mutates the data structure for observations to avoid race conditions.
-
-        Communicator.State.observations.store[.init(queue: .main)] = { state in
-            Current.Log.verbose("Activation state changed: \(state)")
-            _ = HomeAssistantAPI.SyncWatchContext()
-        }
-
-        WatchState.observations.store[.init(queue: .main)] = { watchState in
-            Current.Log.verbose("Watch state changed: \(watchState)")
-            _ = HomeAssistantAPI.SyncWatchContext()
-        }
-
-        Reachability.observations.store[.init(queue: .main)] = { reachability in
-            Current.Log.verbose("Reachability changed: \(reachability)")
-        }
-
-        InteractiveImmediateMessage.observations.store[.init(queue: .main)] = { message in
-            Current.Log.verbose("Received message: \(message.identifier)")
-
-            // TODO: move all these to something more strongly typed
-
-            if message.identifier == "ActionRowPressed" {
-                Current.Log.verbose("Received ActionRowPressed \(message) \(message.content)")
-                let responseIdentifier = "ActionRowPressedResponse"
-
-                guard let actionID = message.content["ActionID"] as? String,
-                      let action = Current.realm().object(ofType: Action.self, forPrimaryKey: actionID),
-                      let server = Current.servers.server(for: action) else {
-                    Current.Log.warning("ActionID either does not exist or is not a string in the payload")
-                    message.reply(.init(identifier: responseIdentifier, content: ["fired": false]))
+        when(fulfilled: Current.apis.compactMap { $0.connection.caches.user.once().promise })
+            .done { [sceneManager] users in
+                guard users.contains(where: \.isAdmin) else {
+                    Current.Log.info("not showing because not an admin anywhere")
                     return
                 }
 
-                firstly {
-                    Current.api(for: server).HandleAction(actionID: actionID, source: .Watch)
-                }.done {
-                    message.reply(.init(identifier: responseIdentifier, content: ["fired": true]))
-                }.catch { err in
-                    Current.Log.error("Error during action event fire: \(err)")
-                    message.reply(.init(identifier: responseIdentifier, content: ["fired": false]))
+                let alert = UIAlertController(
+                    title: L10n.Alerts.Deprecations.NotificationCategory.title,
+                    message: L10n.Alerts.Deprecations.NotificationCategory.message("iOS-2022.4"),
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: L10n.Nfc.List.learnMore, style: .default, handler: { _ in
+                    userDefaults.set(true, forKey: seenKey)
+                    openURLInBrowser(
+                        URL(string: "https://companion.home-assistant.io/app/ios/actionable-notifications")!,
+                        nil
+                    )
+                }))
+                alert.addAction(UIAlertAction(title: L10n.okLabel, style: .cancel, handler: { _ in
+                    userDefaults.set(true, forKey: seenKey)
+                }))
+                sceneManager.webViewWindowControllerPromise.done {
+                    $0.present(alert)
                 }
-            } else if message.identifier == "PushAction" {
-                Current.Log.verbose("Received PushAction \(message) \(message.content)")
-                let responseIdentifier = "PushActionResponse"
-
-                if let infoJSON = message.content["PushActionInfo"] as? [String: Any],
-                   let info = Mapper<HomeAssistantAPI.PushActionInfo>().map(JSON: infoJSON),
-                   let serverIdentifier = message.content["Server"] as? String,
-                   let server = Current.servers.server(forServerIdentifier: serverIdentifier) {
-                    Current.backgroundTask(withName: "watch-push-action") { _ in
-                        firstly {
-                            Current.api(for: server).handlePushAction(for: info)
-                        }.ensure {
-                            message.reply(.init(identifier: responseIdentifier))
-                        }
-                    }.catch { error in
-                        Current.Log.error("error handling push action: \(error)")
-                    }
-                }
+            }.catch { error in
+                Current.Log.error("couldn't check for if user: \(error)")
             }
-        }
+    }
 
-        Blob.observations.store[.init(queue: .main)] = { blob in
-            Current.Log.verbose("Received blob: \(blob.identifier)")
-        }
-
-        Context.observations.store[.init(queue: .main)] = { context in
-            Current.Log.verbose("Received context: \(context.content.keys) \(context.content)")
-
-            if let modelIdentifier = context.content["watchModel"] as? String {
-                Current.crashReporter.setUserProperty(value: modelIdentifier, name: "PairedAppleWatch")
-            }
-        }
-
-        _ = Communicator.shared
+    private func setupWatchCommunicator() {
+        watchCommunicatorService = WatchCommunicatorService()
+        watchCommunicatorService?.setup()
     }
 
     func setupLocalization() {
@@ -458,12 +399,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func setupModels() {
         // Force Realm migration to happen now
         _ = Realm.live()
-
-        Current.modelManager.cleanup().cauterize()
-        Current.modelManager.subscribe()
         Action.setupObserver()
         NotificationCategory.setupObserver()
-        WidgetOpenPageIntent.setupObserver()
     }
 
     private func setupMenus() {
@@ -479,11 +416,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UIMenuSystem.main.setNeedsRebuild()
     }
 
-    // swiftlint:disable:next file_length
-}
-
-extension AppDelegate: ServerObserver {
-    func serversDidChange(_ serverManager: ServerManager) {
-        _ = HomeAssistantAPI.SyncWatchContext()
+    private func setupUIApplicationShortcutItems() {
+        if Current.isCatalyst {
+            UIApplication.shared.shortcutItems = [.init(
+                type: HAApplicationShortcutItem.openSettings.rawValue,
+                localizedTitle: L10n.ShortcutItem.OpenSettings.title,
+                localizedSubtitle: nil,
+                icon: .init(systemSymbol: .gear)
+            )]
+        }
     }
+
+    // swiftlint:disable:next file_length
 }

@@ -87,13 +87,34 @@
 "component::homekit_controller::entity::sensor::thread_status::state::disabled" = "Desactivada";
 "component::hue::entity::sensor::zigbee_connectivity::state::connected" = "Connectat";
 "component::hue::entity::sensor::zigbee_connectivity::state::disconnected" = "Desconnectat";
-"component::hue::entity::switch::automation::state::off" = "Desactivada";
-"component::hue::entity::switch::automation::state::on" = "Activada";
 "component::humidifier::entity_component::_::state::off" = "OFF";
 "component::humidifier::entity_component::_::state::on" = "ON";
 "component::humidifier::entity_component::_::state_attributes::action::state::idle" = "Inactiu";
 "component::humidifier::entity_component::_::state_attributes::action::state::off" = "OFF";
 "component::humidifier::entity_component::_::state_attributes::mode::state::home" = "A casa";
+"component::improv_ble::config::abort::already_configured" = "El dispositiu ja està configurat";
+"component::improv_ble::config::abort::cannot_connect" = "Ha fallat la connexió";
+"component::improv_ble::config::abort::characteristic_missing" = "The device is either already connected to Wi-Fi, or no longer able to connect to Wi-Fi. If you want to connect it to another network, try factory resetting it first.";
+"component::improv_ble::config::abort::no_devices_found" = "No s'han trobat dispositius a la xarxa";
+"component::improv_ble::config::abort::provision_successful" = "El dispositiu s'ha connectat correctament a la xarxa Wi-Fi.";
+"component::improv_ble::config::abort::provision_successful_url" = "El dispositiu s'ha connectat correctament a la xarxa Wi-Fi. \
+\
+Vés a {url} per acabar la configuració.";
+"component::improv_ble::config::abort::unknown" = "Error inesperat";
+"component::improv_ble::config::error::unable_to_connect" = "The device could not connect to the Wi-Fi network. Check that the SSID and password are correct and try again.";
+"component::improv_ble::config::flow_title" = "{name}";
+"component::improv_ble::config::progress::authorize" = "The device requires authorization, please press its authorization button or consult the device's manual for how to proceed.";
+"component::improv_ble::config::progress::provisioning" = "El dispositiu s'està connectant a la xarxa Wi-Fi.";
+"component::improv_ble::config::step::bluetooth_confirm::description" = "Vols configurar {name}?";
+"component::improv_ble::config::step::identify::description" = "The device is now identifying itself, for example by blinking or beeping.";
+"component::improv_ble::config::step::main_menu::description" = "Choose next step.";
+"component::improv_ble::config::step::main_menu::menu_options::identify" = "Identify device";
+"component::improv_ble::config::step::main_menu::menu_options::provision" = "Connecta el dispositiu a una xarxa Wi-Fi";
+"component::improv_ble::config::step::provision::data::password" = "Contrasenya";
+"component::improv_ble::config::step::provision::data::ssid" = "SSID";
+"component::improv_ble::config::step::provision::description" = "Introdueix les credencials Wi-Fi per connectar el dispositiu a la xarxa.";
+"component::improv_ble::config::step::user::data::address" = "Dispositiu";
+"component::improv_ble::config::step::user::description" = "Tria un dispositiu a configurar";
 "component::input_boolean::entity_component::_::state::off" = "OFF";
 "component::input_boolean::entity_component::_::state::on" = "ON";
 "component::input_boolean::entity_component::_::state_attributes::editable::state::false" = "No";
@@ -151,7 +172,6 @@
 "component::plugwise::entity::select::regulation_mode::state::off" = "OFF";
 "component::prusalink::entity::sensor::printer_state::state::idle" = "Inactiu";
 "component::prusalink::entity::sensor::printer_state::state::paused" = "Pausada";
-"component::qbittorrent::entity::sensor::transmission_status::state::idle" = "Inactiu";
 "component::remote::entity_component::_::state::off" = "OFF";
 "component::remote::entity_component::_::state::on" = "ON";
 "component::renson::entity::sensor::breeze_level::state::off" = "OFF";
@@ -230,7 +250,6 @@
 "component::tuya::entity::select::vacuum_cistern::state::closed" = "Tancat/ada";
 "component::tuya::entity::select::vacuum_mode::state::standby" = "En espera";
 "component::tuya::entity::sensor::sous_vide_status::state::standby" = "En espera";
-"component::tuya::entity::sensor::status::state::standby" = "En espera";
 "component::tuya::platform::select::state::tuya__light_mode::none" = "OFF";
 "component::tuya::platform::select::state::tuya__relay_status::off" = "OFF";
 "component::tuya::platform::select::state::tuya__relay_status::on" = "ON";

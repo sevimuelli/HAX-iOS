@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import GRDB
 import HAKit
 import Shared
 
@@ -7,10 +8,10 @@ final class AssistViewModel: NSObject, ObservableObject {
     @Published var chatItems: [AssistChatItem] = []
     @Published var pipelines: [Pipeline] = []
     @Published var preferredPipelineId: String = ""
-    @Published var showScreenLoader = false
     @Published var inputText = ""
     @Published var isRecording = false
     @Published var showError = false
+    @Published var focusOnInput = false
     @Published var errorMessage = ""
 
     private var server: Server
@@ -18,8 +19,6 @@ final class AssistViewModel: NSObject, ObservableObject {
     private var audioPlayer: AudioPlayerProtocol
     private var assistService: AssistServiceProtocol
     private(set) var autoStartRecording: Bool
-    private(set) var audioTask: Task<Void, Error>?
-    private(set) var routineTask: Task<Void, Error>?
 
     private(set) var canSendAudioData = false
 
@@ -41,26 +40,32 @@ final class AssistViewModel: NSObject, ObservableObject {
 
         self.audioRecorder.delegate = self
         self.assistService.delegate = self
+
+        if ["last_used", "preferred"].contains(preferredPipelineId) {
+            self.preferredPipelineId = ""
+        }
     }
 
-    @MainActor
     func initialRoutine() {
         AssistSession.shared.delegate = self
-        routineTask?.cancel()
-        routineTask = Task.detached { [weak self] in
-            await self?.fetchPipelines()
-            self?.checkForAutoRecordingAndStart()
+
+        loadCachedPipelines()
+
+        if pipelines.isEmpty {
+            fetchPipelines { [weak self] in
+                self?.checkForAutoRecordingAndStart()
+            }
+        } else {
+            checkForAutoRecordingAndStart()
+            fetchPipelines()
         }
     }
 
     func onDisappear() {
         audioRecorder.stopRecording()
         audioPlayer.pause()
-        audioTask?.cancel()
-        routineTask?.cancel()
     }
 
-    @MainActor
     func assistWithText() {
         audioPlayer.pause()
         stopStreaming()
@@ -69,7 +74,6 @@ final class AssistViewModel: NSObject, ObservableObject {
         inputText = ""
     }
 
-    @MainActor
     func assistWithAudio() {
         audioPlayer.pause()
 
@@ -88,7 +92,7 @@ final class AssistViewModel: NSObject, ObservableObject {
     private func startAssistAudioPipeline(audioSampleRate: Double) {
         assistService.assist(
             source: .audio(
-                pipelineId: preferredPipelineId,
+                pipelineId: preferredPipelineId.isEmpty ? pipelines.first?.id : preferredPipelineId,
                 audioSampleRate: audioSampleRate
             )
         )
@@ -99,28 +103,52 @@ final class AssistViewModel: NSObject, ObservableObject {
         assistService.delegate = self
     }
 
-    @MainActor
     private func appendToChat(_ item: AssistChatItem) {
+        if chatItems.last?.itemType == .typing {
+            chatItems.removeLast()
+        }
         chatItems.append(item)
+        if item.itemType == .input {
+            chatItems.append(.init(content: "", itemType: .typing))
+        }
     }
 
-    @MainActor
-    private func fetchPipelines() async {
-        showScreenLoader = true
-        await withCheckedContinuation { [weak self] continuation in
-            self?.assistService.fetchPipelines { [weak self] response in
-                self?.showScreenLoader = false
-                guard let self, let response else {
-                    self?.showError(message: L10n.Assist.Error.pipelinesResponse)
-                    continuation.resume()
-                    return
-                }
-                if preferredPipelineId.isEmpty {
-                    preferredPipelineId = response.preferredPipeline
-                }
-                pipelines = response.pipelines
-                continuation.resume()
+    private func fetchPipelines(completion: (() -> Void)? = nil) {
+        assistService.fetchPipelines { [weak self] _ in
+            guard let self else {
+                self?.showError(message: L10n.Assist.Error.pipelinesResponse)
+                return
             }
+
+            // Fetch pipelines method already saves new values in database
+            // loading cache now
+            loadCachedPipelines()
+            completion?()
+        }
+    }
+
+    private func loadCachedPipelines() {
+        do {
+            if let cachedPipelineConfig = try Current.database.read({ db in
+                try AssistPipelines
+                    .filter(Column(DatabaseTables.AssistPipelines.serverId.rawValue) == server.identifier.rawValue)
+                    .fetchOne(db)
+            }) {
+                if preferredPipelineId.isEmpty {
+                    setPreferredPipelineId(cachedPipelineConfig.preferredPipeline)
+                }
+                pipelines = cachedPipelineConfig.pipelines
+            } else {
+                Current.Log.error("Error loading cached pipelines: No cache found.")
+            }
+        } catch {
+            Current.Log.error("Error loading cached pipelines: \(error)")
+        }
+    }
+
+    private func setPreferredPipelineId(_ pipelineId: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.preferredPipelineId = pipelineId
         }
     }
 
@@ -134,10 +162,11 @@ final class AssistViewModel: NSObject, ObservableObject {
 
     private func checkForAutoRecordingAndStart() {
         if autoStartRecording {
+            Current.Log.info("Auto start recording triggered in Assist")
             autoStartRecording = false
-            audioTask = Task {
-                await assistWithAudio()
-            }
+            assistWithAudio()
+        } else if Current.isCatalyst {
+            focusOnInput = true
         }
     }
 
@@ -183,17 +212,15 @@ extension AssistViewModel: AudioRecorderDelegate {
 
 extension AssistViewModel: AssistServiceDelegate {
     func didReceiveEvent(_ event: AssistEvent) {
-        if event == .runEnd, isRecording {
+        if [.sttEnd, .runEnd].contains(event), isRecording {
             stopStreaming()
         }
     }
 
-    @MainActor
     func didReceiveSttContent(_ content: String) {
         appendToChat(.init(content: content, itemType: .input))
     }
 
-    @MainActor
     func didReceiveIntentEndContent(_ content: String) {
         appendToChat(.init(content: content, itemType: .output))
     }
@@ -204,6 +231,11 @@ extension AssistViewModel: AssistServiceDelegate {
 
     func didReceiveTtsMediaUrl(_ mediaUrl: URL) {
         audioPlayer.play(url: mediaUrl)
+    }
+
+    func didReceiveError(code: String, message: String) {
+        Current.Log.error("Assist error: \(code)")
+        appendToChat(.init(content: message, itemType: .error))
     }
 }
 

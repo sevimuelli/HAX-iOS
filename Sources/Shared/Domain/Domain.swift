@@ -11,6 +11,10 @@ public enum Domain: String, CaseIterable {
     case scene
     case script
     case `switch`
+    case sensor
+    case binarySensor = "binary_sensor"
+    case zone
+    case person
     // TODO: Map more domains
 
     public enum State: String {
@@ -35,24 +39,16 @@ public enum Domain: String, CaseIterable {
     public var states: [State] {
         var states: [State] = []
         switch self {
-        case .button:
-            states = []
         case .cover:
             states = [.open, .closed, .opening, .closing]
-        case .inputBoolean:
-            states = []
-        case .inputButton:
-            states = []
         case .light:
             states = [.on, .off]
         case .lock:
             states = [.locked, .unlocked, .jammed, .locking, .unlocking]
-        case .scene:
-            states = []
-        case .script:
-            states = []
         case .switch:
             states = [.on, .off]
+        default:
+            states = []
         }
 
         states.append(contentsOf: [.unavailable, .unknown])
@@ -80,6 +76,14 @@ public enum Domain: String, CaseIterable {
             image = MaterialDesignIcons.scriptTextOutlineIcon
         case .switch:
             image = MaterialDesignIcons.lightSwitchIcon
+        case .sensor:
+            image = MaterialDesignIcons.eyeIcon
+        case .binarySensor:
+            image = MaterialDesignIcons.eyeIcon
+        case .zone:
+            image = MaterialDesignIcons.mapIcon
+        case .person:
+            image = MaterialDesignIcons.accountIcon
         }
         return image
     }
@@ -90,6 +94,30 @@ public enum Domain: String, CaseIterable {
 
     public var isCarPlaySupported: Bool {
         carPlaySupportedDomains.contains(self)
+    }
+
+    public func localizedState(for state: String) -> String {
+        switch self {
+        case .button, .inputButton, .scene:
+            if let relativeDate = isoDateToRelativeTimeString(state) {
+                return relativeDate
+            }
+        default:
+            break
+        }
+        return CoreStrings.getDomainStateLocalizedTitle(state: state) ?? FrontendStrings
+            .getDefaultStateLocalizedTitle(state: state) ?? state
+    }
+
+    private func isoDateToRelativeTimeString(_ isoDateString: String) -> String? {
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = dateFormatter.date(from: isoDateString) else {
+            return nil
+        }
+
+        let relativeFormatter = RelativeDateTimeFormatter()
+        return relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

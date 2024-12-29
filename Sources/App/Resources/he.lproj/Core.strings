@@ -87,13 +87,34 @@
 "component::homekit_controller::entity::sensor::thread_status::state::disabled" = "מושבת";
 "component::hue::entity::sensor::zigbee_connectivity::state::connected" = "מחובר";
 "component::hue::entity::sensor::zigbee_connectivity::state::disconnected" = "מנותק";
-"component::hue::entity::switch::automation::state::off" = "מושבת";
-"component::hue::entity::switch::automation::state::on" = "מופעל";
 "component::humidifier::entity_component::_::state::off" = "כבוי";
 "component::humidifier::entity_component::_::state::on" = "מופעל";
 "component::humidifier::entity_component::_::state_attributes::action::state::idle" = "ממתין";
 "component::humidifier::entity_component::_::state_attributes::action::state::off" = "כבוי";
 "component::humidifier::entity_component::_::state_attributes::mode::state::home" = "בבית";
+"component::improv_ble::config::abort::already_configured" = "תצורת ההתקן כבר נקבעה";
+"component::improv_ble::config::abort::cannot_connect" = "ההתחברות נכשלה";
+"component::improv_ble::config::abort::characteristic_missing" = "ההתקן כבר מחובר ל-Wi-Fi, או שאינו מסוגל יותר להתחבר ל-Wi-Fi. אם ברצונך לחבר אותו לרשת אחרת, כדאי לנסות לאפס אותו להגדרות היצרן.";
+"component::improv_ble::config::abort::no_devices_found" = "לא נמצאו התקנים ברשת";
+"component::improv_ble::config::abort::provision_successful" = "ההתקן התחבר בהצלחה לרשת ה-Wi-Fi.";
+"component::improv_ble::config::abort::provision_successful_url" = "ההתקן התחבר בהצלחה לרשת ה-Wi-Fi.\
+\
+יש לבקר בכתובת {url} כדי לסיים את ההגדרה.";
+"component::improv_ble::config::abort::unknown" = "שגיאה בלתי צפויה";
+"component::improv_ble::config::error::unable_to_connect" = "ההתקן לא הצליח להתחבר לרשת ה-Wi-Fi. נא לודא שה-SSID והסיסמה נכונים ולנסות שוב.";
+"component::improv_ble::config::flow_title" = "{name}";
+"component::improv_ble::config::progress::authorize" = "ההתקן דורש אישור, יש ללחוץ על לחצן ההרשאה שלו או לעיין במדריך למשתמש כיצד להמשיך.";
+"component::improv_ble::config::progress::provisioning" = "ההתקן מתחבר לרשת ה-Wi-Fi.";
+"component::improv_ble::config::step::bluetooth_confirm::description" = "האם ברצונך להגדיר את {name}?";
+"component::improv_ble::config::step::identify::description" = "ההתקן מזהה את עצמו כעת, לדוגמה על ידי הבהוב או צפצוף.";
+"component::improv_ble::config::step::main_menu::description" = "בחירת השלב הבא.";
+"component::improv_ble::config::step::main_menu::menu_options::identify" = "זיהוי התקן";
+"component::improv_ble::config::step::main_menu::menu_options::provision" = "חיבור ההתקן לרשת Wi-Fi";
+"component::improv_ble::config::step::provision::data::password" = "סיסמה";
+"component::improv_ble::config::step::provision::data::ssid" = "SSID";
+"component::improv_ble::config::step::provision::description" = "הזנת אישורי Wi-Fi כדי לחבר את ההתקן לרשת.";
+"component::improv_ble::config::step::user::data::address" = "התקן";
+"component::improv_ble::config::step::user::description" = "בחירת התקן להגדרה";
 "component::input_boolean::entity_component::_::state::off" = "כבוי";
 "component::input_boolean::entity_component::_::state::on" = "מופעל";
 "component::input_boolean::entity_component::_::state_attributes::editable::state::false" = "לא";
@@ -151,7 +172,6 @@
 "component::plugwise::entity::select::regulation_mode::state::off" = "כבוי";
 "component::prusalink::entity::sensor::printer_state::state::idle" = "ממתין";
 "component::prusalink::entity::sensor::printer_state::state::paused" = "מושהה";
-"component::qbittorrent::entity::sensor::transmission_status::state::idle" = "ממתין";
 "component::remote::entity_component::_::state::off" = "כבוי";
 "component::remote::entity_component::_::state::on" = "מופעל";
 "component::renson::entity::sensor::breeze_level::state::off" = "כבוי";
@@ -230,7 +250,6 @@
 "component::tuya::entity::select::vacuum_cistern::state::closed" = "נסגר";
 "component::tuya::entity::select::vacuum_mode::state::standby" = "בהמתנה";
 "component::tuya::entity::sensor::sous_vide_status::state::standby" = "בהמתנה";
-"component::tuya::entity::sensor::status::state::standby" = "בהמתנה";
 "component::tuya::platform::select::state::tuya__light_mode::none" = "כבוי";
 "component::tuya::platform::select::state::tuya__relay_status::off" = "כבוי";
 "component::tuya::platform::select::state::tuya__relay_status::on" = "מופעל";

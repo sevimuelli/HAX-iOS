@@ -25,18 +25,21 @@ pod 'Alamofire', '~> 5.8'
 pod 'Communicator', git: 'https://github.com/zacwest/Communicator.git', branch: 'observation-memory-direct'
 pod 'KeychainAccess'
 pod 'ObjectMapper', git: 'https://github.com/tristanhimmelman/ObjectMapper.git', branch: 'master'
-pod 'PromiseKit'
+pod 'PromiseKit', '~> 8.1.1'
+pod 'Improv-iOS', '~> 0.0.6'
+pod 'SFSafeSymbols', '~> 5.3'
 
 pod 'RealmSwift'
+pod 'GRDB.swift', git: 'https://github.com/groue/GRDB.swift.git', tag: 'v6.29.3'
 pod 'UIColor_Hex_Swift'
 pod 'Version'
 pod 'XCGLogger'
 
 # Keep Starscream reference even though HAKit already install it, because it defines our fork with the necessary fix
 pod 'Starscream', git: 'https://github.com/bgoncal/starscream', branch: 'ha-URLSession-fix'
-pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
-pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
-pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.2'
+pod 'HAKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.4'
+pod 'HAKit/PromiseKit', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.4'
+pod 'HAKit/Mocks', git: 'https://github.com/home-assistant/HAKit.git', tag: '0.4.4'
 
 def test_pods
   pod 'OHHTTPStubs/Swift'
@@ -74,8 +77,7 @@ abstract_target 'iOS' do
 
     pod 'FirebaseMessaging'
 
-    pod 'lottie-ios'
-    pod 'SwiftMessages'
+    pod 'SwiftMessages', '~> 10.0.1'
     pod 'ViewRow', git: 'https://github.com/EurekaCommunity/ViewRow', branch: 'master'
 
     support_modules
@@ -92,7 +94,6 @@ abstract_target 'iOS' do
   target 'Extensions-NotificationService'
   target 'Extensions-PushProvider'
   target 'Extensions-Share'
-  target 'Extensions-Today'
   target 'Extensions-Widgets'
 end
 

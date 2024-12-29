@@ -144,15 +144,10 @@ class DebugSettingsViewController: HAFormViewController {
 
         section <<< SettingsButtonRow {
             $0.title = L10n.Settings.EventLog.title
-
-            let scene = StoryboardScene.ClientEvents.self
-            $0.presentationMode = .show(controllerProvider: .storyBoard(
-                storyboardId: scene.clientEventsList.identifier,
-                storyboardName: scene.storyboardName,
-                bundle: Bundle.main
-            ), onDismiss: { vc in
-                _ = vc.navigationController?.popViewController(animated: true)
-            })
+            $0.onCellSelection { [weak self] _, _ in
+                let controller = UIHostingController(rootView: ClientEventsLogView())
+                self?.navigationController?.pushViewController(controller, animated: true)
+            }
         }
 
         section <<< SettingsButtonRow {
@@ -182,6 +177,33 @@ class DebugSettingsViewController: HAFormViewController {
             Current.Log.export(from: self, sender: cell, openURLHandler: { url in
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
             })
+        }
+
+        section <<< SettingsButtonRow {
+            $0.isDestructive = true
+            $0.title = L10n.Debug.Reset.EntitiesDatabase.title
+            $0.onCellSelection { [weak self] _, _ in
+                guard let self else { return }
+
+                let hud = MBProgressHUD.showAdded(to: view.window ?? view, animated: true)
+                hud.backgroundView.backgroundColor = UIColor(white: 0.0, alpha: 0.5)
+
+                let (promise, seal) = Guarantee<Void>.pending()
+
+                do {
+                    _ = try Current.database.write { db in
+                        try HAAppEntity.deleteAll(db)
+                        seal(())
+                    }
+                } catch {
+                    Current.Log.error("Failed to reset app entities, error: \(error)")
+                    seal(())
+                }
+
+                when(promise, after(seconds: 2.0)).done { _ in
+                    hud.hide(animated: true)
+                }
+            }
         }
 
         section <<< SettingsButtonRow {
@@ -418,7 +440,7 @@ class DebugSettingsViewController: HAFormViewController {
         }.then {
             waitAtLeast
         }.get {
-            Current.apis.map(\.connection).forEach { $0.disconnect() }
+            Current.apis.compactMap(\.connection).forEach { $0.disconnect() }
             Current.servers.removeAll()
             resetStores()
             setDefaults()

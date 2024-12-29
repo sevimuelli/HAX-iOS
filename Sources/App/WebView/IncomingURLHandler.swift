@@ -100,10 +100,11 @@ class IncomingURLHandler {
             windowController.webViewControllerPromise.pipe { result in
                 switch result {
                 case let .fulfilled(webView):
-                    webView.showAssist(
+                    webView.webViewExternalMessageHandler.showAssist(
                         server: server,
                         pipeline: pipeline?.identifier ?? "",
-                        autoStartRecording: autoStartRecording
+                        autoStartRecording: autoStartRecording,
+                        animated: false
                     )
                 case let .rejected(error):
                     Current.Log.error("Failed to obtain webview to open Assist In App: \(error.localizedDescription)")
@@ -170,7 +171,8 @@ class IncomingURLHandler {
 
     func handle(shortcutItem: UIApplicationShortcutItem) -> Promise<Void> {
         Current.backgroundTask(withName: "shortcut-item") { remaining -> Promise<Void> in
-            if shortcutItem.type == "sendLocation" {
+            switch shortcutItem.type {
+            case HAApplicationShortcutItem.sendLocation.rawValue:
                 return firstly {
                     Current.location.oneShotLocation(.AppShortcut, remaining)
                 }.then { location in
@@ -178,7 +180,22 @@ class IncomingURLHandler {
                         api.SubmitLocation(updateType: .AppShortcut, location: location, zone: nil)
                     })
                 }.asVoid()
-            } else {
+            case HAApplicationShortcutItem.openSettings.rawValue:
+                if Current.isCatalyst, Current.settingsStore.macNativeFeaturesOnly {
+                    // Close window to avoid empty window left behind
+                    for window in UIApplication.shared.windows {
+                        if let scene = window.windowScene {
+                            UIApplication.shared.requestSceneSessionDestruction(
+                                scene.session,
+                                options: nil,
+                                errorHandler: nil
+                            )
+                        }
+                    }
+                }
+                Current.sceneManager.activateAnyScene(for: .settings)
+                return .value(())
+            default:
                 if
                     let action = Current.realm().object(ofType: Action.self, forPrimaryKey: shortcutItem.type),
                     let server = Current.servers.server(for: action) {
@@ -188,7 +205,9 @@ class IncomingURLHandler {
                         onto: .value(windowController.window)
                     )
 
-                    return Current.api(for: server).HandleAction(actionID: shortcutItem.type, source: .AppShortcut)
+                    return Current.api(for: server)?
+                        .HandleAction(actionID: shortcutItem.type, source: .AppShortcut) ??
+                        .init(error: HomeAssistantAPI.APIError.noAPIAvailable)
                 } else {
                     return .init(error: HomeAssistantAPI.APIError.notConfigured)
                 }
@@ -533,7 +552,8 @@ extension IncomingURLHandler {
 
         guard
             let action = Current.realm().object(ofType: Action.self, forPrimaryKey: actionID),
-            let server = Current.servers.server(for: action) else {
+            let server = Current.servers.server(for: action),
+            let api = Current.api(for: server) else {
             Current.sceneManager.showFullScreenConfirm(
                 icon: .alertCircleIcon,
                 text: L10n.UrlHandler.Error.actionNotFound,
@@ -548,6 +568,6 @@ extension IncomingURLHandler {
             onto: .value(windowController.window)
         )
 
-        Current.api(for: server).HandleAction(actionID: actionID, source: source).cauterize()
+        api.HandleAction(actionID: actionID, source: source).cauterize()
     }
 }

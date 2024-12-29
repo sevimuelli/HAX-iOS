@@ -87,13 +87,34 @@
 "component::homekit_controller::entity::sensor::thread_status::state::disabled" = "wyłączono";
 "component::hue::entity::sensor::zigbee_connectivity::state::connected" = "online";
 "component::hue::entity::sensor::zigbee_connectivity::state::disconnected" = "offline";
-"component::hue::entity::switch::automation::state::off" = "wyłączono";
-"component::hue::entity::switch::automation::state::on" = "włączono";
 "component::humidifier::entity_component::_::state::off" = "wyłączono";
 "component::humidifier::entity_component::_::state::on" = "włączono";
 "component::humidifier::entity_component::_::state_attributes::action::state::idle" = "brak aktywności";
 "component::humidifier::entity_component::_::state_attributes::action::state::off" = "wyłączono";
 "component::humidifier::entity_component::_::state_attributes::mode::state::home" = "w domu";
+"component::improv_ble::config::abort::already_configured" = "Urządzenie jest już skonfigurowane";
+"component::improv_ble::config::abort::cannot_connect" = "Nie można nawiązać połączenia";
+"component::improv_ble::config::abort::characteristic_missing" = "The device is either already connected to Wi-Fi, or no longer able to connect to Wi-Fi. If you want to connect it to another network, try factory resetting it first.";
+"component::improv_ble::config::abort::no_devices_found" = "Nie znaleziono urządzeń w sieci";
+"component::improv_ble::config::abort::provision_successful" = "The device has successfully connected to the Wi-Fi network.";
+"component::improv_ble::config::abort::provision_successful_url" = "The device has successfully connected to the Wi-Fi network.\
+\
+Please visit {url} to finish setup.";
+"component::improv_ble::config::abort::unknown" = "Nieoczekiwany błąd";
+"component::improv_ble::config::error::unable_to_connect" = "The device could not connect to the Wi-Fi network. Check that the SSID and password are correct and try again.";
+"component::improv_ble::config::flow_title" = "{name}";
+"component::improv_ble::config::progress::authorize" = "The device requires authorization, please press its authorization button or consult the device's manual for how to proceed.";
+"component::improv_ble::config::progress::provisioning" = "The device is connecting to the Wi-Fi network.";
+"component::improv_ble::config::step::bluetooth_confirm::description" = "Czy chcesz skonfigurować {name}?";
+"component::improv_ble::config::step::identify::description" = "The device is now identifying itself, for example by blinking or beeping.";
+"component::improv_ble::config::step::main_menu::description" = "Choose next step.";
+"component::improv_ble::config::step::main_menu::menu_options::identify" = "Zidentyfikuj urządzenie";
+"component::improv_ble::config::step::main_menu::menu_options::provision" = "Connect device to a Wi-Fi network";
+"component::improv_ble::config::step::provision::data::password" = "Password";
+"component::improv_ble::config::step::provision::data::ssid" = "SSID";
+"component::improv_ble::config::step::provision::description" = "Enter Wi-Fi credentials to connect the device to your network.";
+"component::improv_ble::config::step::user::data::address" = "Urządzenie";
+"component::improv_ble::config::step::user::description" = "Wybierz urządzenie do skonfigurowania";
 "component::input_boolean::entity_component::_::state::off" = "wyłączono";
 "component::input_boolean::entity_component::_::state::on" = "włączono";
 "component::input_boolean::entity_component::_::state_attributes::editable::state::false" = "nie";
@@ -151,7 +172,6 @@
 "component::plugwise::entity::select::regulation_mode::state::off" = "wyłączono";
 "component::prusalink::entity::sensor::printer_state::state::idle" = "brak aktywności";
 "component::prusalink::entity::sensor::printer_state::state::paused" = "wstrzymano";
-"component::qbittorrent::entity::sensor::transmission_status::state::idle" = "brak aktywności";
 "component::remote::entity_component::_::state::off" = "wyłączono";
 "component::remote::entity_component::_::state::on" = "włączono";
 "component::renson::entity::sensor::breeze_level::state::off" = "wyłączono";
@@ -198,8 +218,8 @@
 "component::sensor::entity_component::_::state::on" = "włączono";
 "component::sfr_box::entity::sensor::dsl_training::state::idle" = "brak aktywności";
 "component::shelly::entity::sensor::valve_status::state::closed" = "zamknięto";
-"component::shelly::selector::ble_scanner_mode::options::active" = "aktywność";
-"component::shelly::selector::ble_scanner_mode::options::disabled" = "wyłączono";
+"component::shelly::selector::ble_scanner_mode::options::active" = "aktywny";
+"component::shelly::selector::ble_scanner_mode::options::disabled" = "wyłączony";
 "component::siren::entity_component::_::state::off" = "wyłączono";
 "component::siren::entity_component::_::state::on" = "włączono";
 "component::starlink::entity::binary_sensor::power_save_idle::name" = "Sleep";
@@ -230,7 +250,6 @@
 "component::tuya::entity::select::vacuum_cistern::state::closed" = "zamknięto";
 "component::tuya::entity::select::vacuum_mode::state::standby" = "tryb czuwania";
 "component::tuya::entity::sensor::sous_vide_status::state::standby" = "tryb czuwania";
-"component::tuya::entity::sensor::status::state::standby" = "tryb czuwania";
 "component::tuya::platform::select::state::tuya__light_mode::none" = "wyłączono";
 "component::tuya::platform::select::state::tuya__relay_status::off" = "wyłączono";
 "component::tuya::platform::select::state::tuya__relay_status::on" = "włączono";

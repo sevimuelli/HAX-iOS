@@ -44,6 +44,7 @@
 				<string>OpenPageIntent</string>
 				<string>PerformActionIntent</string>
 				<string>RenderTemplateIntent</string>
+				<string>ScriptAppIntent</string>
 				<string>SendLocationIntent</string>
 				<string>UpdateSensorsIntent</string>
 				<string>WidgetActionsIntent</string>

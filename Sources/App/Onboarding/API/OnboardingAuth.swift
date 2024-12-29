@@ -3,6 +3,7 @@ import Foundation
 import HAKit
 import PromiseKit
 import Shared
+import SwiftUI
 
 class OnboardingAuth {
     func successController(server: Server?) -> UIViewController {
@@ -10,7 +11,7 @@ class OnboardingAuth {
     }
 
     func failureController(error: Error) -> UIViewController {
-        OnboardingErrorViewController(error: error)
+        UIHostingController(rootView: OnboardingErrorView(error: error))
     }
 
     var login: OnboardingAuthLogin = OnboardingAuthLoginImpl()
@@ -57,7 +58,11 @@ class OnboardingAuth {
                 // not super necessary but prevents making a duplicate connection during this session
                 Current.cachedApis[api.server.identifier] = api
             }.then { server in
-                steps(.complete).map { server }
+                server.update { info in
+                    // Disable fallback to internal URL after onboarding
+                    info.connection.alwaysFallbackToInternalURL = false
+                }
+                return steps(.complete).map { server }
             }.recover(policy: .allErrors) { [self] error -> Promise<Server> in
                 when(resolved: undoConfigure(api: api)).then { _ in Promise<Server>(error: error) }
             }
@@ -155,6 +160,9 @@ class OnboardingAuth {
 
         var connectionInfo = ConnectionInfo(discovered: instance, authDetails: authDetails)
 
+        // During onboarding we need at least one URL available, this is disabled at the end of onboarding
+        connectionInfo.alwaysFallbackToInternalURL = true
+
         return tokenExchange.tokenInfo(
             code: code,
             connectionInfo: &connectionInfo
@@ -202,7 +210,8 @@ private extension ConnectionInfo {
             internalSSIDs: Current.connectivity.currentWiFiSSID().map { [$0] },
             internalHardwareAddresses: nil,
             isLocalPushEnabled: true,
-            securityExceptions: authDetails.exceptions
+            securityExceptions: authDetails.exceptions,
+            alwaysFallbackToInternalURL: false
         )
 
         // default cloud to on
