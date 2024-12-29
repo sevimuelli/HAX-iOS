@@ -66,7 +66,7 @@ public class HomeAssistantAPI {
         let tokenManager = TokenManager(server: server)
         self.tokenManager = tokenManager
         var customHeaders: [HAHeader] = []
-        if var headers = server.info.connection.activeCustomHeaders() {
+        if let headers = server.info.connection.activeCustomHeaders() {
             for header in  headers {
                 customHeaders.append(HAHeader(key: header.key, value: header.value))
             }
@@ -300,6 +300,8 @@ public class HomeAssistantAPI {
                 (downloadPath, [.removePreviousFile, .createIntermediateDirectories])
             }
 
+            //customheaders_todo
+
             dataManager.download(finalURL, to: destination).validate().responseData { downloadResponse in
                 switch downloadResponse.result {
                 case .success:
@@ -356,6 +358,8 @@ public class HomeAssistantAPI {
             ])
         )
     }
+
+    //customheaders_todo
 
     public func GetCameraImage(cameraEntityID: String) -> Promise<UIImage> {
         Promise { seal in
@@ -459,7 +463,7 @@ public class HomeAssistantAPI {
         with(MobileAppRegistrationRequest()) {
             if let pushID = Current.settingsStore.pushID {
                 $0.AppData = [
-                    "push_url": "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                    "push_url": "https://us-central1-hax-mobile-apps.cloudfunctions.net/sendPushNotification",
                     "push_token": pushID,
                 ]
             }

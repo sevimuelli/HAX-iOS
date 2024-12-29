@@ -16,6 +16,7 @@ extension HomeAssistantAPI {
             seal.reject(error)
         }
     }
+    //customheaders_todo
 
     func request(
         path: String,
@@ -117,10 +118,16 @@ extension HomeAssistantAPI {
         method: HTTPMethod = .get,
         parameters: Parameters? = nil,
         encoding: ParameterEncoding = URLEncoding.default,
-        headers: HTTPHeaders? = nil
+        headers: HTTPHeaders = HTTPHeaders()
     ) -> Promise<T> {
         Promise { seal in
             let url = server.info.connection.activeAPIURL().appendingPathComponent(path)
+            var headers = headers
+            if let customHeaders = server.info.connection.activeCustomHeaders() {
+                for header in customHeaders {
+                    headers.add(name: header.key, value: header.value)
+                }
+            }
             _ = manager.request(url, method: method, parameters: parameters, encoding: encoding, headers: headers)
                 .validate()
                 .responseObject { (response: AFDataResponse<T>) in

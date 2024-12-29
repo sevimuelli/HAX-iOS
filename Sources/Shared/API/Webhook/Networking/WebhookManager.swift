@@ -213,7 +213,8 @@ public class WebhookManager: NSObject {
             }
         }
     }
-
+    
+    //customheaders_todo
     public func sendEphemeral<ResponseType>(server: Server, request: WebhookRequest) -> Promise<ResponseType> {
         Current.backgroundTask(withName: "webhook-send-ephemeral") { [self, dataQueue] _ in
             attemptNetworking {
@@ -375,6 +376,7 @@ public class WebhookManager: NSObject {
                     .appendingPathComponent(UUID().uuidString)
                     .appendingPathExtension("json")
                 try data.write(to: temporaryFile)
+                //customheaders_todo
 
                 task = sessionInfo.session.uploadTask(with: urlRequest, fromFile: temporaryFile)
 
@@ -514,6 +516,12 @@ public class WebhookManager: NSObject {
 
             var urlRequest = try URLRequest(url: webhookURL, method: .post)
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            if var customHeaders = server.info.connection.activeCustomHeaders() {
+                for header in customHeaders {
+                    urlRequest.setValue(header.value, forHTTPHeaderField: header.key)
+                }
+            }
 
             let jsonObject = Mapper<WebhookRequest>(context: WebhookRequestContext.server(server)).toJSON(request)
             let data = try JSONSerialization.data(withJSONObject: jsonObject, options: [.sortedKeys])
