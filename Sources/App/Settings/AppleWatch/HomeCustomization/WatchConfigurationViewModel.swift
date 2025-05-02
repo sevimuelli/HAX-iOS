@@ -49,7 +49,7 @@ final class WatchConfigurationViewModel: ObservableObject {
 
     func deleteConfiguration(completion: (Bool) -> Void) {
         do {
-            try Current.database.write { db in
+            try Current.database().write { db in
                 try WatchConfig.deleteAll(db)
                 completion(true)
             }
@@ -61,21 +61,14 @@ final class WatchConfigurationViewModel: ObservableObject {
     @MainActor
     func save(completion: (Bool) -> Void) {
         do {
-            try Current.database.write { db in
-                let configsCount = try WatchConfig.all().fetchCount(db)
-                if configsCount > 1 {
-                    Current.Log.error("More than one watch config detected, deleting all and saving new one.")
-                    // Making sure only one config exists
+            try Current.database().write { db in
+                if watchConfig.id != WatchConfig.watchConfigId {
+                    // Previous config needs to be explicit deleted because when WatchConfig was released
+                    // the ID wasn't static, so it was possible to have multiple rows in the table
                     try WatchConfig.deleteAll(db)
-                    // Save new config
-                    try watchConfig.save(db)
-                } else if configsCount == 0 {
-                    Current.Log.info("Saving new watch config and leaving config screen")
-                    try watchConfig.save(db)
-                } else {
-                    Current.Log.info("Updating watch config")
-                    try watchConfig.update(db)
+                    watchConfig.id = WatchConfig.watchConfigId
                 }
+                try watchConfig.insert(db, onConflict: .replace)
                 completion(true)
             }
         } catch {

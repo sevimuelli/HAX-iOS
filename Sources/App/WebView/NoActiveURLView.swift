@@ -29,9 +29,6 @@ struct NoActiveURLView: View {
         .ignoresSafeArea(edges: .bottom)
         .onDisappear {
             Current.sceneManager.webViewWindowControllerPromise.then(\.webViewControllerPromise)
-                .done { webViewController in
-                    webViewController.overlayAppController = nil
-                }
         }
         .alert(L10n.Connection.Permission.InternalUrl.Ignore.Alert.title, isPresented: $showIgnoreConfirmation) {
             Button(L10n.yesLabel, role: .destructive) {
@@ -108,7 +105,7 @@ struct NoActiveURLView: View {
 
     @ViewBuilder
     private var textBlock: some View {
-        Text(L10n.Connection.Permission.InternalUrl.title)
+        Text(verbatim: L10n.Connection.Permission.InternalUrl.title)
             .font(.title.bold())
             .padding(.vertical)
         VStack(spacing: Spaces.two) {

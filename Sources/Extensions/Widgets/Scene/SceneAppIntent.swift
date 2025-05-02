@@ -1,5 +1,4 @@
 import AppIntents
-import AudioToolbox
 import Foundation
 import PromiseKit
 import Shared
@@ -36,9 +35,7 @@ final class SceneAppIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
         if hapticConfirmation {
-            // Unfortunately this is the only 'haptics' that work with widgets
-            // ideally in the future this should use CoreHaptics for a better experience
-            AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
+            AppIntentHaptics.notify()
         }
 
         let success: Bool = try await withCheckedThrowingContinuation { continuation in
@@ -50,7 +47,8 @@ final class SceneAppIntent: AppIntent {
             api.CallService(
                 domain: Domain.scene.rawValue,
                 service: "turn_on",
-                serviceData: ["entity_id": scene.entityId]
+                serviceData: ["entity_id": scene.entityId],
+                triggerSource: .AppIntent
             )
             .pipe { [weak self] result in
                 switch result {

@@ -2,6 +2,7 @@ import Foundation
 import PromiseKit
 import Shared
 import UIKit
+import WidgetKit
 
 final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -108,19 +109,33 @@ final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
+        if #available(iOS 17.0, *) {
+            // if a widget is pending confirmation to execute it's action
+            // this will reset that and the widget will be restored to default state
+            _ = ResetAllCustomWidgetConfirmationAppIntent()
+        }
         DataWidgetsUpdater.update()
         Current.modelManager.unsubscribe()
-        Current.periodicAppEntitiesUpdater().stop()
+        Current.appDatabaseUpdater.stop()
     }
 
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        DataWidgetsUpdater.update()
+    func sceneDidBecomeActive(_ scene: UIScene) {
         Current.modelManager.cleanup().cauterize()
         Current.modelManager.subscribe(isAppInForeground: {
             UIApplication.shared.applicationState == .active
         })
-        Current.periodicAppEntitiesUpdater().setup()
-        Current.panelsUpdater().update()
+
+        Current.appDatabaseUpdater.update()
+        Current.panelsUpdater.update()
+
+        let widgetsCacheFile = AppConstants.widgetsCacheURL
+
+        // Clean up widgets cache file
+        do {
+            try FileManager.default.removeItem(at: widgetsCacheFile)
+        } catch {
+            Current.Log.error("Failed to remove widgets cache file: \(error)")
+        }
     }
 
     func windowScene(

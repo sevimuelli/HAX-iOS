@@ -5,6 +5,25 @@ import Version
 
 /// Contains shared constants
 public enum AppConstants {
+    public enum WebURLs {
+        public static var homeAssistant = URL(string: "https://www.home-assistant.io")!
+        public static var homeAssistantGetStarted = URL(string: "https://www.home-assistant.io/installation/")!
+        public static var companionAppDocs = URL(string: "https://companion.home-assistant.io")!
+        public static var companionAppDocsTroubleshooting =
+            URL(string: "https://companion.home-assistant.io/docs/troubleshooting/errors")!
+        public static var beta = URL(string: "https://companion.home-assistant.io/app/ios/beta")!
+        public static var betaMac = URL(string: "https://companion.home-assistant.io/app/ios/beta_mac")!
+        public static var review = URL(string: "https://companion.home-assistant.io/app/ios/review")!
+        public static var reviewMac = URL(string: "https://companion.home-assistant.io/app/ios/review_mac")!
+        public static var translate = URL(string: "https://companion.home-assistant.io/app/ios/translate")!
+        public static var forums = URL(string: "https://community.home-assistant.io/")!
+        public static var chat = URL(string: "https://companion.home-assistant.io/app/ios/chat")!
+        public static var twitter = URL(string: "https://twitter.com/home_assistant")!
+        public static var facebook = URL(string: "https://www.facebook.com/292963007723872")!
+        public static var repo = URL(string: "https://companion.home-assistant.io/app/ios/repo")!
+        public static var issues = URL(string: "https://companion.home-assistant.io/app/ios/issues")!
+    }
+
     /// Home Assistant Blue
     public static var tintColor: UIColor {
         #if os(iOS)
@@ -65,6 +84,29 @@ public enum AppConstants {
         }
     }
 
+    public static func navigateDeeplinkURL(path: String, serverId: String, avoidUnecessaryReload: Bool) -> URL? {
+        URL(
+            string: "\(AppConstants.deeplinkURL.absoluteString)navigate/\(path)?server=\(serverId)&avoidUnecessaryReload=\(avoidUnecessaryReload)"
+        )
+    }
+
+    public static func openPageDeeplinkURL(path: String, serverId: String) -> URL? {
+        if #available(iOS 16.0, watchOS 9.0, *) {
+            AppConstants.navigateDeeplinkURL(path: path, serverId: serverId, avoidUnecessaryReload: true)?
+                .appending(queryItems: [
+                    .init(name: "openPageIntent", value: "true"),
+                ])
+        } else {
+            AppConstants.navigateDeeplinkURL(path: path, serverId: serverId, avoidUnecessaryReload: true)
+        }
+    }
+
+    public static func assistDeeplinkURL(serverId: String, pipelineId: String, startListening: Bool) -> URL? {
+        URL(
+            string: "\(AppConstants.deeplinkURL.absoluteString)assist?serverId=\(serverId)&pipelineId=\(pipelineId)&startListening=\(startListening)"
+        )
+    }
+
     /// The App Group ID used by the app and extensions for sharing data.
     public static var AppGroupID: String {
         "group." + BundleID.lowercased()
@@ -94,6 +136,54 @@ public enum AppConstants {
         }
         let databaseURL = directoryURL.appendingPathComponent("App.sqlite")
         return databaseURL
+    }
+
+    public static var clientEventsFile: URL {
+        let fileManager = FileManager.default
+        let directoryURL = Self.AppGroupContainer.appendingPathComponent("databases", isDirectory: true)
+        if !fileManager.fileExists(atPath: directoryURL.path) {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            } catch {
+                Current.Log.error("Failed to create Client Events file")
+            }
+        }
+        let eventsURL = directoryURL.appendingPathComponent("clientEvents.json")
+        return eventsURL
+    }
+
+    public static var widgetsCacheURL: URL = {
+        let fileManager = FileManager.default
+        let directoryURL = Self.AppGroupContainer.appendingPathComponent("caches/widgets", isDirectory: true)
+        return directoryURL
+    }()
+
+    public static func widgetCachedStates(widgetId: String) -> URL {
+        let fileManager = FileManager.default
+        let directoryURL = Self.widgetsCacheURL
+        if !fileManager.fileExists(atPath: directoryURL.path) {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            } catch {
+                Current.Log.error("Failed to create Client Events file")
+            }
+        }
+        let eventsURL = directoryURL.appendingPathComponent("/widgetId-\(widgetId).json")
+        return eventsURL
+    }
+
+    public static var watchMagicItemsInfo: URL {
+        let fileManager = FileManager.default
+        let directoryURL = Self.AppGroupContainer.appendingPathComponent("caches", isDirectory: true)
+        if !fileManager.fileExists(atPath: directoryURL.path) {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            } catch {
+                Current.Log.error("Failed to magic items info file")
+            }
+        }
+        let eventsURL = directoryURL.appendingPathComponent("magicItemsInfo.json")
+        return eventsURL
     }
 
     public static var LogsDirectory: URL {

@@ -12,10 +12,7 @@ import Version
 enum SettingsDetailsGroup: String {
     case display
     case actions
-    case general
     case location
-    case privacy
-    case carPlay
 }
 
 class SettingsDetailViewController: HAFormViewController, TypedRowControllerType {
@@ -45,7 +42,6 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
         onDismissCallback?(self)
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -61,232 +57,6 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
         }
 
         switch detailGroup {
-        case .general:
-            title = L10n.SettingsDetails.General.title
-
-            form
-                +++ Section {
-                    $0.hidden = .isCatalyst
-                }
-
-                <<< PushRow<AppIcon>("appIcon") {
-                    $0.hidden = .isCatalyst
-                    $0.title = L10n.SettingsDetails.General.AppIcon.title
-                    $0.selectorTitle = $0.title
-                    $0.options = AppIcon.allCases.sorted { a, b in
-                        switch (a.isDefault, b.isDefault) {
-                        case (true, false): return true
-                        case (false, true): return false
-                        default:
-                            // swift sort isn't stable
-                            return AppIcon.allCases.firstIndex(of: a)! < AppIcon.allCases.firstIndex(of: b)!
-                        }
-                    }
-                    $0.value = AppIcon.Release
-                    if let altIconName = UIApplication.shared.alternateIconName,
-                       let icon = AppIcon(rawValue: altIconName) {
-                        $0.value = icon
-                    }
-                    $0.displayValueFor = { $0?.title }
-                }.onPresent { [weak self] _, to in
-                    to.selectableRowCellUpdate = { cell, row in
-                        cell.height = { 72 }
-                        cell.imageView?.layer.masksToBounds = true
-                        cell.imageView?.layer.cornerRadius = 12.63
-                        guard let newIcon = row.selectableValue else { return }
-                        cell.imageView?.image = self?.resizeImage(
-                            image: UIImage(named: newIcon.rawValue),
-                            newSize: .init(width: 64, height: 64)
-                        )
-                        cell.textLabel?.text = newIcon.title
-                    }
-                }.onChange { row in
-                    let iconName = row.value?.iconName
-                    UIApplication.shared.setAlternateIconName(iconName) { error in
-                        Current.Log
-                            .info("set icon to \(String(describing: iconName)) error: \(String(describing: error))")
-                    }
-                }
-
-                +++ Section {
-                    $0.hidden = .isNotCatalyst
-                }
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.General.LaunchOnLogin.title
-
-                    #if targetEnvironment(macCatalyst)
-                    let launcherIdentifier = AppConstants.BundleID.appending(".Launcher")
-                    $0.value = Current.macBridge.isLoginItemEnabled(forBundleIdentifier: launcherIdentifier)
-                    $0.onChange { row in
-                        let success = Current.macBridge.setLoginItem(
-                            forBundleIdentifier: launcherIdentifier,
-                            enabled: row.value ?? false
-                        )
-                        if !success {
-                            row.value = Current.macBridge.isLoginItemEnabled(forBundleIdentifier: launcherIdentifier)
-                            row.updateCell()
-                        }
-                    }
-                    #endif
-                }
-
-                <<< PushRow<SettingsStore.LocationVisibility> {
-                    $0.tag = "locationVisibility"
-                    $0.title = L10n.SettingsDetails.General.Visibility.title
-                    $0.options = SettingsStore.LocationVisibility.allCases
-                    $0.value = Current.settingsStore.locationVisibility
-                    $0.displayValueFor = {
-                        switch $0 ?? .dock {
-                        case .dock: return L10n.SettingsDetails.General.Visibility.Options.dock
-                        case .dockAndMenuBar: return L10n.SettingsDetails.General.Visibility.Options.dockAndMenuBar
-                        case .menuBar: return L10n.SettingsDetails.General.Visibility.Options.menuBar
-                        }
-                    }
-                    $0.onChange { row in
-                        Current.settingsStore.locationVisibility = row.value ?? .dock
-                    }
-                }
-
-                <<< ButtonRow { row in
-                    row.title = L10n.SettingsDetails.General.MenuBarText.title
-                    row.cellStyle = .value1
-                    row.value = Current.settingsStore.menuItemTemplate?.template
-                    row.displayValueFor = { $0 }
-                    row.hidden = .function(["locationVisibility"], { form in
-                        if let row = form
-                            .rowBy(tag: "locationVisibility") as? PushRow<SettingsStore.LocationVisibility> {
-                            return row.value?.isStatusItemVisible == false
-                        } else {
-                            return true
-                        }
-                    })
-                    row.presentationMode = .show(controllerProvider: .callback(builder: {
-                        if let current = Current.settingsStore.menuItemTemplate {
-                            return TemplateEditViewController(
-                                server: current.server,
-                                initial: current.template,
-                                saveHandler: { Current.settingsStore.menuItemTemplate = ($0, $1) }
-                            )
-                        } else {
-                            return UIViewController()
-                        }
-                    }), onDismiss: { [weak self, row] _ in
-                        row.value = Current.settingsStore.menuItemTemplate?.template
-                        self?.navigationController?.popViewController(animated: true)
-                    })
-                }
-
-                +++
-                Section(
-                    footer: L10n.SettingsDetails.MacNativeFeatures.footer
-                ) {
-                    $0.hidden = .function([], { _ in !Current.isCatalyst })
-                }
-                <<< SwitchRow("macNativeFeaturesOnly") {
-                    $0.title = L10n.SettingsDetails.MacNativeFeatures.title
-                    $0.value = Current.settingsStore.macNativeFeaturesOnly
-                    $0.onChange { row in
-                        Current.settingsStore.macNativeFeaturesOnly = row.value ?? false
-                    }
-                }
-
-                +++ Section {
-                    $0.hidden = .function([], { _ in !Current.updater.isSupported })
-                }
-                <<< SwitchRow("checkForUpdates") {
-                    $0.title = L10n.SettingsDetails.Updates.CheckForUpdates.title
-                    $0.value = Current.settingsStore.privacy.updates
-                    $0.onChange { row in
-                        Current.settingsStore.privacy.updates = row.value ?? true
-                    }
-                }
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.Updates.CheckForUpdates.includeBetas
-                    $0.value = Current.settingsStore.privacy.updatesIncludeBetas
-                    $0.onChange { row in
-                        Current.settingsStore.privacy.updatesIncludeBetas = row.value ?? true
-                    }
-                }
-
-                +++ PushRow<OpenInBrowser>("openInBrowser") {
-                    $0.hidden = .isCatalyst
-                    $0.title = L10n.SettingsDetails.General.OpenInBrowser.title
-
-                    if let value = prefs.string(forKey: "openInBrowser").flatMap({ OpenInBrowser(rawValue: $0) }),
-                       value.isInstalled {
-                        $0.value = value
-                    } else {
-                        $0.value = .Safari
-                    }
-                    $0.selectorTitle = $0.title
-                    $0.options = OpenInBrowser.allCases.filter(\.isInstalled)
-                    $0.displayValueFor = { $0?.title }
-                }.onChange { row in
-                    guard let browserChoice = row.value else { return }
-                    prefs.setValue(browserChoice.rawValue, forKey: "openInBrowser")
-                }
-
-                <<< SwitchRow("openInPrivateTab") {
-                    $0.hidden = .function(["openInBrowser"], { form in
-                        if let row = form
-                            .rowBy(tag: "openInBrowser") as? PushRow<OpenInBrowser> {
-                            return row.value?.supportsPrivateTabs == false
-                        } else {
-                            return true
-                        }
-                    })
-                    $0.title = L10n.SettingsDetails.General.OpenInPrivateTab.title
-                    $0.value = prefs.bool(forKey: "openInPrivateTab")
-                }.onChange { row in
-                    prefs.setValue(row.value, forKey: "openInPrivateTab")
-                }
-
-                <<< SwitchRow("confirmBeforeOpeningUrl") {
-                    $0.title = L10n.SettingsDetails.Notifications.PromptToOpenUrls.title
-                    $0.value = prefs.bool(forKey: "confirmBeforeOpeningUrl")
-                }.onChange { row in
-                    prefs.setValue(row.value, forKey: "confirmBeforeOpeningUrl")
-                }
-
-                +++ SwitchRow {
-                    // mac has a system-level setting for state restoration
-                    $0.hidden = .isCatalyst
-
-                    $0.title = L10n.SettingsDetails.General.Restoration.title
-                    $0.value = Current.settingsStore.restoreLastURL
-                    $0.onChange { row in
-                        Current.settingsStore.restoreLastURL = row.value ?? false
-                    }
-                }
-
-                <<< PushRow<SettingsStore.PageZoom> { row in
-                    row.title = L10n.SettingsDetails.General.PageZoom.title
-                    row.options = SettingsStore.PageZoom.allCases
-
-                    row.value = Current.settingsStore.pageZoom
-                    row.onChange { row in
-                        Current.settingsStore.pageZoom = row.value ?? .default
-                    }
-                }
-
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.General.PinchToZoom.title
-                    $0.hidden = .isCatalyst
-                    $0.value = Current.settingsStore.pinchToZoom
-                    $0.onChange { row in
-                        Current.settingsStore.pinchToZoom = row.value ?? false
-                    }
-                }
-
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.General.FullScreen.title
-                    $0.hidden = .isCatalyst
-                    $0.value = Current.settingsStore.fullScreen
-                    $0.onChange { row in
-                        Current.settingsStore.fullScreen = row.value ?? false
-                    }
-                }
-
         case .location:
             title = L10n.SettingsDetails.Location.title
             form
@@ -295,7 +65,7 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                 +++ ButtonRow {
                     $0.title = L10n.Settings.LocationHistory.title
                     $0.presentationMode = .show(controllerProvider: .callback(builder: {
-                        LocationHistoryListViewController()
+                        LocationHistoryListViewHostingController(rootView: LocationHistoryListView())
                     }), onDismiss: nil)
                 }
 
@@ -530,48 +300,6 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                     Self.getSceneRows($0)
                 }
             )
-
-        case .privacy:
-            title = L10n.SettingsDetails.Privacy.title
-
-            form
-                +++ Section(header: nil, footer: L10n.SettingsDetails.Privacy.Messaging.description)
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.Privacy.Messaging.title
-                    $0.value = Current.settingsStore.privacy.messaging
-                }.onChange { row in
-                    Current.settingsStore.privacy.messaging = row.value ?? true
-                    Messaging.messaging().isAutoInitEnabled = Current.settingsStore.privacy.messaging
-                }
-                +++ Section(header: nil, footer: L10n.SettingsDetails.Privacy.Alerts.description)
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.Privacy.Alerts.title
-                    $0.value = Current.settingsStore.privacy.alerts
-                }.onChange { row in
-                    Current.settingsStore.privacy.alerts = row.value ?? true
-                }
-                +++ Section(
-                    header: nil,
-                    footer: L10n.SettingsDetails.Privacy.CrashReporting.description
-                ) {
-                    $0.hidden = .init(booleanLiteral: !Current.crashReporter.hasCrashReporter)
-                }
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.Privacy.CrashReporting.title
-                    $0.value = Current.settingsStore.privacy.crashes
-                }.onChange { row in
-                    Current.settingsStore.privacy.crashes = row.value ?? true
-                }
-                +++ Section(header: nil, footer: L10n.SettingsDetails.Privacy.Analytics.genericDescription) {
-                    $0.hidden = .init(booleanLiteral: !Current.crashReporter.hasAnalytics)
-                }
-                <<< SwitchRow {
-                    $0.title = L10n.SettingsDetails.Privacy.Analytics.genericTitle
-                    $0.value = Current.settingsStore.privacy.analytics
-                }.onChange { row in
-                    Current.settingsStore.privacy.analytics = row.value ?? true
-                }
-
         default:
             Current.Log.warning("Something went wrong, no settings detail group named \(detailGroup)")
         }
@@ -586,7 +314,7 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                 let message =
                     "Server \(server.info.name) - Internal URL set but no internal SSIDs or hardware addresses set"
                 Current.Log.error(message)
-                Current.clientEventStore.addEvent(.init(text: message, type: .settings)).cauterize()
+                Current.clientEventStore.addEvent(.init(text: message, type: .settings))
             }
         }
     }
@@ -912,106 +640,6 @@ class SettingsDetailViewController: HAFormViewController, TypedRowControllerType
                 UIApplication.shared.openSettings(destination: .backgroundRefresh)
                 row.deselect(animated: true)
             }
-        }
-    }
-}
-
-enum AppIcon: String, CaseIterable {
-    case Release = "release"
-    case Beta = "beta"
-    case Dev = "dev"
-    case Black = "black"
-    case Blue = "blue"
-    case CaribbeanGreen = "caribbean-green"
-    case CornflowerBlue = "cornflower-blue"
-    case Crimson = "crimson"
-    case ElectricViolet = "electric-violet"
-    case FireOrange = "fire-orange"
-    case Green = "green"
-    case Classic = "classic"
-    case OldBeta = "old-beta"
-    case OldDev = "old-dev"
-    case OldRelease = "old-release"
-    case Orange = "orange"
-    case Pink = "pink"
-    case Purple = "purple"
-    case Red = "red"
-    case White = "white"
-    case BiPride = "bi_pride"
-    case POCPride = "POC_pride"
-    case NonBinary = "non-binary"
-    case Rainbow = "rainbow"
-    case Trans = "trans"
-
-    var title: String {
-        switch self {
-        case .Release:
-            return L10n.SettingsDetails.General.AppIcon.Enum.release
-        case .Beta:
-            return L10n.SettingsDetails.General.AppIcon.Enum.beta
-        case .Dev:
-            return L10n.SettingsDetails.General.AppIcon.Enum.dev
-        case .Black:
-            return L10n.SettingsDetails.General.AppIcon.Enum.black
-        case .Blue:
-            return L10n.SettingsDetails.General.AppIcon.Enum.blue
-        case .CaribbeanGreen:
-            return L10n.SettingsDetails.General.AppIcon.Enum.caribbeanGreen
-        case .CornflowerBlue:
-            return L10n.SettingsDetails.General.AppIcon.Enum.cornflowerBlue
-        case .Crimson:
-            return L10n.SettingsDetails.General.AppIcon.Enum.crimson
-        case .ElectricViolet:
-            return L10n.SettingsDetails.General.AppIcon.Enum.electricViolet
-        case .FireOrange:
-            return L10n.SettingsDetails.General.AppIcon.Enum.fireOrange
-        case .Green:
-            return L10n.SettingsDetails.General.AppIcon.Enum.green
-        case .Classic:
-            return L10n.SettingsDetails.General.AppIcon.Enum.classic
-        case .OldBeta:
-            return L10n.SettingsDetails.General.AppIcon.Enum.oldBeta
-        case .OldDev:
-            return L10n.SettingsDetails.General.AppIcon.Enum.oldDev
-        case .OldRelease:
-            return L10n.SettingsDetails.General.AppIcon.Enum.oldRelease
-        case .Orange:
-            return L10n.SettingsDetails.General.AppIcon.Enum.orange
-        case .Pink:
-            return L10n.SettingsDetails.General.AppIcon.Enum.pink
-        case .Purple:
-            return L10n.SettingsDetails.General.AppIcon.Enum.purple
-        case .Red:
-            return L10n.SettingsDetails.General.AppIcon.Enum.red
-        case .White:
-            return L10n.SettingsDetails.General.AppIcon.Enum.white
-        case .BiPride:
-            return L10n.SettingsDetails.General.AppIcon.Enum.prideBi
-        case .POCPride:
-            return L10n.SettingsDetails.General.AppIcon.Enum.pridePoc
-        case .Rainbow:
-            return L10n.SettingsDetails.General.AppIcon.Enum.prideRainbow
-        case .Trans:
-            return L10n.SettingsDetails.General.AppIcon.Enum.prideTrans
-        case .NonBinary:
-            return L10n.SettingsDetails.General.AppIcon.Enum.prideNonBinary
-        }
-    }
-
-    var isDefault: Bool {
-        switch Current.appConfiguration {
-        case .debug where self == .Dev: return true
-        case .beta where self == .Beta: return true
-        case .release where self == .Release: return true
-        default: return false
-        }
-    }
-
-    var iconName: String? {
-        if isDefault {
-            return nil
-        } else {
-            return rawValue
         }
     }
 }

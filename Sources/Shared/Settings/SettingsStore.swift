@@ -99,7 +99,7 @@ public class SettingsStore {
     }
     #endif
 
-    public struct PageZoom: CaseIterable, Equatable, CustomStringConvertible {
+    public struct PageZoom: CaseIterable, Equatable, CustomStringConvertible, Hashable {
         public let zoom: Int
 
         init?(preference: Int) {
@@ -298,6 +298,14 @@ public class SettingsStore {
             case .menuBar: return false
             }
         }
+
+        public var title: String {
+            switch self {
+            case .dock: return L10n.SettingsDetails.General.Visibility.Options.dock
+            case .dockAndMenuBar: return L10n.SettingsDetails.General.Visibility.Options.dockAndMenuBar
+            case .menuBar: return L10n.SettingsDetails.General.Visibility.Options.menuBar
+            }
+        }
     }
 
     public var locationVisibility: LocationVisibility {
@@ -414,10 +422,10 @@ public class SettingsStore {
     }
 
     #if os(iOS)
-    public var gestures: [HAGesture: HAGestureAction] {
+    public var gestures: [AppGesture: HAGestureAction] {
         get {
             guard let data = prefs.data(forKey: "gesturesSettings"),
-                  let decodedGestures = try? JSONDecoder().decode([HAGesture: HAGestureAction].self, from: data) else {
+                  let decodedGestures = try? JSONDecoder().decode([AppGesture: HAGestureAction].self, from: data) else {
                 Current.Log.error("Failed to decode gestures from settings")
                 return .defaultGestures
             }
@@ -452,11 +460,5 @@ public class SettingsStore {
         let okayChars: Set<Character> =
             Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890")
         return String(text.filter { okayChars.contains($0) })
-    }
-}
-
-public class BluetoothPermissionScreenDisplayedCount: UserDefaultsValueSync<Int> {
-    public init() {
-        super.init(settingsKey: "bluetoothPermissionScreenPresentedCount")
     }
 }
