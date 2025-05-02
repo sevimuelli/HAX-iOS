@@ -2,12 +2,14 @@ import Foundation
 import PromiseKit
 import Shared
 import UIKit
+import WidgetKit
 
 final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
     var window: UIWindow?
     var windowController: WebViewWindowController?
     var urlHandler: IncomingURLHandler?
 
+    // swiftlint:disable cyclomatic_complexity
     func scene(
         _ scene: UIScene,
         willConnectTo session: UISceneSession,
@@ -37,8 +39,29 @@ final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
             }
         }
 
-        windowController.setup()
+        if Current.isCatalyst, Current.settingsStore.macNativeFeaturesOnly {
+            // This getter does not exist on macOS 10.15, so we need to check that it responds.
+            // Of course, this is not documented via availability headers, of course.
+            if connectionOptions.responds(to: #selector(getter: UIScene.ConnectionOptions.shortcutItem)),
+               let shortcutItem = connectionOptions.shortcutItem {
+                self.windowScene(scene, performActionFor: shortcutItem, completionHandler: { _ in })
+            } else if let url = Current.servers.all.first?.info.connection.activeURL() {
+                UIApplication.shared.open(url)
+                // Close window to avoid empty window left behind
+                if let scene = window.windowScene {
+                    UIApplication.shared.requestSceneSessionDestruction(scene.session, options: nil, errorHandler: nil)
+                }
+            }
+        } else {
+            windowController.setup()
 
+            // This getter does not exist on macOS 10.15, so we need to check that it responds.
+            // Of course, this is not documented via availability headers, of course.
+            if connectionOptions.responds(to: #selector(getter: UIScene.ConnectionOptions.shortcutItem)),
+               let shortcutItem = connectionOptions.shortcutItem {
+                self.windowScene(scene, performActionFor: shortcutItem, completionHandler: { _ in })
+            }
+        }
         #if targetEnvironment(macCatalyst)
         if let titlebar = scene.titlebar {
             // disabling this also disables the "show tab bar" window tab bar (aka not uitabbar)
@@ -49,13 +72,6 @@ final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
 
         if !connectionOptions.urlContexts.isEmpty {
             self.scene(scene, openURLContexts: connectionOptions.urlContexts)
-        }
-
-        // This getter does not exist on macOS 10.15, so we need to check that it responds.
-        // Of course, this is not documented via availability headers, of course.
-        if connectionOptions.responds(to: #selector(getter: UIScene.ConnectionOptions.shortcutItem)),
-           let shortcutItem = connectionOptions.shortcutItem {
-            self.windowScene(scene, performActionFor: shortcutItem, completionHandler: { _ in })
         }
 
         if !connectionOptions.userActivities.isEmpty {
@@ -75,6 +91,8 @@ final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
         #if targetEnvironment(macCatalyst)
         WindowScenesManager.shared.sceneWillResignActive(scene)
         #endif
+
+        DataWidgetsUpdater.update()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -86,6 +104,38 @@ final class WebViewSceneDelegate: NSObject, UIWindowSceneDelegate {
         #if targetEnvironment(macCatalyst)
         WindowScenesManager.shared.didDiscardScene(scene)
         #endif
+
+        DataWidgetsUpdater.update()
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        if #available(iOS 17.0, *) {
+            // if a widget is pending confirmation to execute it's action
+            // this will reset that and the widget will be restored to default state
+            _ = ResetAllCustomWidgetConfirmationAppIntent()
+        }
+        DataWidgetsUpdater.update()
+        Current.modelManager.unsubscribe()
+        Current.appDatabaseUpdater.stop()
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        Current.modelManager.cleanup().cauterize()
+        Current.modelManager.subscribe(isAppInForeground: {
+            UIApplication.shared.applicationState == .active
+        })
+
+        Current.appDatabaseUpdater.update()
+        Current.panelsUpdater.update()
+
+        let widgetsCacheFile = AppConstants.widgetsCacheURL
+
+        // Clean up widgets cache file
+        do {
+            try FileManager.default.removeItem(at: widgetsCacheFile)
+        } catch {
+            Current.Log.error("Failed to remove widgets cache file: \(error)")
+        }
     }
 
     func windowScene(

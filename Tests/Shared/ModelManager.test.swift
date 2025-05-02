@@ -8,7 +8,7 @@ import XCTest
 class ModelManagerTests: XCTestCase {
     private var realm: Realm!
     private var testQueue: DispatchQueue!
-    private var manager: ModelManager!
+    private var manager: LegacyModelManager!
     private var servers: FakeServerManager!
     private var api1: FakeHomeAssistantAPI!
     private var api2: FakeHomeAssistantAPI!
@@ -19,7 +19,7 @@ class ModelManagerTests: XCTestCase {
         try super.setUpWithError()
 
         testQueue = DispatchQueue(label: #file)
-        manager = ModelManager()
+        manager = LegacyModelManager()
         manager.workQueue = testQueue
 
         servers = FakeServerManager(initial: 0)
@@ -374,7 +374,7 @@ class ModelManagerTests: XCTestCase {
         var handlers1APIs = [(HAConnection, Server)]()
         var handlers2APIs = [(HAConnection, Server)]()
 
-        let definitions: [ModelManager.SubscribeDefinition] = [
+        let definitions: [LegacyModelManager.SubscribeDefinition] = [
             .init(subscribe: { connection, server, queue, manager -> [HACancellable] in
                 XCTAssertEqual(queue, self.testQueue)
                 XCTAssertTrue(manager === self.manager)
@@ -389,14 +389,14 @@ class ModelManagerTests: XCTestCase {
             }),
         ]
 
-        manager.subscribe(definitions: definitions)
+        manager.subscribe(definitions: definitions, isAppInForeground: { true })
 
         func verify(apis: [HomeAssistantAPI]) {
             XCTAssertEqual(handlers1APIs.map(\.1), apis.map(\.server))
             XCTAssertEqual(handlers2APIs.map(\.1), apis.map(\.server))
             XCTAssertEqual(
                 handlers1APIs.map(\.0).map(ObjectIdentifier.init(_:)),
-                apis.map(\.connection).map(ObjectIdentifier.init(_:))
+                apis.compactMap(\.connection).map(ObjectIdentifier.init(_:))
             )
         }
 
@@ -411,7 +411,7 @@ class ModelManagerTests: XCTestCase {
         handlers1APIs.removeAll()
         handlers2APIs.removeAll()
 
-        manager.subscribe(definitions: definitions)
+        manager.subscribe(definitions: definitions, isAppInForeground: { true })
 
         XCTAssertTrue(handlers1_1.allSatisfy(\.wasCancelled))
         XCTAssertTrue(handlers2_1.allSatisfy(\.wasCancelled))
@@ -455,7 +455,7 @@ class ModelManagerTests: XCTestCase {
         }
 
         XCTAssertThrowsError(try doStore()) { error in
-            XCTAssertEqual(error as? ModelManager.StoreError, .missingPrimaryKey)
+            XCTAssertEqual(error as? LegacyModelManager.StoreError, .missingPrimaryKey)
         }
     }
 

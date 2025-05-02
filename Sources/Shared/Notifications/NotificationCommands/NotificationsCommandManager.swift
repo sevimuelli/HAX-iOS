@@ -1,6 +1,7 @@
 import Communicator
 import PromiseKit
 import UserNotifications
+import WidgetKit
 
 public protocol NotificationCommandHandler {
     func handle(_ payload: [String: Any]) -> Promise<Void>
@@ -19,9 +20,12 @@ public class NotificationCommandManager {
     public init() {
         register(command: "request_location_update", handler: HandlerLocationUpdate())
         register(command: "clear_notification", handler: HandlerClearNotification())
-
         #if os(iOS)
         register(command: "update_complications", handler: HandlerUpdateComplications())
+        #endif
+
+        #if os(iOS) || os(macOS)
+        register(command: "update_widgets", handler: HandlerUpdateWidgets())
         #endif
     }
 
@@ -110,6 +114,18 @@ private struct HandlerUpdateComplications: NotificationCommandHandler {
                 object: nil
             )
         }
+    }
+}
+
+private struct HandlerUpdateWidgets: NotificationCommandHandler {
+    func handle(_ payload: [String: Any]) -> Promise<Void> {
+        Current.Log.verbose("Reloading widgets triggered by notification command")
+        Current.clientEventStore.addEvent(ClientEvent(
+            text: "Notification command triggered widget update",
+            type: .notification
+        ))
+        DataWidgetsUpdater.update()
+        return Promise.value(())
     }
 }
 #endif

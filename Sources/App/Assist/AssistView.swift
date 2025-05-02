@@ -1,3 +1,4 @@
+import SFSafeSymbols
 import Shared
 import SwiftUI
 
@@ -25,7 +26,6 @@ struct AssistView: View {
                     pipelinesPicker
                 }
                 chatList
-                bottomBar
             }
             .navigationTitle("Assist")
             .navigationBarTitleDisplayMode(.inline)
@@ -46,15 +46,20 @@ struct AssistView: View {
             assistSession.inProgress = true
             viewModel.initialRoutine()
         }
+        .onChange(of: viewModel.focusOnInput) { newValue in
+            if newValue {
+                isFirstResponder = true
+            }
+        }
         .onDisappear {
             assistSession.inProgress = false
             viewModel.onDisappear()
         }
         .alert(isPresented: $viewModel.showError) {
             .init(
-                title: Text(L10n.errorLabel),
+                title: Text(verbatim: L10n.errorLabel),
                 message: Text(viewModel.errorMessage),
-                dismissButton: .default(Text(L10n.okLabel))
+                dismissButton: .default(Text(verbatim: L10n.okLabel))
             )
         }
     }
@@ -63,7 +68,7 @@ struct AssistView: View {
         Button {
             dismiss()
         } label: {
-            Image(systemName: "xmark")
+            Image(systemSymbol: .xmark)
         }
         .buttonStyle(.plain)
         .tint(Color(uiColor: .label))
@@ -102,37 +107,41 @@ struct AssistView: View {
     }
 
     private func makeChatBubble(item: AssistChatItem) -> some View {
-        Text(item.content)
-            .padding(8)
-            .padding(.horizontal, 8)
-            .background(backgroundForChatItemType(item.itemType))
-            .roundedCorner(10, corners: roundedCornersForChatItemType(item.itemType))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, alignment: alignmentForChatItemType(item.itemType))
-            .textSelection(.enabled)
+        VStack {
+            if item.itemType == .typing {
+                AssistTypingIndicator()
+                    .padding(.vertical, Spaces.half)
+            } else {
+                Text(item.content)
+            }
+        }
+        .padding(8)
+        .padding(.horizontal, 8)
+        .background(backgroundForChatItemType(item.itemType))
+        .roundedCorner(10, corners: roundedCornersForChatItemType(item.itemType))
+        .foregroundColor(.white)
+        .frame(maxWidth: .infinity, alignment: alignmentForChatItemType(item.itemType))
+        .textSelection(.enabled)
     }
 
     private var chatList: some View {
-        ZStack(alignment: .bottom) {
-            ZStack(alignment: .top) {
-                ScrollView {
-                    ScrollViewReader { proxy in
-                        VStack {
-                            ForEach(viewModel.chatItems, id: \.id) { item in
-                                makeChatBubble(item: item)
-                                    .id(item.id)
-                                    .padding(.bottom)
-                            }
-                        }
-                        .padding()
-                        .onChange(of: viewModel.chatItems) { _ in
-                            proxy.scrollTo(viewModel.chatItems.last?.id)
-                        }
+        ScrollView {
+            ScrollViewReader { proxy in
+                VStack {
+                    ForEach(viewModel.chatItems, id: \.id) { item in
+                        makeChatBubble(item: item)
+                            .id(item.id)
+                            .padding(.bottom)
                     }
                 }
-                linearGradientDivider(position: .top)
+                .padding()
+                .onChange(of: viewModel.chatItems) { _ in
+                    proxy.scrollTo(viewModel.chatItems.last?.id)
+                }
             }
-            linearGradientDivider(position: .bottom)
+        }
+        .safeAreaInset(edge: .bottom) {
+            bottomBar
         }
     }
 
@@ -148,6 +157,14 @@ struct AssistView: View {
     }
 
     private var bottomBar: some View {
+        ZStack {
+            inputTextView
+            microphoneIcon
+        }
+        .frame(maxHeight: 80)
+    }
+
+    private var inputTextView: some View {
         HStack(spacing: Spaces.two) {
             TextField("", text: $viewModel.inputText)
                 .textFieldStyle(.plain)
@@ -156,7 +173,7 @@ struct AssistView: View {
                 .frame(height: 45)
                 .padding(.horizontal, viewModel.isRecording ? .zero : Spaces.two)
                 .overlay(content: {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: CornerRadiusSizes.one)
                         .stroke(.gray)
                 })
                 .opacity(viewModel.isRecording ? 0 : 1)
@@ -175,6 +192,19 @@ struct AssistView: View {
         .padding(.vertical)
         .padding(.bottom, isIpad ? Spaces.two : Spaces.half)
         .background(viewModel.isRecording ? .clear : Color(uiColor: .systemBackground))
+        .opacity(viewModel.isRecording ? 0 : 1)
+    }
+
+    private var microphoneIcon: some View {
+        Button {
+            feedbackGenerator.notificationOccurred(.warning)
+            viewModel.stopStreaming()
+        } label: {
+            AssistMicAnimationView()
+                .frame(maxWidth: viewModel.isRecording ? .infinity : 0)
+        }
+        .buttonStyle(.plain)
+        .opacity(viewModel.isRecording ? 1 : 0)
     }
 
     private var assistSendTextButton: some View {
@@ -192,59 +222,30 @@ struct AssistView: View {
         .keyboardShortcut(.defaultAction)
     }
 
+    @ViewBuilder
     private var assistMicButton: some View {
         Button(action: {
-            isFirstResponder = false
-            feedbackGenerator.notificationOccurred(.warning)
-            if viewModel.isRecording {
-                viewModel.stopStreaming()
-            } else {
-                viewModel.assistWithAudio()
-            }
+            assistMicButtonAction()
         }, label: {
-            micIcon
+            Image(uiImage: MaterialDesignIcons.microphoneIcon.image(ofSize: iconSize, color: iconColor))
         })
         .buttonStyle(.plain)
-        .font(.system(size: viewModel.isRecording ? 70 : iconSize.width))
-        .padding(viewModel.isRecording ? [] : .trailing)
+        .keyboardShortcut(.init("a"))
+        .font(.system(size: iconSize.width))
+        .padding(.trailing)
         .animation(.smooth, value: viewModel.isRecording)
-        .onChange(of: viewModel.isRecording) { newValue in
-            if !newValue {
-                feedbackGenerator.notificationOccurred(.success)
-            }
-        }
+    }
+
+    private func assistMicButtonAction() {
+        feedbackGenerator.notificationOccurred(.success)
+        isFirstResponder = false
+        viewModel.assistWithAudio()
     }
 
     private var sendIcon: some View {
         Image(uiImage: MaterialDesignIcons.sendIcon.image(ofSize: iconSize, color: iconColor))
             .symbolRenderingMode(.palette)
             .foregroundStyle(.white, Color.asset(Asset.Colors.haPrimary))
-    }
-
-    @ViewBuilder
-    private var micIcon: some View {
-        let icon = MaterialDesignIcons.microphoneIcon.image(ofSize: iconSize, color: iconColor)
-        if #available(iOS 17.0, *) {
-            ZStack {
-                Image(systemName: "waveform.circle.fill")
-                    .symbolEffect(
-                        .variableColor.cumulative.dimInactiveLayers.nonReversing,
-                        options: .repeating,
-                        value: viewModel.isRecording
-                    )
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, Color.asset(Asset.Colors.haPrimary))
-                    .opacity(viewModel.isRecording ? 1 : 0)
-                Image(uiImage: icon)
-                    .opacity(viewModel.isRecording ? 0 : 1)
-            }
-        } else {
-            if viewModel.isRecording {
-                Image(systemName: "stop.circle")
-            } else {
-                Image(uiImage: icon)
-            }
-        }
     }
 
     private func backgroundForChatItemType(_ itemType: AssistChatItem.ItemType) -> Color {
@@ -255,7 +256,7 @@ struct AssistView: View {
             .gray
         case .error:
             .red
-        case .info:
+        case .info, .typing:
             .gray.opacity(0.5)
         }
     }
@@ -264,7 +265,7 @@ struct AssistView: View {
         switch itemType {
         case .input:
             .trailing
-        case .output:
+        case .output, .typing:
             .leading
         case .error, .info:
             .center
@@ -275,7 +276,7 @@ struct AssistView: View {
         switch itemType {
         case .input:
             [.topLeft, .topRight, .bottomLeft]
-        case .output:
+        case .output, .typing:
             [.topLeft, .topRight, .bottomRight]
         case .error, .info:
             [.allCorners]

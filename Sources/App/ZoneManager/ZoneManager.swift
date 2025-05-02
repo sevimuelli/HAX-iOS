@@ -108,6 +108,7 @@ class ZoneManager {
                 type: .locationUpdate,
                 payload: logPayload
             ))
+            return Promise.value(())
         }.catch { error in
             Current.Log.error("final error for \(event): \(error)")
 
@@ -118,7 +119,7 @@ class ZoneManager {
                 text: "Didn't update: \(error.localizedDescription)",
                 type: .locationUpdate,
                 payload: updatedPayload
-            )).cauterize()
+            ))
         }
     }
 
@@ -128,7 +129,10 @@ class ZoneManager {
 
         switch event.eventType {
         case let .region(region, state):
-            let api = Current.api(for: server)
+            guard let api = Current.api(for: server) else {
+                Current.Log.error("No API available to fire ZoneManager event, server: \(server)")
+                return
+            }
             let eventInfo = api.zoneStateEvent(region: region, state: state, zone: zone)
             api.CreateEvent(eventType: eventInfo.eventType, eventData: eventInfo.eventData).cauterize()
         case .locationChange:
@@ -165,7 +169,7 @@ class ZoneManager {
                 payload: [
                     "region": String(describing: region),
                 ]
-            )).cauterize()
+            ))
             locationManager.stopMonitoring(for: region)
         }
 
@@ -176,7 +180,7 @@ class ZoneManager {
                 payload: [
                     "region": String(describing: region),
                 ]
-            )).cauterize()
+            ))
 
             collector.ignoreNextState(for: region)
             locationManager.startMonitoring(for: region)

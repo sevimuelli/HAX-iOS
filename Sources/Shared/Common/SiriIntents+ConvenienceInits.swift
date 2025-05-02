@@ -112,10 +112,6 @@ public extension IntentAction {
     }
 }
 
-public extension WidgetActionsIntent {
-    static let widgetKind = "WidgetActions"
-}
-
 public extension IntentPanel {
     convenience init(panel: HAPanel, server: Server) {
         let image: INImage?
@@ -126,7 +122,7 @@ public extension IntentPanel {
         image = icon.flatMap { icon in
             INImage(
                 icon: Self.materialDesignIcon(for: icon),
-                foreground: Constants.tintColor.resolvedColor(with: .init(userInterfaceStyle: .light)),
+                foreground: AppConstants.tintColor.resolvedColor(with: .init(userInterfaceStyle: .light)),
                 background: .white
             )
         }
@@ -154,14 +150,11 @@ public extension IntentPanel {
     }
 
     var widgetURL: URL {
-        var components = URLComponents()
-        components.scheme = "homeassistant"
-        components.host = "navigate"
-        components.path = "/" + (identifier ?? "lovelace")
-        if let server = Current.servers.server(for: self) {
-            components.insertWidgetServer(server: server)
-        }
-        return components.url!
+        let server = Current.servers.server(for: self) ?? Current.servers.all.first
+        return AppConstants.openPageDeeplinkURL(
+            path: identifier ?? "lovelace",
+            serverId: server?.identifier.rawValue ?? ""
+        ) ?? AppConstants.deeplinkURL
     }
 
     private static func materialDesignIcon(for name: String?) -> MaterialDesignIcons {
@@ -173,10 +166,6 @@ public extension IntentPanel {
     }
 }
 
-public extension WidgetOpenPageIntent {
-    static let widgetKind = "WidgetOpenPage"
-}
-
 public extension IntentServer {
     convenience init(server: Server) {
         self.init(identifier: server.identifier.rawValue, display: server.info.name)
@@ -185,8 +174,4 @@ public extension IntentServer {
     static var all: [IntentServer] {
         Current.servers.all.map { IntentServer(server: $0) }
     }
-}
-
-public extension AssistInAppIntent {
-    static let widgetKind = "WidgetAssist"
 }

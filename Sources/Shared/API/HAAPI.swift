@@ -21,6 +21,7 @@ public class HomeAssistantAPI {
         case updateNotPossible
         case mobileAppComponentNotLoaded
         case mustUpgradeHomeAssistant(current: Version, minimum: Version)
+        case noAPIAvailable
         case unknown
     }
 
@@ -34,14 +35,14 @@ public class HomeAssistantAPI {
     public internal(set) var connection: HAConnection
 
     public static var clientVersionDescription: String {
-        "\(Constants.version) (\(Constants.build))"
+        "\(AppConstants.version) (\(AppConstants.build))"
     }
 
     public static var userAgent: String {
         // This matches Alamofire's generated string, for consistency with the past
-        let bundle = Constants.BundleID
-        let appVersion = Constants.version
-        let appBuild = Constants.build
+        let bundle = AppConstants.BundleID
+        let appVersion = AppConstants.version
+        let appBuild = AppConstants.build
 
         let osNameVersion: String = {
             let version = ProcessInfo.processInfo.operatingSystemVersion
@@ -68,17 +69,26 @@ public class HomeAssistantAPI {
         self.connection = HAKit.connection(configuration: .init(
             connectionInfo: {
                 do {
-                    return try .init(
-                        url: server.info.connection.activeURL(),
-                        userAgent: HomeAssistantAPI.userAgent,
-                        evaluateCertificate: { secTrust, completion in
-                            completion(
-                                Swift.Result<Void, Error> {
-                                    try server.info.connection.securityExceptions.evaluate(secTrust)
-                                }
-                            )
-                        }
-                    )
+                    if let activeURL = server.info.connection.activeURL() {
+                        return try .init(
+                            url: activeURL,
+                            userAgent: HomeAssistantAPI.userAgent,
+                            evaluateCertificate: { secTrust, completion in
+                                completion(
+                                    Swift.Result<Void, Error> {
+                                        try server.info.connection.securityExceptions.evaluate(secTrust)
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        Current.clientEventStore.addEvent(.init(
+                            text: "No active URL available to interact with API, please check if you have internal or external URL available, for internal URL you need to specify your network SSID otherwise for security reasons it won't be available.",
+                            type: .networkRequest
+                        ))
+                        Current.Log.error("activeURL was not available when HAAPI called initializer")
+                        return nil
+                    }
                 } catch {
                     Current.Log.error("couldn't create connection info: \(error)")
                     return nil
@@ -92,6 +102,7 @@ public class HomeAssistantAPI {
                 }
             }
         ))
+
         let manager = HomeAssistantAPI.configureSessionManager(
             urlConfig: urlConfig,
             interceptor: newInterceptor(),
@@ -194,12 +205,11 @@ public class HomeAssistantAPI {
                     // ha directly will send a 200 with an empty body for deleted
 
                     let message = "Integration is missing; registering."
-                    return Current.clientEventStore
+                    Current.clientEventStore
                         .addEvent(ClientEvent(text: message, type: .networkRequest, payload: [
                             "error": String(describing: error),
-                        ])).then { [self] in
-                            register()
-                        }
+                        ]))
+                    return register()
                 case .unregisteredIdentifier,
                      .unacceptableStatusCode,
                      .replaced,
@@ -259,7 +269,7 @@ public class HomeAssistantAPI {
         let fileManager = FileManager.default
 
         if let downloadDataDir = fileManager.containerURL(
-            forSecurityApplicationGroupIdentifier: Constants.AppGroupID
+            forSecurityApplicationGroupIdentifier: AppConstants.AppGroupID
         )?.appendingPathComponent("downloadedData", isDirectory: true) {
             try? fileManager.removeItem(at: downloadDataDir)
         }
@@ -273,7 +283,10 @@ public class HomeAssistantAPI {
             let dataManager: Alamofire.Session = needsAuth ? self.manager : Self.unauthenticatedManager
 
             if needsAuth {
-                let activeURL = server.info.connection.activeURL()
+                guard let activeURL = server.info.connection.activeURL() else {
+                    seal.reject(ServerConnectionError.noActiveURL(server.info.name))
+                    return
+                }
 
                 if !url.absoluteString.hasPrefix(activeURL.absoluteString) {
                     Current.Log.verbose("URL does not contain base URL, prepending base URL to \(url.absoluteString)")
@@ -315,6 +328,7 @@ public class HomeAssistantAPI {
                 server.connection.cloudhookURL = config.CloudhookURL
                 server.connection.set(address: config.RemoteUIURL, for: .remoteUI)
                 server.remoteName = config.LocationName ?? ServerInfo.defaultName
+                server.hassDeviceId = config.hassDeviceId
 
                 if let version = try? Version(hassVersion: config.Version) {
                     server.version = version
@@ -333,6 +347,7 @@ public class HomeAssistantAPI {
         domain: String,
         service: String,
         serviceData: [String: Any],
+        triggerSource: AppTriggerSource,
         shouldLog: Bool = true
     ) -> Promise<Void> {
         let intent = CallServiceIntent(domain: domain, service: service, payload: serviceData)
@@ -351,8 +366,11 @@ public class HomeAssistantAPI {
 
     public func GetCameraImage(cameraEntityID: String) -> Promise<UIImage> {
         Promise { seal in
-            let queryUrl = server.info.connection.activeAPIURL()
-                .appendingPathComponent("camera_proxy/\(cameraEntityID)")
+            guard let queryUrl = server.info.connection.activeAPIURL()?
+                .appendingPathComponent("camera_proxy/\(cameraEntityID)") else {
+                seal.reject(ServerConnectionError.noActiveURL(server.info.name))
+                return
+            }
             _ = manager.request(queryUrl)
                 .validate()
                 .responseData { response in
@@ -456,7 +474,7 @@ public class HomeAssistantAPI {
                 ]
             }
 
-            $0.AppIdentifier = Constants.BundleID
+            $0.AppIdentifier = AppConstants.BundleID
             $0.AppName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String
             $0.AppVersion = HomeAssistantAPI.clientVersionDescription
             $0.DeviceID = Current.settingsStore.integrationDeviceID
@@ -550,24 +568,10 @@ public class HomeAssistantAPI {
     }
 
     public var sharedEventDeviceInfo: [String: String] { [
-        "sourceDevicePermanentID": Constants.PermanentID,
+        "sourceDevicePermanentID": AppConstants.PermanentID,
         "sourceDeviceName": server.info.setting(for: .overrideDeviceName) ?? Current.device.deviceName(),
         "sourceDeviceID": Current.settingsStore.deviceID,
     ] }
-
-    public enum ActionSource: String, CaseIterable, CustomStringConvertible {
-        case Watch = "watch"
-        case Widget = "widget"
-        case AppShortcut = "appShortcut" // UIApplicationShortcutItem
-        case Preview = "preview"
-        case SiriShortcut = "siriShortcut"
-        case URLHandler = "urlHandler"
-        case CarPlay = "carPlay"
-
-        public var description: String {
-            rawValue
-        }
-    }
 
     public func legacyNotificationActionEvent(
         identifier: String,
@@ -614,7 +618,7 @@ public class HomeAssistantAPI {
     public func actionEvent(
         actionID: String,
         actionName: String,
-        source: ActionSource
+        source: AppTriggerSource
     ) -> (eventType: String, eventData: [String: String]) {
         var eventData = sharedEventDeviceInfo
         eventData["actionName"] = actionName
@@ -626,7 +630,7 @@ public class HomeAssistantAPI {
 
     public func actionScene(
         actionID: String,
-        source: ActionSource
+        source: AppTriggerSource
     ) -> (serviceDomain: String, serviceName: String, serviceData: [String: String]) {
         (serviceDomain: "scene", serviceName: "turn_on", serviceData: ["entity_id": actionID])
     }
@@ -634,7 +638,7 @@ public class HomeAssistantAPI {
     public func tagEvent(
         tagPath: String
     ) -> (eventType: String, eventData: [String: String]) {
-        var eventData = [String: String]()
+        var eventData: [String: String] = sharedEventDeviceInfo
         eventData["tag_id"] = tagPath
         if server.info.version < .tagWebhookAvailable {
             eventData["device_id"] = Current.settingsStore.integrationDeviceID
@@ -730,7 +734,7 @@ public class HomeAssistantAPI {
         }).asVoid()
     }
 
-    public func HandleAction(actionID: String, source: ActionSource) -> Promise<Void> {
+    public func HandleAction(actionID: String, source: AppTriggerSource) -> Promise<Void> {
         guard let action = Current.realm().object(ofType: Action.self, forPrimaryKey: actionID) else {
             Current.Log.error("couldn't find action with id \(actionID)")
             return .init(error: HomeAssistantAPI.APIError.cantBuildURL)
@@ -755,8 +759,41 @@ public class HomeAssistantAPI {
             return CallService(
                 domain: serviceInfo.serviceDomain,
                 service: serviceInfo.serviceName,
-                serviceData: serviceInfo.serviceData
+                serviceData: serviceInfo.serviceData,
+                triggerSource: source
             )
+        }
+    }
+
+    public func executeActionForDomainType(domain: Domain, entityId: String, state: String) -> Promise<Void> {
+        var request: HATypedRequest<HAResponseVoid>?
+        switch domain {
+        case .button, .inputButton:
+            request = .pressButton(domain: domain, entityId: entityId)
+        case .cover, .inputBoolean, .light, .switch:
+            request = .toggleDomain(domain: domain, entityId: entityId)
+        case .scene:
+            request = .applyScene(entityId: entityId)
+        case .script:
+            request = .runScript(entityId: entityId)
+        case .lock:
+            guard let state = Domain.State(rawValue: state) else { return .value }
+            switch state {
+            case .unlocking, .unlocked, .opening:
+                request = .lockLock(entityId: entityId)
+            case .locked, .locking:
+                request = .unlockLock(entityId: entityId)
+            default:
+                break
+            }
+        case .sensor, .binarySensor, .zone, .person:
+            break
+        }
+        if let request {
+            return connection.send(request).promise
+                .map { _ in () }
+        } else {
+            return .value
         }
     }
 
@@ -881,6 +918,38 @@ public class HomeAssistantAPI {
         }
     }
     #endif
+
+    public func profilePictureURL(completion: @escaping (URL?) -> Void) {
+        connection.caches.user.once { [weak self] user in
+            guard let self else {
+                Current.Log.error("Failed to retrieve profile picture URL: self is nil")
+                completion(nil)
+                return
+            }
+            connection.caches.states().once { [weak self] states in
+                let states = states.all
+                guard let person = states.first(where: { $0.attributes["user_id"] as? String == user.id }) else {
+                    Current.Log.error("Profile picture: No person found for user \(user.id)")
+                    completion(nil)
+                    return
+                }
+
+                guard let path = person.attributes["entity_picture"] as? String else {
+                    Current.Log.error("Profile picture: Missing URL for user entity picture, user id \(user.id)")
+                    completion(nil)
+                    return
+                }
+
+                guard let url = self?.server.info.connection.activeURL()?.appendingPathComponent(path) else {
+                    Current.Log.error("Profile picture: Missing active URL for user entity picture, user id \(user.id)")
+                    completion(nil)
+                    return
+                }
+
+                completion(url)
+            }
+        }
+    }
 }
 
 extension HomeAssistantAPI.APIError: LocalizedError {
@@ -903,6 +972,8 @@ extension HomeAssistantAPI.APIError: LocalizedError {
                 current.description,
                 minimum.description
             )
+        case .noAPIAvailable:
+            return L10n.HaApi.ApiError.noAvailableApi
         case .unknown:
             return L10n.HaApi.ApiError.unknown
         }

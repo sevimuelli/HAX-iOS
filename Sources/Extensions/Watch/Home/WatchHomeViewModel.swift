@@ -1,134 +1,223 @@
 import Communicator
 import Foundation
+import NetworkExtension
 import PromiseKit
-import RealmSwift
 import Shared
 
-struct WatchActionItem: Equatable {
-    let id: String
-    let name: String
-    let iconName: String
-    let backgroundColor: String
-    let iconColor: String
-    let textColor: String
+enum WatchHomeType {
+    case undefined
+    case empty
+    case config(watchConfig: WatchConfig, magicItemsInfo: [MagicItem.Info])
+    case error(message: String)
 }
 
-protocol WatchHomeViewModelProtocol: ObservableObject {
-    var actions: [WatchActionItem] { get set }
-    func onAppear()
-    func onDisappear()
-    func runActionId(_ actionId: String, completion: @escaping (Bool) -> Void)
-}
+final class WatchHomeViewModel: ObservableObject {
+    @Published var isLoading = false
+    @Published var showAssist = false
+    @Published var showError = false
+    @Published var errorMessage = ""
+    @Published private(set) var homeType: WatchHomeType = .undefined
 
-enum WatchHomeViewState {
-    case loading
-    case success
-    case failure
-    case idle
-}
+    @Published var watchConfig: WatchConfig = .init()
+    @Published var magicItemsInfo: [MagicItem.Info] = []
 
-final class WatchHomeViewModel: WatchHomeViewModelProtocol {
-    enum SendError: Error {
-        case notImmediate
-        case phoneFailed
+    // If the watchConfig items are the same but it's customization properties
+    // are different, the list won't refresh. This is a workaround to force a refresh
+    @Published var refreshListID: UUID = .init()
+
+    func fetchNetworkInfo(completion: (() -> Void)? = nil) {
+        NEHotspotNetwork.fetchCurrent { hotspotNetwork in
+            WatchUserDefaults.shared.set(hotspotNetwork?.ssid, key: .watchSSID)
+            completion?()
+        }
     }
 
-    @Published var actions: [WatchActionItem] = []
-
-    private var actionsToken: NotificationToken?
-    private var realmActions: [Action] = []
-
-    func onAppear() {
-        setupActionsObservation()
+    @MainActor
+    func initialRoutine() {
+        isLoading = true
+        requestConfig()
     }
 
-    func onDisappear() {
-        actionsToken?.invalidate()
+    @MainActor
+    func requestConfig() {
+        homeType = .undefined
+        isLoading = true
+        guard Communicator.shared.currentReachability != .notReachable else {
+            Current.Log.error("iPhone reachability is not immediate reachable")
+            loadCache()
+            return
+        }
+        Communicator.shared.send(.init(
+            identifier: InteractiveImmediateMessages.watchConfig.rawValue,
+            reply: { [weak self] message in
+                self?.handleMessageResponse(message)
+            }
+        ))
     }
 
-    func runActionId(_ actionId: String, completion: @escaping (Bool) -> Void) {
-        guard let selectedAction = realmActions.first(where: { $0.ID == actionId }) else {
-            completion(false)
+    @MainActor
+    private func handleMessageResponse(_ message: ImmediateMessage) {
+        switch message.identifier {
+        case InteractiveImmediateResponses.emptyWatchConfigResponse.rawValue:
+            clearCacheAndLoad()
+        case InteractiveImmediateResponses.watchConfigResponse.rawValue:
+            setupConfig(message)
+        default:
+            Current.Log
+                .error("Received unmapped response id for watch config request, id: \(message.identifier)")
+            loadCache()
+        }
+        updateLoading(isLoading: false)
+    }
+
+    @MainActor
+    private func setupConfig(_ message: ImmediateMessage) {
+        guard let configData = message.content["config"] as? Data,
+              let watchConfig = WatchConfig.decodeForWatch(configData) else {
+            Current.Log.error("Failed to get config data from watch config response")
             return
         }
 
-        Current.Log.verbose("Selected action id: \(actionId)")
+        guard let magicItemsInfo = message.content["magicItemsInfo"] as? [Data] else {
+            Current.Log.error("Failed to get magicItemsInfo data array from watch config response")
+            return
+        }
+        let itemsInfo = magicItemsInfo.map({ MagicItem.Info.decodeForWatch($0) })
 
-        firstly { () -> Promise<Void> in
-            Promise { seal in
-                guard Communicator.shared.currentReachability == .immediatelyReachable else {
-                    seal.reject(SendError.notImmediate)
-                    return
-                }
-
-                Current.Log.verbose("Signaling action pressed via phone")
-                let actionMessage = InteractiveImmediateMessage(
-                    identifier: "ActionRowPressed",
-                    content: ["ActionID": selectedAction.ID],
-                    reply: { message in
-                        Current.Log.verbose("Received reply dictionary \(message)")
-                        if message.content["fired"] as? Bool == true {
-                            seal.fulfill(())
-                        } else {
-                            seal.reject(SendError.phoneFailed)
-                        }
-                    }
+        do {
+            try Current.database().write { db in
+                try watchConfig.insert(db, onConflict: .replace)
+            }
+            saveItemsInfoInCache(itemsInfo.compactMap({ $0 }))
+        } catch {
+            Current.Log
+                .error(
+                    "Failed to save watch config and/or magic item info in database on Apple watch, error: \(error.localizedDescription)"
                 )
+        }
 
-                Current.Log.verbose("Sending ActionRowPressed message \(actionMessage)")
-                Communicator.shared.send(actionMessage, errorHandler: { error in
-                    Current.Log.error("Received error when sending immediate message \(error)")
-                    seal.reject(error)
-                })
-            }
-        }.recover { error -> Promise<Void> in
-            guard error == SendError.notImmediate, let server = Current.servers.server(for: selectedAction) else {
-                throw error
-            }
+        loadCache()
+    }
 
-            Current.Log.error("recovering error \(error) by trying locally")
-            return Current.api(for: server).HandleAction(actionID: selectedAction.ID, source: .Watch)
-        }.done {
-            completion(true)
-        }.catch { err in
-            Current.Log.error("Error during action event fire: \(err)")
-            completion(false)
+    @MainActor
+    func loadCache() {
+        do {
+            if let watchConfig = try Current.database().read({ db in
+                try WatchConfig.fetchOne(db)
+            }) {
+                loadInformationCache(watchConfig: watchConfig)
+            } else {
+                updateConfig(config: .init(), magicItemsInfo: [])
+            }
+        } catch {
+            Current.Log.error("Failed to fetch watch config from database, error: \(error.localizedDescription)")
+            displayError(message: L10n.Watch.Config.Cache.Error.message)
+            updateConfig(config: .init(), magicItemsInfo: [])
         }
     }
 
-    private func setupActionsObservation() {
-        let actions = Current.realm().objects(Action.self)
-            .sorted(byKeyPath: "Position")
-            .filter("showInWatch == true")
+    @MainActor
+    private func loadInformationCache(watchConfig: WatchConfig) {
+        let magicItemsInfo = getItemsInfoFromCache()
+        if !magicItemsInfo.isEmpty {
+            updateConfig(config: watchConfig, magicItemsInfo: magicItemsInfo)
+            resetError()
+        } else {
+            Current.Log.error("Failed to retrieve magic items cache")
+            displayError(message: L10n.Watch.Config.Error.message("No information cached"))
+        }
+        updateLoading(isLoading: false)
+    }
 
-        actionsToken?.invalidate()
-        actionsToken = actions.observe { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case let .initial(collectionType):
-                    self?.realmActions = collectionType.map({ $0 })
-                    self?.actions = collectionType.map({ $0.toWatchActionItem() })
-                case let .update(collectionType, _, _, _):
-                    self?.realmActions = collectionType.map({ $0 })
-                    self?.actions = collectionType.map({ $0.toWatchActionItem() })
-                case let .error(error):
-                    Current.Log
-                        .error("Error happened on observe actions for Apple Watch: \(error.localizedDescription)")
-                }
+    @MainActor
+    private func clearCacheAndLoad() {
+        do {
+            _ = try Current.database().write { db in
+                try WatchConfig.deleteAll(db)
             }
+        } catch {
+            Current.Log
+                .error(
+                    "Failed to delete watch config and/or magic item info in database on Apple watch, error: \(error.localizedDescription)"
+                )
+        }
+
+        deleteItemsInfoInCache()
+        loadCache()
+    }
+
+    private func saveItemsInfoInCache(_ itemsInfo: [MagicItem.Info]) {
+        do {
+            let fileURL = AppConstants.watchMagicItemsInfo
+            let jsonData = try JSONEncoder().encode(itemsInfo)
+            try jsonData.write(to: fileURL)
+            Current.Log
+                .verbose("JSON saved successfully for watch magic items info, file URL: \(fileURL.absoluteString)")
+        } catch {
+            Current.Log.error("Error saving JSON for magic items info: \(error)")
         }
     }
-}
 
-private extension Action {
-    func toWatchActionItem() -> WatchActionItem {
-        .init(
-            id: ID,
-            name: Text,
-            iconName: IconName,
-            backgroundColor: BackgroundColor,
-            iconColor: IconColor,
-            textColor: TextColor
-        )
+    private func deleteItemsInfoInCache() {
+        do {
+            let fileURL = AppConstants.watchMagicItemsInfo
+            try FileManager.default.removeItem(at: fileURL)
+        } catch {
+            Current.Log.error("Error deleting JSON for magic items info: \(error)")
+        }
+    }
+
+    private func getItemsInfoFromCache() -> [MagicItem.Info] {
+        let fileURL = AppConstants.watchMagicItemsInfo
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            Current.Log.error("Watch magic items info cache file doesn't exist at path: \(fileURL.absoluteString)")
+            return []
+        }
+
+        let data = FileManager.default.contents(atPath: fileURL.path) ?? Data()
+
+        do {
+            let infos = try JSONDecoder().decode([MagicItem.Info].self, from: data)
+            return infos
+        } catch {
+            Current.Log.error("Failed to decode watch magic item info data from cache, error: \(error)")
+            return []
+        }
+    }
+
+    private func updateConfig(config: WatchConfig, magicItemsInfo: [MagicItem.Info]) {
+        DispatchQueue.main.async { [weak self] in
+            self?.watchConfig = config
+            self?.magicItemsInfo = magicItemsInfo
+
+            if config.assist.showAssist,
+               !config.assist.serverId.isEmpty,
+               !config.assist.pipelineId.isEmpty {
+                self?.showAssist = true
+            } else {
+                self?.showAssist = false
+            }
+            self?.refreshListID = UUID()
+        }
+    }
+
+    private func updateLoading(isLoading: Bool) {
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = isLoading
+        }
+    }
+
+    private func displayError(message: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.errorMessage = message
+            self?.showError = true
+        }
+    }
+
+    private func resetError() {
+        DispatchQueue.main.async { [weak self] in
+            self?.errorMessage = ""
+            self?.showError = false
+        }
     }
 }
