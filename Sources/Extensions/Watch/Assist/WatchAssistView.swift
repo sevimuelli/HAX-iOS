@@ -3,7 +3,7 @@ import SwiftUI
 
 struct WatchAssistView: View {
     @StateObject private var viewModel: WatchAssistViewModel
-
+    @State private var isInitialAppearance = true
     private let progressViewId = "progressViewId"
 
     init(
@@ -13,34 +13,48 @@ struct WatchAssistView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            micButton
-            chatList
-            stateView
-            inlineLoading
-        }
-        .animation(.easeInOut, value: viewModel.state)
-        /* Double tap for watchOS 11
-         .handGestureShortcut(.primaryAction)
-          */
-        .onTapGesture {
-            viewModel.assist()
-        }
-        .modify {
-            if #available(watchOS 10, *) {
-                $0.toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        pipelineSelector
-                    }
+        NavigationView {
+            Button(action: {
+                viewModel.assist()
+            }, label: {
+                ZStack(alignment: .bottom) {
+                    micButton
+                    chatList
+                    stateView
+                    inlineLoading
                 }
-            } else {
-                $0.toolbar {
-                    pipelineSelector
+                .modify({ view in
+                    if #available(watchOS 10, *) {
+                        view.toolbar(content: {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                volumeButton
+                            }
+                        })
+                    } else {
+                        view.toolbar(content: {
+                            ToolbarItem {
+                                volumeButton
+                            }
+                        })
+                    }
+                })
+            })
+            .buttonStyle(.plain)
+            .modify { view in
+                if #available(watchOS 11, *) {
+                    view.handGestureShortcut(.primaryAction)
+                } else {
+                    view
                 }
             }
         }
+        .animation(.easeInOut, value: viewModel.state)
         .onAppear {
-            viewModel.initialRoutine()
+            // Avoid re-trigger when coming back from audio volume screen
+            if isInitialAppearance {
+                isInitialAppearance = false
+                viewModel.initialRoutine()
+            }
         }
         .onDisappear {
             viewModel.endRoutine()
@@ -49,22 +63,25 @@ struct WatchAssistView: View {
             // TODO: On watchOS 10 this can be replaced by '.sensoryFeedback' modifier
             let currentDevice = WKInterfaceDevice.current()
             switch newValue {
-            case .recording, .waitingForPipelineResponse:
+            case .recording:
                 currentDevice.play(.start)
+            case .waitingForPipelineResponse:
+                currentDevice.play(.start)
+                viewModel.startPingPong()
+            case .idle:
+                viewModel.stopPingPong()
             default:
                 break
             }
         }
-        .onChange(of: viewModel.showSettings) { newValue in
-            if newValue {
-                viewModel.stopRecording()
-            }
-        }
-        .fullScreenCover(isPresented: $viewModel.showSettings) {
-            WatchAssistSettings(assistService: viewModel.assistService)
-        }
         .onReceive(NotificationCenter.default.publisher(for: AssistDefaultComplication.launchNotification)) { _ in
             viewModel.initialRoutine()
+        }
+    }
+
+    private var volumeButton: some View {
+        NavigationLink(destination: VolumeView()) {
+            Image(systemName: "speaker.wave.2.fill")
         }
     }
 
@@ -88,20 +105,11 @@ struct WatchAssistView: View {
     }
 
     @ViewBuilder
-    private var pipelineSelector: some View {
-        Button {
-            viewModel.showSettings = true
-        } label: {
-            Image(systemName: "gear")
-        }
-    }
-
-    @ViewBuilder
     private var micButton: some View {
         if ![.loading, .recording].contains(viewModel.state), !viewModel.showChatLoader {
-            HStack(spacing: .zero) {
+            HStack(spacing: Spaces.one) {
                 if viewModel.assistService.deviceReachable {
-                    Text(L10n.Assist.Watch.MicButton.title)
+                    Text(verbatim: L10n.Assist.Watch.MicButton.title)
                     Image(systemName: "mic.fill")
                 } else {
                     Image(systemName: "iphone.slash")
@@ -147,20 +155,27 @@ struct WatchAssistView: View {
         Button(action: {
             viewModel.assist()
         }, label: {
-            if #available(watchOS 10.0, *) {
-                Image(systemName: "waveform.circle.fill")
-                    .font(.system(size: 80))
-                    .symbolEffect(
-                        .variableColor.cumulative.dimInactiveLayers.nonReversing,
-                        options: .repeating,
-                        value: viewModel.state
-                    )
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, Color.asset(Asset.Colors.haPrimary))
-                    .frame(maxHeight: .infinity)
-            } else {
-                Image(systemName: "waveform.circle.fill")
-                    .font(.system(size: 50))
+            VStack(spacing: .zero) {
+                if #available(watchOS 10.0, *) {
+                    Image(systemSymbol: .waveformCircleFill)
+                        .font(.system(size: 80))
+                        .symbolEffect(
+                            .variableColor.cumulative.dimInactiveLayers.nonReversing,
+                            options: .repeating,
+                            value: viewModel.state
+                        )
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, Color.asset(Asset.Colors.haPrimary))
+                } else {
+                    Image(systemSymbol: .waveformCircleFill)
+                        .font(.system(size: 50))
+                }
+                Text(verbatim: L10n.Watch.Assist.Button.Recording.title)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.gray)
+                Text(verbatim: L10n.Watch.Assist.Button.SendRequest.title)
+                    .font(.footnote.bold())
+                    .padding()
             }
         })
         .buttonStyle(.plain)

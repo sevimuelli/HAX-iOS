@@ -12,12 +12,13 @@ import RealmSwift
 import SafariServices
 import Shared
 import UIKit
+import WidgetKit
 import XCGLogger
 import PasscodeKit
 
-let keychain = Constants.Keychain
+let keychain = AppConstants.Keychain
 
-let prefs = UserDefaults(suiteName: Constants.AppGroupID)!
+let prefs = UserDefaults(suiteName: AppConstants.AppGroupID)!
 
 private extension UIApplication {
     var typedDelegate: AppDelegate {
@@ -64,6 +65,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setDefaults()
 
+        // swiftlint:disable prohibit_environment_assignment
         Current.backgroundTask = ApplicationBackgroundTaskRunner()
 
         Current.isBackgroundRequestsImmediate = { [lifecycleManager] in
@@ -83,6 +85,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         #else
         Current.tags = iOSTagManager()
         #endif
+        // swiftlint:enable prohibit_environment_assignment
 
         notificationManager.setupNotifications()
         setupFirebase()
@@ -96,13 +99,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             text: "Application Starting" + (launchingForLocation ? " due to location change" : ""),
             type: .unknown
         )
-        Current.clientEventStore.addEvent(event).cauterize()
+        Current.clientEventStore.addEvent(event)
 
         zoneManager = ZoneManager()
 
         UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
 
         setupWatchCommunicator()
+        setupUIApplicationShortcutItems()
 
         return true
     }
@@ -208,9 +212,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .full)
-        Current.Log.verbose("Background fetch activated at \(timestamp)!")
-
+        Current.clientEventStore.addEvent(ClientEvent(text: "Background fetch activated", type: .backgroundOperation))
         Current.backgroundTask(withName: "background-fetch") { remaining in
             let updatePromise: Promise<Void>
             if Current.settingsStore.isLocationEnabled(for: UIApplication.shared.applicationState),
@@ -324,33 +326,34 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        when(fulfilled: Current.apis.map { $0.connection.caches.user.once().promise }).done { [sceneManager] users in
-            guard users.contains(where: \.isAdmin) else {
-                Current.Log.info("not showing because not an admin anywhere")
-                return
-            }
+        when(fulfilled: Current.apis.compactMap { $0.connection.caches.user.once().promise })
+            .done { [sceneManager] users in
+                guard users.contains(where: \.isAdmin) else {
+                    Current.Log.info("not showing because not an admin anywhere")
+                    return
+                }
 
-            let alert = UIAlertController(
-                title: L10n.Alerts.Deprecations.NotificationCategory.title,
-                message: L10n.Alerts.Deprecations.NotificationCategory.message("iOS-2022.4"),
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: L10n.Nfc.List.learnMore, style: .default, handler: { _ in
-                userDefaults.set(true, forKey: seenKey)
-                openURLInBrowser(
-                    URL(string: "https://companion.home-assistant.io/app/ios/actionable-notifications")!,
-                    nil
+                let alert = UIAlertController(
+                    title: L10n.Alerts.Deprecations.NotificationCategory.title,
+                    message: L10n.Alerts.Deprecations.NotificationCategory.message("iOS-2022.4"),
+                    preferredStyle: .alert
                 )
-            }))
-            alert.addAction(UIAlertAction(title: L10n.okLabel, style: .cancel, handler: { _ in
-                userDefaults.set(true, forKey: seenKey)
-            }))
-            sceneManager.webViewWindowControllerPromise.done {
-                $0.present(alert)
+                alert.addAction(UIAlertAction(title: L10n.Nfc.List.learnMore, style: .default, handler: { _ in
+                    userDefaults.set(true, forKey: seenKey)
+                    openURLInBrowser(
+                        URL(string: "https://companion.home-assistant.io/app/ios/actionable-notifications")!,
+                        nil
+                    )
+                }))
+                alert.addAction(UIAlertAction(title: L10n.okLabel, style: .cancel, handler: { _ in
+                    userDefaults.set(true, forKey: seenKey)
+                }))
+                sceneManager.webViewWindowControllerPromise.done {
+                    $0.present(alert)
+                }
+            }.catch { error in
+                Current.Log.error("couldn't check for if user: \(error)")
             }
-        }.catch { error in
-            Current.Log.error("couldn't check for if user: \(error)")
-        }
     }
 
     private func setupWatchCommunicator() {
@@ -389,12 +392,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func setupModels() {
         // Force Realm migration to happen now
         _ = Realm.live()
-
-        Current.modelManager.cleanup().cauterize()
-        Current.modelManager.subscribe()
         Action.setupObserver()
         NotificationCategory.setupObserver()
-        WidgetOpenPageIntent.setupObserver()
     }
 
     private func setupMenus() {
@@ -413,6 +412,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     @objc private func menuRelatedSettingDidChange(_ note: Notification) {
         UIMenuSystem.main.setNeedsRebuild()
+    }
+
+    private func setupUIApplicationShortcutItems() {
+        if Current.isCatalyst {
+            UIApplication.shared.shortcutItems = [.init(
+                type: HAApplicationShortcutItem.openSettings.rawValue,
+                localizedTitle: L10n.ShortcutItem.OpenSettings.title,
+                localizedSubtitle: nil,
+                icon: .init(systemSymbol: .gear)
+            )]
+        }
     }
 
     // swiftlint:disable:next file_length

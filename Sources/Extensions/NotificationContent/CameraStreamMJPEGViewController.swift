@@ -105,7 +105,10 @@ class CameraStreamMJPEGViewController: UIViewController, CameraStreamHandler {
             fatalError("we checked for a non-nil path on init, this should not be possible")
         }
 
-        let url = api.server.info.connection.activeURL().appendingPathComponent(path)
+        guard let url = api.server.info.connection.activeURL()?.appendingPathComponent(path) else {
+            Current.Log.error("ActiveURL was not available while 'setupStreamer()' was called")
+            return
+        }
         var headers = HTTPHeaders()
         if let tempHeaders = api.server.info.connection.activeCustomHeaders() {
             for header in tempHeaders {

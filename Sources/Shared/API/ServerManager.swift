@@ -115,7 +115,12 @@ private struct ServerCache {
 
     var server: [Identifier<Server>: Server] = [:] {
         didSet {
-            precondition(deletedServers.isDisjoint(with: server.keys))
+            if !deletedServers.isDisjoint(with: server.keys) {
+                Current.Log
+                    .error(
+                        "There are server(s) in cache that are deleted also in deleted servers set, servers: \(server.keys), deleted servers: \(deletedServers)"
+                    )
+            }
         }
     }
 
@@ -170,7 +175,7 @@ final class ServerManagerImpl: ServerManager {
 
     init(
         keychain: ServerManagerKeychain = Keychain(service: ServerManagerImpl.service),
-        historicKeychain: ServerManagerKeychain = Keychain(service: Constants.BundleID)
+        historicKeychain: ServerManagerKeychain = Keychain(service: AppConstants.BundleID)
     ) {
         self.keychain = keychain
         self.historicKeychain = historicKeychain

@@ -20,6 +20,7 @@ enum SettingsRootDataSource {
 
     enum Row: String, CaseIterable {
         case general
+        case gestures
         case servers
         case location
         case notifications
@@ -27,6 +28,8 @@ enum SettingsRootDataSource {
         case passcode
         case actions
         case sensors
+        case watch
+        case carPlay
         case complications
         case nfc
         case widgets
@@ -40,12 +43,15 @@ enum SettingsRootDataSource {
                 switch self {
                 case .servers: return SettingsRootDataSource.servers()
                 case .general: return SettingsRootDataSource.general()
+                case .gestures: return SettingsRootDataSource.gestures()
                 case .location: return SettingsRootDataSource.location()
                 case .notifications: return SettingsRootDataSource.notifications()
                 case .thread: return SettingsRootDataSource.thread()
                 case .passcode: return SettingsRootDataSource.passcode()
                 case .actions: return SettingsRootDataSource.actions()
                 case .sensors: return SettingsRootDataSource.sensors()
+                case .watch: return SettingsRootDataSource.watch()
+                case .carPlay: return SettingsRootDataSource.carPlay()
                 case .complications: return SettingsRootDataSource.complications()
                 case .nfc: return SettingsRootDataSource.nfc()
                 case .widgets: return SettingsRootDataSource.widgets()
@@ -75,9 +81,18 @@ enum SettingsRootDataSource {
             $0.title = L10n.SettingsDetails.General.title
             $0.icon = .paletteOutlineIcon
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
-                let view = SettingsDetailViewController()
-                view.detailGroup = .general
-                return view
+                GeneralSettingsView().embeddedInHostingController()
+            }, onDismiss: nil)
+        }
+    }
+
+    private static func gestures() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = L10n.Gestures.Screen.title
+            $0.icon = .gestureIcon
+            $0.isAvailableForMac = false
+            $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
+                GesturesSetupView().embeddedInHostingController()
             }, onDismiss: nil)
         }
     }
@@ -111,7 +126,7 @@ enum SettingsRootDataSource {
             $0.isAvailableForMac = false
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 guard #available(iOS 17, *) else { return UIViewController() }
-                return UIHostingController(rootView: ThreadCredentialsManagementView.build())
+                return ThreadCredentialsManagementView().embeddedInHostingController()
             }, onDismiss: nil)
         }
     }
@@ -131,7 +146,7 @@ enum SettingsRootDataSource {
 
     private static func actions() -> SettingsButtonRow {
         SettingsButtonRow {
-            $0.title = L10n.SettingsDetails.Actions.title
+            $0.title = L10n.SettingsDetails.LegacyActions.title
             $0.icon = .gamepadVariantOutlineIcon
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 let view = SettingsDetailViewController()
@@ -146,15 +161,45 @@ enum SettingsRootDataSource {
             $0.title = L10n.SettingsSensors.title
             $0.icon = .formatListBulletedIcon
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
-                SensorListViewController()
+                SensorListView().embeddedInHostingController()
             }, onDismiss: nil)
+        }
+    }
+
+    private static func watch() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = L10n.Settings.DetailsSection.WatchRowConfiguration.title
+            $0.icon = .watchVariantIcon
+            $0.hidden = .isCatalyst
+            $0.presentationMode = .presentModally(controllerProvider: ControllerProvider.callback {
+                let controller = WatchConfigurationView().embeddedInHostingController()
+                controller.overrideUserInterfaceStyle = .dark
+                return controller
+            }, onDismiss: { _ in
+
+            })
+        }
+    }
+
+    private static func carPlay() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = "CarPlay"
+            $0.icon = .carBackIcon
+            $0.hidden = .isCatalyst
+            $0.presentationMode = .presentModally(controllerProvider: ControllerProvider.callback {
+                let controller = CarPlayConfigurationView().embeddedInHostingController()
+                controller.overrideUserInterfaceStyle = .dark
+                return controller
+            }, onDismiss: { _ in
+
+            })
         }
     }
 
     private static func complications() -> SettingsButtonRow {
         SettingsButtonRow {
-            $0.title = L10n.Settings.DetailsSection.WatchRow.title
-            $0.icon = .watchVariantIcon
+            $0.title = L10n.Settings.DetailsSection.WatchRowComplications.title
+            $0.icon = .chartDonutIcon
             $0.hidden = .isCatalyst
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 ComplicationListViewController()
@@ -180,7 +225,7 @@ enum SettingsRootDataSource {
             $0.title = L10n.Settings.Widgets.title
             $0.icon = .widgetsIcon
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
-                UIHostingController(rootView: WidgetsSettingsView.build())
+                WidgetBuilderView().embeddedInHostingController()
             }, onDismiss: nil)
         }
     }
@@ -203,9 +248,7 @@ enum SettingsRootDataSource {
             $0.title = L10n.SettingsDetails.Privacy.title
             $0.icon = .lockOutlineIcon
             $0.presentationMode = .show(controllerProvider: .callback {
-                let view = SettingsDetailViewController()
-                view.detailGroup = .privacy
-                return view
+                PrivacyView().embeddedInHostingController()
             }, onDismiss: nil)
         }
     }
@@ -215,7 +258,7 @@ enum SettingsRootDataSource {
             $0.title = L10n.Settings.Debugging.title
             $0.icon = .bugIcon
             $0.presentationMode = .show(controllerProvider: .callback {
-                DebugSettingsViewController()
+                DebugView().embeddedInHostingController()
             }, onDismiss: nil)
         }
     }

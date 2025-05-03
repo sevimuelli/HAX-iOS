@@ -8,154 +8,259 @@ struct WidgetBasicContainerView: View {
 
     let emptyViewGenerator: () -> AnyView
     let contents: [WidgetBasicViewModel]
+    let type: WidgetType
+    let showLastUpdate: Bool
 
-    init(emptyViewGenerator: @escaping () -> AnyView, contents: [WidgetBasicViewModel]) {
+    init(
+        emptyViewGenerator: @escaping () -> AnyView,
+        contents: [WidgetBasicViewModel],
+        type: WidgetType,
+        showLastUpdate: Bool = false
+    ) {
         self.emptyViewGenerator = emptyViewGenerator
         self.contents = contents
+        self.type = type
+        self.showLastUpdate = showLastUpdate
     }
 
     var body: some View {
-        Group {
+        WidgetBasicContainerWrapperView(
+            emptyViewGenerator: emptyViewGenerator,
+            contents: contents,
+            type: type,
+            showLastUpdate: showLastUpdate,
+            family: family
+        )
+    }
+}
+
+@available(iOS 18, *)
+struct WidgetBasicContainerView_Previews: PreviewProvider {
+    struct WidgetBasicContainerViewPreviewData {
+        let modelsCount: Int
+        let withSubtitle: Bool
+        let withIconBackgroundColor: Bool
+    }
+
+    static var previews: some View {
+        WidgetBasicContainerView_Previews.systemSmallConfigurations.previews()
+        WidgetBasicContainerView_Previews.systemMediumConfigurations.previews()
+        WidgetBasicContainerView_Previews.systemLargeConfigurations.previews()
+    }
+
+    static var systemSmallConfigurations: SnapshottablePreviewConfigurations<WidgetBasicContainerViewPreviewData> =
+        .init(
+            configurations: Self.configurations(for: .systemSmall)
+        ) { previewData in
+            widgetBasicContainerView(
+                modelsCount: previewData.modelsCount,
+                withSubtitle: previewData.withSubtitle,
+                withIconBackgroundColor: previewData.withIconBackgroundColor,
+                familySize: .systemSmall
+            )
+            .previewContext(WidgetPreviewContext(family: WidgetFamily.systemSmall))
+        }
+
+    static var systemMediumConfigurations: SnapshottablePreviewConfigurations<WidgetBasicContainerViewPreviewData> =
+        .init(
+            configurations: Self.configurations(for: .systemMedium)
+        ) { previewData in
+            widgetBasicContainerView(
+                modelsCount: previewData.modelsCount,
+                withSubtitle: previewData.withSubtitle,
+                withIconBackgroundColor: previewData.withIconBackgroundColor,
+                familySize: .systemMedium
+            )
+            .previewContext(WidgetPreviewContext(family: WidgetFamily.systemMedium))
+        }
+
+    static var systemLargeConfigurations: SnapshottablePreviewConfigurations<WidgetBasicContainerViewPreviewData> =
+        .init(
+            configurations: Self.configurations(for: .systemLarge)
+        ) { previewData in
+            widgetBasicContainerView(
+                modelsCount: previewData.modelsCount,
+                withSubtitle: previewData.withSubtitle,
+                withIconBackgroundColor: previewData.withIconBackgroundColor,
+                familySize: .systemLarge
+            )
+            .previewContext(WidgetPreviewContext(family: WidgetFamily.systemLarge))
+        }
+
+    private static func maxTiles(for familySize: WidgetFamily) -> Int {
+        switch familySize {
+        case .systemSmall: 3
+        case .systemMedium: 6
+        case .systemLarge: 12
+        default: 12
+        }
+    }
+
+    private static func configurations(for familySize: WidgetFamily)
+        -> [
+            SnapshottablePreviewConfigurations<WidgetBasicContainerViewPreviewData>
+                .Configuration<WidgetBasicContainerViewPreviewData>
+        ] {
+        (1 ... maxTiles(for: familySize))
+            .flatMap { maxTiles in
+                [
+                    .init(
+                        item: .init(
+                            modelsCount: maxTiles,
+                            withSubtitle: true,
+                            withIconBackgroundColor: true
+                        ),
+                        name: previewName(
+                            "withSubtitleWithIconBackground",
+                            widgetFamily: familySize,
+                            tilesCount: maxTiles
+                        )
+                    ),
+                    .init(
+                        item: .init(
+                            modelsCount: maxTiles,
+                            withSubtitle: true,
+                            withIconBackgroundColor: false
+                        ),
+                        name: previewName(
+                            "withSubtitleWithoutIconBackground",
+                            widgetFamily: familySize,
+                            tilesCount: maxTiles
+                        )
+                    ),
+                    .init(
+                        item: .init(
+                            modelsCount: maxTiles,
+                            withSubtitle: false,
+                            withIconBackgroundColor: true
+                        ),
+                        name: previewName(
+                            "withoutSubtitleWithIconBackground",
+                            widgetFamily: familySize,
+                            tilesCount: maxTiles
+                        )
+                    ),
+                    .init(
+                        item: .init(
+                            modelsCount: maxTiles,
+                            withSubtitle: false,
+                            withIconBackgroundColor: false
+                        ),
+                        name: previewName(
+                            "withoutSubtitleWithoutIconBackground",
+                            widgetFamily: familySize,
+                            tilesCount: maxTiles
+                        )
+                    ),
+                ]
+            }
+    }
+
+    private static func previewName(
+        _ base: String,
+        widgetFamily: WidgetFamily,
+        tilesCount: Int
+    ) -> String {
+        "\(base)-\(widgetFamily.description)-\(String(format: "%02d", tilesCount))_tiles"
+    }
+
+    private static func widgetBasicContainerView(
+        modelsCount: Int,
+        withSubtitle: Bool,
+        withIconBackgroundColor: Bool,
+        familySize: WidgetFamily
+    ) -> some View {
+        WidgetBasicContainerWrapperView(
+            emptyViewGenerator: {
+                AnyView(EmptyView())
+            },
+            contents: models(
+                count: modelsCount,
+                withSubtitle: withSubtitle,
+                withIconBackgroundColor: withIconBackgroundColor
+            ),
+            type: .custom,
+            family: familySize
+        )
+    }
+
+    private static func models(
+        count: Int,
+        withSubtitle: Bool,
+        withIconBackgroundColor: Bool
+    ) -> [WidgetBasicViewModel] {
+        (0 ..< count).map { index in
+            WidgetBasicViewModel(
+                id: "\(index)",
+                title: "Title \(index)",
+                subtitle: withSubtitle ? "Subtitle \(index)" : nil,
+                interactionType: .appIntent(.refresh),
+                icon: .abTestingIcon,
+                showIconBackground: withIconBackgroundColor
+            )
+        }
+    }
+}
+
+/// This wrapper only exists so it can be snapshot tested with the proper family size which is not possible with the
+/// `WidgetBasicContainerView` and the environment variable
+struct WidgetBasicContainerWrapperView: View {
+    let emptyViewGenerator: () -> AnyView
+    let contents: [WidgetBasicViewModel]
+    let type: WidgetType
+    let showLastUpdate: Bool
+    let family: WidgetFamily
+
+    init(
+        emptyViewGenerator: @escaping () -> AnyView,
+        contents: [WidgetBasicViewModel],
+        type: WidgetType,
+        showLastUpdate: Bool = false,
+        family: WidgetFamily
+    ) {
+        self.emptyViewGenerator = emptyViewGenerator
+        self.contents = contents
+        self.type = type
+        self.showLastUpdate = showLastUpdate
+        self.family = family
+    }
+
+    var body: some View {
+        VStack {
             if contents.isEmpty {
                 emptyViewGenerator()
             } else {
-                content(for: contents)
+                content(for: Array(contents.prefix(WidgetFamilySizes.size(for: family))))
+            }
+            if showLastUpdate, !contents.isEmpty {
+                Group {
+                    Text("\(L10n.Widgets.Custom.ShowUpdateTime.title) ") + Text(Date.now, style: .time)
+                }
+                .font(.system(size: 10).bold())
+                .frame(maxWidth: .infinity, alignment: .center)
+                .multilineTextAlignment(.center)
+                .padding(.bottom, Spaces.half)
+                .opacity(0.5)
             }
         }
         // Whenever Apple allow apps to use material backgrounds we should update this
         .widgetBackground(Color.asset(Asset.Colors.primaryBackground))
     }
 
-    @available(iOS 17.0, *)
-    private func intent(for model: WidgetBasicViewModel) -> (any AppIntent)? {
-        switch model.interactionType {
-        case .widgetURL:
-            return nil
-        case let .appIntent(widgetIntentType):
-            switch widgetIntentType {
-            case .action:
-                let intent = WidgetActionsAppIntent()
-                intent.actions = [IntentActionAppEntity(id: model.id, displayString: model.title)]
-                return intent
-            }
-        }
-    }
-
     @ViewBuilder
     func content(for models: [WidgetBasicViewModel]) -> some View {
-        let actionCount = models.count
-        let columnCount = Self.columnCount(family: family, modelCount: actionCount)
-        let rows = Array(columnify(count: columnCount, models: models))
-
-        let sizeStyle: WidgetBasicSizeStyle = {
-            if models.count == 1 {
-                return .single
-            }
-
-            let compactBp = Self.compactSizeBreakpoint(for: family)
-
-            let condensed = compactBp < actionCount
-            let compactRowCount = compactBp / Self.columnCount(family: family, modelCount: compactBp)
-
-            if condensed {
-                return .condensed
-            } else if rows.count < compactRowCount {
-                return .expanded
-            } else {
-                return .regular
-            }
-        }()
-
-        VStack(alignment: .leading, spacing: Spaces.one) {
-            ForEach(rows, id: \.self) { column in
-                HStack(spacing: Spaces.one) {
-                    ForEach(column) { model in
-                        if case let .widgetURL(url) = model.interactionType {
-                            Link(destination: url.withWidgetAuthenticity()) {
-                                WidgetBasicView(model: model, sizeStyle: sizeStyle)
-                            }
-                        } else {
-                            if #available(iOS 17.0, *), let intent = intent(for: model) {
-                                Button(intent: intent) {
-                                    WidgetBasicView(model: model, sizeStyle: sizeStyle)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding(models.count == 1 ? 0 : Spaces.one)
-    }
-
-    private func columnify(count: Int, models: [WidgetBasicViewModel]) -> AnyIterator<[WidgetBasicViewModel]> {
-        var perActionIterator = models.makeIterator()
-        return AnyIterator { () -> [WidgetBasicViewModel]? in
-            let column = stride(from: 0, to: count, by: 1)
-                .compactMap { _ in perActionIterator.next() }
-            return column.isEmpty == false ? column : nil
-        }
-    }
-
-    static func columnCount(family: WidgetFamily, modelCount: Int) -> Int {
-        switch family {
-        #if !targetEnvironment(macCatalyst) // no ventura SDK yet
-        case .accessoryCircular, .accessoryInline, .accessoryRectangular: return 1
-        #endif
-        case .systemSmall: return 1
-        case .systemMedium: return 2
-        case .systemLarge:
-            if modelCount <= 2 {
-                // 2 'landscape' actions looks better than 2 'portrait'
-                return 1
-            } else {
-                return 2
-            }
-        case .systemExtraLarge:
-            if modelCount <= 4 {
-                return 1
-            } else if modelCount <= 15 {
-                // note this is 15 and not 16 - divisibility by 3 here
-                return 3
-            } else {
-                return 4
-            }
-        @unknown default: return 2
-        }
-    }
-
-    /// More than this number: show compact (icon left, text right) version
-    static func compactSizeBreakpoint(for family: WidgetFamily) -> Int {
-        switch family {
-        #if !targetEnvironment(macCatalyst) // no ventura SDK yet
-        case .accessoryCircular,
-             .accessoryInline,
-             .accessoryRectangular:
-            return 1
-        #endif
-        case .systemSmall: return 2
-        case .systemMedium: return 4
-        case .systemLarge: return 10
-        case .systemExtraLarge: return 20
-        @unknown default: return 8
-        }
-    }
-
-    static func maximumCount(family: WidgetFamily) -> Int {
-        switch family {
-        #if !targetEnvironment(macCatalyst) // no ventura SDK yet
-        case .accessoryCircular,
-             .accessoryInline,
-             .accessoryRectangular:
-            return 1
-        #endif
-        case .systemSmall: return 2
-        case .systemMedium: return 4
-        case .systemLarge: return 10
-        case .systemExtraLarge: return 20
-        @unknown default: return 4
-        }
+        let modelsCount = models.count
+        let columnCount = WidgetFamilySizes.columns(family: family, modelCount: modelsCount)
+        let rows = Array(WidgetFamilySizes.rows(count: columnCount, models: models))
+        WidgetBasicView(
+            type: type,
+            rows: rows,
+            sizeStyle: WidgetFamilySizes.sizeStyle(
+                family: family,
+                modelsCount: modelsCount,
+                rowsCount: rows.count
+            )
+        )
     }
 
     // This is all widgets that are on the lock screen

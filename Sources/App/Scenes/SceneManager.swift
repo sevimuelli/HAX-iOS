@@ -49,6 +49,7 @@ final class SceneManager {
     }
 
     init() {
+        // swiftlint:disable prohibit_environment_assignment
         Current.realmFatalPresentation = { [weak self] viewController in
             guard let self else { return }
 
@@ -62,6 +63,7 @@ final class SceneManager {
                 })
             }
         }
+        // swiftlint:enable prohibit_environment_assignment
     }
 
     fileprivate func pendingResolver<T>(from activities: Set<NSUserActivity>) -> (T) -> Void {
@@ -120,18 +122,30 @@ final class SceneManager {
     ) -> Guarantee<DelegateType> {
         if let active = existingScenes(for: query.activity).first,
            let delegate = active.delegate as? DelegateType {
+            Current.Log.verbose("Ready to activate scene \(active.session.persistentIdentifier)")
+
             let options = UIScene.ActivationRequestOptions()
             options.requestingScene = active
 
-            if #available(iOS 17.0, *) {
-                UIApplication.shared.activateSceneSession(for: .init(session: active.session, options: options))
-            } else {
-                UIApplication.shared.requestSceneSessionActivation(
-                    active.session,
-                    userActivity: nil,
-                    options: options,
-                    errorHandler: nil
-                )
+            // Only activate scene if not activated already
+            guard active.activationState != .foregroundActive else {
+                Current.Log
+                    .verbose("Did not activate scene \(active.session.persistentIdentifier), it was already active")
+                return .value(delegate)
+            }
+
+            // Guarantee it runs on main thread when coming from widgets
+            DispatchQueue.main.async {
+                if #available(iOS 17.0, *) {
+                    UIApplication.shared.activateSceneSession(for: .init(session: active.session, options: options))
+                } else {
+                    UIApplication.shared.requestSceneSessionActivation(
+                        active.session,
+                        userActivity: nil,
+                        options: options,
+                        errorHandler: nil
+                    )
+                }
             }
             return .value(delegate)
         }
@@ -147,6 +161,8 @@ final class SceneManager {
         pendingResolvers[token] = PendingResolver(resolver: resolver)
 
         if supportsMultipleScenes {
+            Current.Log.verbose("Ready to request new scene activation for \(query.activity)")
+
             let activity = query.activity.activity
             activity.userInfo = [
                 Self.activityUserInfoKeyResolver: token,

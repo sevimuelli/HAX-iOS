@@ -5,6 +5,10 @@ import PromiseKit
 
 typealias URLRequestConvertible = Alamofire.URLRequestConvertible
 
+public enum ServerConnectionError: Error {
+    case noActiveURL(_ serverName: String)
+}
+
 public class AuthenticationAPI {
     public enum AuthenticationError: LocalizedError {
         case serverError(statusCode: Int, errorCode: String?, error: String?)
@@ -27,6 +31,10 @@ public class AuthenticationAPI {
 
     public func refreshTokenWith(tokenInfo: TokenInfo) -> Promise<TokenInfo> {
         Promise { seal in
+            guard let activeUrl = server.info.connection.activeURL() else {
+                seal.reject(ServerConnectionError.noActiveURL(server.info.name))
+                return
+            }
             let token = tokenInfo.refreshToken
             var headers = HTTPHeaders()
             if let tempHeaders = server.info.connection.activeCustomHeaders() {
@@ -36,7 +44,7 @@ public class AuthenticationAPI {
             }
             let routeInfo = RouteInfo(
                 route: AuthenticationRoute.refreshToken(token: token),
-                baseURL: server.info.connection.activeURL(),
+                baseURL: activeUrl,
                 headers: headers
             )
             let request = session.request(routeInfo)
@@ -55,6 +63,10 @@ public class AuthenticationAPI {
 
     public func revokeToken(tokenInfo: TokenInfo) -> Promise<Bool> {
         Promise { seal in
+            guard let activeUrl = server.info.connection.activeURL() else {
+                seal.reject(ServerConnectionError.noActiveURL(server.info.name))
+                return
+            }
             let token = tokenInfo.accessToken
             var headers = HTTPHeaders()
             if let tempHeaders = server.info.connection.activeCustomHeaders() {
@@ -64,7 +76,7 @@ public class AuthenticationAPI {
             }
             let routeInfo = RouteInfo(
                 route: AuthenticationRoute.revokeToken(token: token),
-                baseURL: server.info.connection.activeURL(),
+                baseURL: activeUrl,
                 headers: headers
             )
             let request = session.request(routeInfo)

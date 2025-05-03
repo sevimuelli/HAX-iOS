@@ -1,42 +1,32 @@
 import Shared
 import SwiftUI
-import UIKit
 
-struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtocol {
+struct WatchHomeView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var viewModel: ViewModel
+    @StateObject private var viewModel = WatchHomeViewModel()
     @State private var showAssist = false
 
-    private let stateIconSize: CGSize = .init(width: 60, height: 60)
-    private let stateIconColor: UIColor = .white
-    private let interfaceDevice = WKInterfaceDevice.current()
-
-    init(viewModel: ViewModel) {
-        self._viewModel = .init(wrappedValue: viewModel)
+    init() {
         MaterialDesignIcons.register()
     }
 
     var body: some View {
         navigation
-            .onAppear {
-                viewModel.onAppear()
-            }
-            .onDisappear {
-                viewModel.onDisappear()
-            }
-            .fullScreenCover(isPresented: $showAssist, content: {
-                WatchAssistView.build()
-            })
             .onReceive(NotificationCenter.default.publisher(for: AssistDefaultComplication.launchNotification)) { _ in
                 showAssist = true
             }
-            .onChange(of: scenePhase) { newScenePhase in
-                switch newScenePhase {
-                case .active:
-                    viewModel.fetchNetworkInfo(completion: nil)
-                default:
-                    break
-                }
+            .fullScreenCover(isPresented: $viewModel.isLoading, content: {
+                loadingState
+            })
+            .fullScreenCover(isPresented: $showAssist, content: {
+                WatchAssistView.build(
+                    serverId: viewModel.watchConfig.assist.serverId,
+                    pipelineId: viewModel.watchConfig.assist.pipelineId
+                )
+            })
+            .onAppear {
+                viewModel.fetchNetworkInfo(completion: nil)
+                viewModel.initialRoutine()
             }
     }
 
@@ -45,6 +35,23 @@ struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtoco
         if #available(watchOS 10, *) {
             NavigationStack {
                 content
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            navReloadButton
+                        }
+                        if viewModel.showAssist {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                assistButton
+                                    .modify { view in
+                                        if #available(watchOS 11, *) {
+                                            view.handGestureShortcut(.primaryAction)
+                                        } else {
+                                            view
+                                        }
+                                    }
+                            }
+                        }
+                    }
             }
         } else {
             NavigationView {
@@ -53,62 +60,100 @@ struct WatchHomeView<ViewModel>: View where ViewModel: WatchHomeViewModelProtoco
         }
     }
 
+    private var assistButton: some View {
+        Button(action: {
+            showAssist = true
+        }, label: {
+            Image(uiImage: MaterialDesignIcons.messageProcessingOutlineIcon.image(
+                ofSize: .init(width: 24, height: 24),
+                color: Asset.Colors.haPrimary.color
+            ))
+        })
+    }
+
+    private var loadingState: some View {
+        VStack {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .scaleEffect(2)
+            Button(L10n.Watch.Home.Loading.Skip.title) {
+                viewModel.loadCache()
+            }
+        }
+    }
+
     @ViewBuilder
     private var content: some View {
-        list
-            .navigationTitle("")
-            .modify {
-                if #available(watchOS 10, *) {
-                    $0.toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button(action: {
-                                showAssist = true
-                            }, label: {
-                                Image(uiImage: MaterialDesignIcons.messageProcessingOutlineIcon.image(
-                                    ofSize: .init(width: 24, height: 24),
-                                    color: Asset.Colors.haPrimary.color
-                                ))
-                            })
-                        }
-                    }
-                } else {
-                    $0
-                }
-            }
-    }
-
-    private var stateViewBackground: some ShapeStyle {
-        if #available(watchOS 10, *) {
-            return .regularMaterial
-        } else {
-            return Color.black.opacity(0.6)
-        }
-    }
-
-    private var list: some View {
         List {
-            ForEach(viewModel.actions, id: \.id) { action in
-                WatchActionButtonView<ViewModel>(action: action)
-                    .environmentObject(viewModel)
+            if viewModel.showError {
+                Text(viewModel.errorMessage)
+                    .font(.footnote)
+                    .listRowBackground(
+                        Color.red.opacity(0.5)
+                            .clipShape(RoundedRectangle(cornerRadius: CornerRadiusSizes.oneAndHalf))
+                    )
             }
-            if viewModel.actions.isEmpty {
-                noActionsView
+            if viewModel.watchConfig.items.isEmpty {
+                Text(verbatim: L10n.Watch.Labels.noConfig)
+                    .font(.footnote)
+            } else {
+                mainContent
+            }
+            if viewModel.watchConfig.items.isEmpty || viewModel.showError {
+                reloadButton
             }
         }
-        .animation(.easeInOut, value: viewModel.actions)
-        // This improves how the overlayed assist view looks
-        .opacity(showAssist ? 0.5 : 1)
+        .id(viewModel.refreshListID)
+        .navigationTitle("")
     }
 
-    private var noActionsView: some View {
-        Text(L10n.Watch.Labels.noAction)
-            .font(.footnote)
-            .padding(.vertical)
+    private var navReloadButton: some View {
+        Button {
+            viewModel.requestConfig()
+        } label: {
+            Image(systemName: "arrow.circlepath")
+        }
+    }
+
+    @ViewBuilder
+    private var reloadButton: some View {
+        // When watchOS 10 is available, reload is on toolbar
+        if #unavailable(watchOS 10.0) {
+            Button {
+                viewModel.requestConfig()
+            } label: {
+                Label(L10n.reloadLabel, systemImage: "arrow.circlepath")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .font(.footnote)
+            }
+            .listRowBackground(Color.clear)
+        }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        if #unavailable(watchOS 10),
+           viewModel.watchConfig.assist.showAssist,
+           !viewModel.watchConfig.assist.serverId.isEmpty,
+           !viewModel.watchConfig.assist.pipelineId.isEmpty {
+            assistButton
+        }
+        ForEach(viewModel.watchConfig.items, id: \.serverUniqueId) { item in
+            WatchMagicViewRow(
+                item: item,
+                itemInfo: info(for: item)
+            )
+        }
+        reloadButton
+    }
+
+    private func info(for magicItem: MagicItem) -> MagicItem.Info {
+        viewModel.magicItemsInfo.first(where: {
+            $0.id == magicItem.serverUniqueId
+        }) ?? .init(
+            id: magicItem.id,
+            name: magicItem.id,
+            iconName: ""
+        )
     }
 }
-
-#if DEBUG
-#Preview {
-    WatchHomeView(viewModel: MockWatchHomeViewModel())
-}
-#endif

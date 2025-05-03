@@ -6,6 +6,29 @@ import RealmSwift
 @testable import Shared
 import XCTest
 
+final class MockClientEventStore: ClientEventStoreProtocol {
+    let addEventAction: (ClientEvent) -> Void
+
+    var addedEvents: [ClientEvent] = []
+
+    init(addEventAction: @escaping (ClientEvent) -> Void) {
+        self.addEventAction = addEventAction
+    }
+
+    func addEvent(_ event: ClientEvent) {
+        addedEvents.append(event)
+        addEventAction(event)
+    }
+
+    func getEvents() -> [ClientEvent] {
+        addedEvents
+    }
+
+    func clearAllEvents() {
+        addedEvents = []
+    }
+}
+
 class ZoneManagerTests: XCTestCase {
     private var realm: Realm!
     private var collector: FakeCollector!
@@ -44,7 +67,9 @@ class ZoneManagerTests: XCTestCase {
         loggedEvents = []
         Current.connectivity.currentWiFiSSID = { "wifi_name" }
         Current.realm = { self.realm }
-        Current.clientEventStore.addEvent = { self.loggedEvents.append($0); return .value(()) }
+        Current.clientEventStore = MockClientEventStore(addEventAction: { event in
+            self.loggedEvents.append(event)
+        })
         Current.location.oneShotLocation = { _, _ in .value(.init(latitude: 0, longitude: 0)) }
         collector = FakeCollector()
         processor = FakeProcessor()
@@ -56,7 +81,7 @@ class ZoneManagerTests: XCTestCase {
         super.tearDown()
 
         Current.realm = Realm.live
-        Current.clientEventStore.addEvent = { _ in .value(()) }
+        Current.clientEventStore.clearAllEvents()
     }
 
     private func newZoneManager() -> ZoneManager {
@@ -437,8 +462,8 @@ class ZoneManagerTests: XCTestCase {
 
         XCTAssertTrue(loggedEvent.type == .locationUpdate)
         XCTAssertTrue(loggedEvent.text.contains("Didn't update"))
-        XCTAssertEqual(loggedEvent.jsonPayload?["start_ssid"] as? String, "wifi_name")
-        XCTAssertEqual(loggedEvent.jsonPayload?["event"] as? String, event.description)
+        XCTAssertEqual(loggedEvent.jsonPayloadJSONObject()["start_ssid"] as? String, "wifi_name")
+        XCTAssertEqual(loggedEvent.jsonPayloadJSONObject()["event"] as? String, event.description)
     }
 
     func testCollectorCollectsEventAndProcessorSucceeds() {
@@ -471,8 +496,8 @@ class ZoneManagerTests: XCTestCase {
 
         XCTAssertTrue(loggedEvent.type == .locationUpdate)
         XCTAssertTrue(loggedEvent.text.contains("Updated location"))
-        XCTAssertEqual(loggedEvent.jsonPayload?["start_ssid"] as? String, "wifi_name")
-        XCTAssertEqual(loggedEvent.jsonPayload?["event"] as? String, event.description)
+        XCTAssertEqual(loggedEvent.jsonPayloadJSONObject()["start_ssid"] as? String, "wifi_name")
+        XCTAssertEqual(loggedEvent.jsonPayloadJSONObject()["event"] as? String, event.description)
     }
 }
 

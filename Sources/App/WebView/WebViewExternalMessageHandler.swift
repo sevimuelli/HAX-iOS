@@ -3,6 +3,7 @@ import Foundation
 import Improv_iOS
 import PromiseKit
 import Shared
+import SwiftMessages
 import SwiftUI
 
 final class WebViewExternalMessageHandler {
@@ -98,13 +99,7 @@ final class WebViewExternalMessageHandler {
             case .themeUpdate:
                 webViewController.evaluateJavaScript("notifyThemeColors()", completion: nil)
             case .matterCommission:
-                Current.matter.commission(webViewController.server).done {
-                    Current.Log.info("commission call completed")
-                }.catch { error in
-                    // we don't show a user-visible error because even a successful operation will return 'cancelled'
-                    // but the errors aren't public, so we can't compare -- the apple ui shows errors visually though
-                    Current.Log.error(error)
-                }
+                matterComissioningHandler(incomingMessage: incomingMessage)
             case .threadImportCredentials:
                 transferKeychainThreadCredentialsToHARequested()
             case .barCodeScanner:
@@ -118,7 +113,7 @@ final class WebViewExternalMessageHandler {
                     incomingMessageId: incomingMessageId
                 )
             case .barCodeScannerClose:
-                if webViewController.overlayAppController as? BarcodeScannerHostingController != nil {
+                if webViewController.overlayedController as? BarcodeScannerHostingController != nil {
                     webViewController.dismissControllerAboveOverlayController()
                     webViewController.dismissOverlayController(animated: true, completion: nil)
                 }
@@ -126,7 +121,7 @@ final class WebViewExternalMessageHandler {
                 guard let message = incomingMessage.Payload?["message"] as? String else { return }
                 let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
                 alert.addAction(.init(title: L10n.okLabel, style: .default))
-                webViewController.presentController(alert, animated: false)
+                webViewController.presentAlertController(controller: alert, animated: true)
             case .threadStoreCredentialInAppleKeychain:
                 guard let macExtendedAddress = incomingMessage.Payload?["mac_extended_address"] as? String,
                       let activeOperationalDataset = incomingMessage.Payload?["active_operational_dataset"] as? String else { return }
@@ -135,9 +130,19 @@ final class WebViewExternalMessageHandler {
                     activeOperationalDataset: activeOperationalDataset
                 )
             case .assistShow:
-                showAssist(server: webViewController.server, pipeline: "")
+                let startListening = incomingMessage.Payload?["start_listening"] as? Bool
+                let pipelineId = incomingMessage.Payload?["pipeline_id"] as? String
+                showAssist(
+                    server: webViewController.server,
+                    pipeline: pipelineId ?? "",
+                    autoStartRecording: startListening ?? false,
+                    animated: true
+                )
             case .scanForImprov:
                 scanImprov()
+            case .improvConfigureDevice:
+                let deviceName = incomingMessage.Payload?["name"] as? String
+                presentImprov(deviceName: deviceName)
             }
         } else {
             Current.Log.error("unknown: \(incomingMessage.MessageType)")
@@ -155,7 +160,7 @@ final class WebViewExternalMessageHandler {
             let settingsView = SettingsViewController()
             settingsView.hidesBottomBarWhenPushed = true
             let navController = UINavigationController(rootViewController: settingsView)
-            webViewController?.presentOverlayController(controller: navController)
+            webViewController?.presentOverlayController(controller: navController, animated: true)
         }
     }
 
@@ -219,7 +224,7 @@ final class WebViewExternalMessageHandler {
             threadManagementView.view.backgroundColor = .clear
             threadManagementView.modalPresentationStyle = .overFullScreen
             threadManagementView.modalTransitionStyle = .crossDissolve
-            webViewController.presentController(threadManagementView, animated: true)
+            webViewController.presentOverlayController(controller: threadManagementView, animated: true)
         }
     }
 
@@ -236,7 +241,7 @@ final class WebViewExternalMessageHandler {
             threadManagementView.view.backgroundColor = .clear
             threadManagementView.modalPresentationStyle = .overFullScreen
             threadManagementView.modalTransitionStyle = .crossDissolve
-            webViewController?.presentController(threadManagementView, animated: true)
+            webViewController?.presentOverlayController(controller: threadManagementView, animated: true)
         }
     }
 
@@ -253,10 +258,98 @@ final class WebViewExternalMessageHandler {
             incomingMessageId: incomingMessageId
         ))
         barcodeController.modalPresentationStyle = .fullScreen
-        webViewController?.presentOverlayController(controller: barcodeController)
+        webViewController?.presentOverlayController(controller: barcodeController, animated: true)
     }
 
-    func showAssist(server: Server, pipeline: String = "", autoStartRecording: Bool = false) {
+    private func matterComissioningHandler(incomingMessage: WebSocketMessage) {
+        // So we avoid conflicting credentials (or absence) between servers
+        cleanPreferredThreadCredentials()
+        let preferredNetWorkMacExtendedAddress = incomingMessage
+            .Payload?[PayloadConstants.macExtendedAddress.rawValue] as? String
+        let preferredNetWorkActiveOperationalDataset = incomingMessage
+            .Payload?[PayloadConstants.activeOperationalDataset.rawValue] as? String
+        let preferredNetworkExtendedPANID = incomingMessage.Payload?[PayloadConstants.extendedPanId.rawValue] as? String
+
+        Current.Log
+            .verbose(
+                "Matter comission received preferredNetWorkMacExtendedAddress from frontend: \(String(describing: preferredNetWorkMacExtendedAddress))"
+            )
+        Current.Log
+            .verbose(
+                "Matter comission received preferredNetWorkActiveOperationalDataset from frontend: \(String(describing: preferredNetWorkActiveOperationalDataset))"
+            )
+        Current.Log
+            .verbose(
+                "Matter comission received preferredNetworkExtendedPANID from frontend: \(String(describing: preferredNetworkExtendedPANID))"
+            )
+
+        if let preferredNetWorkMacExtendedAddress, !preferredNetWorkMacExtendedAddress.isEmpty,
+           let preferredNetWorkActiveOperationalDataset, !preferredNetWorkActiveOperationalDataset.isEmpty,
+           let preferredNetworkExtendedPANID, !preferredNetworkExtendedPANID.isEmpty {
+            // This information will be used in 'MatterRequestHandler'
+            Current.settingsStore
+                .matterLastPreferredNetWorkMacExtendedAddress = preferredNetWorkMacExtendedAddress
+            Current.settingsStore
+                .matterLastPreferredNetWorkActiveOperationalDataset = preferredNetWorkActiveOperationalDataset
+            Current.settingsStore
+                .matterLastPreferredNetWorkExtendedPANID = preferredNetworkExtendedPANID
+
+            // Saving credential in keychain before moving forward as required, docs: https://developer.apple.com/documentation/mattersupport/matteradddeviceextensionrequesthandler/selectthreadnetwork(from:)
+            Current.matter.threadClientService.saveCredential(
+                macExtendedAddress: preferredNetWorkMacExtendedAddress,
+                operationalDataSet: preferredNetWorkActiveOperationalDataset
+            ) { [weak self] error in
+                if let error {
+                    Current.Log
+                        .error(
+                            "Error saving credentials in keychain while comissioning matter device, error: \(error.localizedDescription)"
+                        )
+                    let alert = UIAlertController(
+                        title: L10n.Thread.SaveCredential.Fail.Alert.title(error.localizedDescription),
+                        message: L10n.Thread.SaveCredential.Fail.Alert.message,
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(.init(title: L10n.cancelLabel, style: .default))
+                    alert.addAction(.init(title: L10n.continueLabel, style: .destructive, handler: { [weak self] _ in
+                        self?.comissionMatterDevice()
+                    }))
+                    self?.webViewController?.presentOverlayController(controller: alert, animated: false)
+                } else {
+                    Current.Log
+                        .verbose(
+                            "Succeeded saving thread credentials in keychain, moving forward to matter comissioning"
+                        )
+                    self?.comissionMatterDevice()
+                }
+            }
+        } else {
+            comissionMatterDevice()
+        }
+    }
+
+    private func cleanPreferredThreadCredentials() {
+        Current.settingsStore.matterLastPreferredNetWorkMacExtendedAddress = nil
+        Current.settingsStore.matterLastPreferredNetWorkActiveOperationalDataset = nil
+        Current.settingsStore.matterLastPreferredNetWorkExtendedPANID = nil
+    }
+
+    private func comissionMatterDevice() {
+        guard let webViewController else {
+            Current.Log.error("WebViewController not available while commissioning matter device")
+            return
+        }
+        Current.matter.commission(webViewController.server).done {
+            Current.Log.info("commission call completed")
+        }.catch { error in
+            // we don't show a user-visible error because even a successful operation will return 'cancelled'
+            // but the errors aren't public, so we can't compare -- the apple ui shows errors visually though
+            Current.Log.error(error)
+        }.finally { [weak self] in
+            self?.webViewController?.reload()
+        }
+    }
+
+    func showAssist(server: Server, pipeline: String = "", autoStartRecording: Bool = false, animated: Bool) {
         if AssistSession.shared.inProgress {
             AssistSession.shared.requestNewSession(.init(
                 server: server,
@@ -271,21 +364,32 @@ final class WebViewExternalMessageHandler {
             autoStartRecording: autoStartRecording
         ))
 
-        webViewController?.presentOverlayController(controller: assistView)
+        webViewController?.presentOverlayController(controller: assistView, animated: animated)
     }
 
     func scanImprov() {
-        improvManager.delegate = self
-        improvManager.scan()
+        switch Current.bluetoothPermissionStatus {
+        case .denied, .restricted:
+            break
+        case .allowedAlways:
+            improvManager.delegate = self
+            improvManager.scan()
+        default:
+            // Mac Catalyst doesn't trigger bluetooth permission for some reason
+            guard !Current.isCatalyst else { return }
+            let bluetoothPermissionView = UIHostingController(rootView: BluetoothPermissionView())
+            webViewController?.presentOverlayController(controller: bluetoothPermissionView, animated: true)
+        }
     }
 
-    func presentImprov() {
+    func presentImprov(deviceName: String?) {
         improvManager.stopScan()
         improvManager.delegate = nil
 
         improvController =
             UIHostingController(rootView: ImprovDiscoverView<ImprovManager>(
                 improvManager: improvManager,
+                deviceName: deviceName,
                 redirectRequest: { [weak self] redirectUrlPath in
                     self?.webViewController?.navigateToPath(path: redirectUrlPath)
                 }
@@ -295,7 +399,7 @@ final class WebViewExternalMessageHandler {
         improvController.modalTransitionStyle = .crossDissolve
         improvController.modalPresentationStyle = .overFullScreen
         improvController.view.backgroundColor = .clear
-        webViewController?.presentOverlayController(controller: improvController)
+        webViewController?.presentOverlayController(controller: improvController, animated: true)
     }
 
     func stopImprovScanIfNeeded() {
@@ -305,19 +409,24 @@ final class WebViewExternalMessageHandler {
     }
 }
 
-extension WebViewExternalMessageHandler: ImprovManagerDelegate {
+extension WebViewExternalMessageHandler: @preconcurrency ImprovManagerDelegate {
     func didUpdateBluetoohState(_ state: CBManagerState) {
         if state == .poweredOn {
             improvManager.scan()
         }
     }
 
+    @MainActor
     func didUpdateFoundDevices(devices: [String: CBPeripheral]) {
-        if !devices.isEmpty {
-            localNotificationDispatcher.send(.init(
-                id: .improvSetup,
-                title: L10n.Improv.Toast.title
-            ))
+        devices.forEach { [weak self] _, value in
+            if let name = value.name {
+                self?.sendExternalBus(message: .init(
+                    command: WebViewExternalBusOutgoingMessage.improvDiscoveredDevice.rawValue,
+                    payload: [
+                        "name": name,
+                    ]
+                ))
+            }
         }
     }
 }
