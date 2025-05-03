@@ -2,6 +2,7 @@
 "2KWKqM" = "Sikertelen: Home Assistant nem érhető el";
 "2LIxe4" = "Sikertelen: ${error}";
 "2b0Uo4" = "Szolgáltatás";
+"2yevCF" = "Melyik csatornát szeretné használni?";
 "3jKamg" = "{{ now() }}";
 "4fFx9y" = "Frissítve";
 "4tpAXn" = "Kérem, erősítse meg: '${server}'?";
@@ -14,9 +15,11 @@
 "8BMgur" = "Kész";
 "8skKro" = "Milyen műveletek?";
 "A1pokw" = "Asszisztens igénybevétele";
+"Asg4pN" = "Hanggal";
 "B28HAk" = "Asszisztens";
 "B4bXyc" = "Kész";
 "BafuI1" = "Nyelv";
+"Bw6Ucn" = "Melyik csatorna?";
 "BwZv3u" = "Melyik szerver?";
 "CmlkE4" = "shortcut_event";
 "DFWJB8" = "${page} megnyitása";
@@ -35,6 +38,7 @@
 "HoH8wg" = "Műveletek";
 "J3qct4" = "Szerver";
 "JBMp1T" = "Kérem, erősítse meg: '${server}'?";
+"JFaYRG" = "Csak megerősítésképpen, a(z) ’${pipeline}’ csatornát szerette volna?";
 "K4xrvF" = "Hiba";
 "KHH48D" = "Sikertelen: A Home Assistant jelenleg nem érhető el";
 "KJS2jk" = "Sikertelen: ${error}";
@@ -54,6 +58,7 @@
 "QCGKRz" = "Milyen nyelven?";
 "QVD2lM" = "Szolgáltatási adatok";
 "QmGpOH" = "Hiba";
+"R2PmrD" = "Szeretné, ha hangvezérléssel segítenék?";
 "RCQAlr" = "A ${cameraID} képének kinyerése";
 "RMQY3r" = "Helymegatározás elküldése a Home Assistantnak";
 "RsOw3P" = "Sikeresen renderelt sablon";
@@ -68,6 +73,7 @@
 "YNQXwq" = "Hiba";
 "YxAau3" = "${count} opció van, amely megfelel a következőnek: '${server}'.";
 "ZApPxB" = "Szolgáltatás neve";
+"ZG5nuL" = "Assist az alkalmazásban";
 "ZRPVYO" = "Nyisson meg egy oldalt a kezelőfelületen";
 "ZT9Mld" = "Esemény neve";
 "ZmUm9Q" = "Milyen sablont szeretne renderelni?";
@@ -81,6 +87,7 @@
 "dFHPYK" = "${action} végrehajtva";
 "eObn2i" = "Oldal";
 "f1KX0Q" = "Műveletek megtekintése és futtatása";
+"fiOkO4" = "${count} lehetőség van, amely megfelel a(z) ’${pipeline}’ kifejezésnek";
 "fkQXDn" = "${count} opció van, amely megfelel a következőnek: '${action}'.";
 "flUgtx" = "Melyik művelet?";
 "fnz838" = "Érzékelők frissítve";
@@ -103,6 +110,7 @@
 "jWGtvO" = "${count} opció van, amely megfelel a következőnek: '${server}'.";
 "jtqxOg" = "Kérem, erősítse meg: '${action}'?";
 "kGB23u" = "Művelet végrehajtása";
+"kPqT8T" = "Csatorna";
 "l2coEc" = "Melyik szerver?";
 "lGqSSG" = "Nem sikerült frissíteni az érzékelőket.";
 "lNmaCR" = "Sablon";
@@ -127,8 +135,10 @@
 "rFSNpu" = "Kész";
 "rOlW1x" = "Milyen helymegatározást szeretne küldeni?";
 "rU3vhT" = "Szerver azonosító";
+"s9Gk3c" = "Assist az alkalmazásban";
 "sNFoWe" = "Melyik kamera?";
 "sQJAJS" = "Hiba";
+"sbjA6e" = "Kérjen segítséget az alkalmazásban";
 "sfDGvk" = "Renderelt sablon";
 "txfcnn" = "Szöveg";
 "tycImk" = "Az alkalmazásban meghatározott művelet végrehajtása";

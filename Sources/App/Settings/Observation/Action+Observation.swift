@@ -21,17 +21,9 @@ extension Action {
             }
 
             let updateShortcuts = Promise<Void> { seal in
-                UIApplication.shared.shortcutItems = collection.map(\.uiShortcut)
-                seal.fulfill(())
-            }
-
-            let updateTodayWidget = Promise<Void> { seal in
-                #if !targetEnvironment(macCatalyst)
-                NCWidgetController().setHasContent(
-                    !collection.isEmpty,
-                    forWidgetWithBundleIdentifier: Constants.BundleID.appending(".TodayWidget")
-                )
-                #endif
+                if !Current.isCatalyst {
+                    UIApplication.shared.shortcutItems = collection.map(\.uiShortcut)
+                }
                 seal.fulfill(())
             }
 
@@ -39,15 +31,6 @@ extension Action {
                 WidgetCenter.shared.reloadTimelines(ofKind: WidgetsKind.actions.rawValue)
 
                 seal.fulfill(())
-            }
-
-            let updateWatch = Promise<Void> { seal in
-                let error = HomeAssistantAPI.SyncWatchContext()
-                if let error {
-                    seal.reject(error)
-                } else {
-                    seal.fulfill(())
-                }
             }
 
             let updateSuggestions = Promise<Void> { seal in
@@ -60,9 +43,7 @@ extension Action {
             return when(resolved: [
                 invalidateMenu,
                 updateShortcuts,
-                updateTodayWidget,
                 updateWidgetKitWidgets,
-                updateWatch,
                 updateSuggestions,
             ]).asVoid()
         }

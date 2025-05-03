@@ -54,6 +54,7 @@
 		<string>AssistInAppIntent</string>
 		<string>AssistIntent</string>
 		<string>ReloadWidgetsAppIntent</string>
+		<string>ScriptAppIntent</string>
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
@@ -138,12 +139,13 @@
 		<string>INSendMessageIntent</string>
 		<string>OpenPageIntent</string>
 		<string>PerformActionIntent</string>
+		<string>ReloadWidgetsAppIntent</string>
 		<string>RenderTemplateIntent</string>
+		<string>ScriptAppIntent</string>
 		<string>SendLocationIntent</string>
 		<string>UpdateSensorsIntent</string>
 		<string>WidgetActionsIntent</string>
 		<string>WidgetOpenPageIntent</string>
-		<string>ReloadWidgetsAppIntent</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

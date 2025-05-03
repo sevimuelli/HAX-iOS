@@ -16,10 +16,10 @@ final class WatchAssistViewModel: ObservableObject {
         case waitingForPipelineResponse
     }
 
-    @Published var chatItems: [AssistChatItem] = []
+    @Published var chatItems: [AssistChatItem] = [.init(content: "BETA", itemType: .info)]
     @Published var state: State = .idle
     @Published var showChatLoader = false
-    @Published var showSettings = false
+    private var timer: Timer?
 
     private let audioRecorder: any WatchAudioRecorderProtocol
     private let audioPlayer: any AudioPlayerProtocol
@@ -28,13 +28,14 @@ final class WatchAssistViewModel: ObservableObject {
     @Published var assistService: WatchAssistService
 
     init(
+        assistService: WatchAssistService,
         audioRecorder: any WatchAudioRecorderProtocol,
         audioPlayer: any AudioPlayerProtocol,
         immediateCommunicatorService: ImmediateCommunicatorService
     ) {
         self.audioRecorder = audioRecorder
         self.immediateCommunicatorService = immediateCommunicatorService
-        self.assistService = WatchAssistService()
+        self.assistService = assistService
         self.audioPlayer = audioPlayer
         audioRecorder.delegate = self
         immediateCommunicatorService.addObserver(.init(delegate: self))
@@ -45,40 +46,17 @@ final class WatchAssistViewModel: ObservableObject {
     }
 
     func initialRoutine() {
-        appendChatItem(.init(content: "BETA", itemType: .info))
-        state = .loading
-        guard !assistService.selectedServer.isEmpty else {
-            fatalError("Server can't be nil")
-        }
-        if assistService.pipelines.isEmpty || assistService.preferredPipeline.isEmpty {
-            Current.Log.info("Watch Assist: pipelines list is empty, trying to fetch pipelines")
-            assistService.fetchPipelines { [weak self] success in
-                Current.Log
-                    .info("Watch Assist: Pipelines fetch done, result: \(success), moving on with assist command")
-                if success {
-                    self?.assist()
-                } else {
-                    self?.state = .idle
-                }
-            }
-        } else {
-            Current.Log.info("Watch Assist: pipelines list exist, moving on with assist command")
-            assist()
-        }
+        assist()
     }
 
     func endRoutine() {
         stopRecording()
         assistService.endRoutine()
+        timer?.invalidate()
         immediateCommunicatorService.removeObserver(self)
     }
 
     func assist() {
-        guard !showSettings else {
-            state = .idle
-            stopRecording()
-            return
-        }
         if assistService.deviceReachable {
             // Extra message just to wake up iPhone from the background
             Communicator.shared.send(ImmediateMessage(identifier: "wakeup"))
@@ -91,6 +69,23 @@ final class WatchAssistViewModel: ObservableObject {
 
     func stopRecording() {
         audioRecorder.stopRecording()
+    }
+
+    func startPingPong() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.timerAction()
+        }
+    }
+
+    func stopPingPong() {
+        timer?.invalidate()
+    }
+
+    private func timerAction() {
+        Current.Log.verbose("Ping iPhone")
+        Communicator.shared.send(.init(identifier: InteractiveImmediateMessages.ping.rawValue, reply: { _ in
+            Current.Log.verbose("Pong from iPhone")
+        }))
     }
 
     private func showUnreacheableMessage() {
@@ -130,8 +125,15 @@ final class WatchAssistViewModel: ObservableObject {
 
     func appendChatItem(_ item: AssistChatItem) {
         DispatchQueue.main.async { [weak self] in
-            self?.chatItems.append(item)
-            self?.showChatLoader = false
+            guard let self else { return }
+            if chatItems.last?.itemType == .typing {
+                chatItems.removeLast()
+            }
+            chatItems.append(item)
+            if item.itemType == .input {
+                chatItems.append(.init(content: "", itemType: .typing))
+            }
+            showChatLoader = false
         }
     }
 
@@ -142,7 +144,7 @@ final class WatchAssistViewModel: ObservableObject {
     }
 }
 
-extension WatchAssistViewModel: WatchAudioRecorderDelegate {
+extension WatchAssistViewModel: @preconcurrency WatchAudioRecorderDelegate {
     @MainActor
     func didStartRecording() {
         runInMainThread { [weak self] in

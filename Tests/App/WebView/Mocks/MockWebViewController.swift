@@ -5,14 +5,12 @@ import UIKit
 
 final class MockWebViewController: WebViewControllerProtocol {
     var server: Server = ServerFixture.standard
-    var overlayAppController: UIViewController?
+    var overlayedController: UIViewController?
 
     var presentOverlayControllerCalled = false
     var presentControllerCalled = false
     var evaluateJavaScriptCalled = false
 
-    var lastPresentedController: UIViewController?
-    var lastPresentedControllerAnimated: Bool = false
     var lastEvaluatedJavaScriptScript: String?
     var lastEvaluatedJavaScriptCompletion: ((Any?, (any Error)?) -> Void)?
 
@@ -30,15 +28,12 @@ final class MockWebViewController: WebViewControllerProtocol {
     var updateImprovEntryViewCalled = false
     var lastUpdateImprovEntryViewState = false
 
-    func presentOverlayController(controller: UIViewController) {
-        presentOverlayControllerCalled = true
-        overlayAppController = controller
-    }
+    var reloadCalled = false
+    var presentAlertControllerCalled = false
 
-    func presentController(_ controller: UIViewController, animated: Bool) {
-        presentControllerCalled = true
-        lastPresentedController = controller
-        lastPresentedControllerAnimated = animated
+    func presentOverlayController(controller: UIViewController, animated: Bool) {
+        presentOverlayControllerCalled = true
+        overlayedController = controller
     }
 
     func evaluateJavaScript(_ script: String, completion: ((Any?, (any Error)?) -> Void)?) {
@@ -70,5 +65,13 @@ final class MockWebViewController: WebViewControllerProtocol {
     func navigateToPath(path: String) {
         navigateToPathCalled = true
         lastNavigateToPathPath = path
+    }
+
+    func reload() {
+        reloadCalled = true
+    }
+
+    func presentAlertController(controller: UIViewController, animated: Bool) {
+        presentAlertControllerCalled = true
     }
 }

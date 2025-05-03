@@ -4,6 +4,7 @@ import FirebaseMessaging
 import Foundation
 import PromiseKit
 import Shared
+import SwiftUI
 import UserNotifications
 import XCGLogger
 
@@ -118,7 +119,7 @@ class NotificationManager: NSObject, LocalPushManagerDelegate {
 
         let eventName = "ios.shortcut_run"
         let deviceDict: [String: String] = [
-            "sourceDevicePermanentID": Constants.PermanentID, "sourceDeviceName": UIDevice.current.name,
+            "sourceDevicePermanentID": AppConstants.PermanentID, "sourceDeviceName": UIDevice.current.name,
             "sourceDeviceID": Current.settingsStore.deviceID,
         ]
         var eventData: [String: Any] = ["name": shortcutName, "input": shortcutDict, "device": deviceDict]
@@ -247,13 +248,14 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         if let url = urlString(from: response) {
             Current.Log.info("launching URL \(url)")
             Current.sceneManager.webViewWindowControllerPromise.done {
-                $0.open(from: .notification, server: server, urlString: url)
+                $0.open(from: .notification, server: server, urlString: url, isOpenPageIntent: false)
             }
         }
 
         if let info = HomeAssistantAPI.PushActionInfo(response: response) {
             Current.backgroundTask(withName: "handle-push-action") { _ in
-                Current.api(for: server).handlePushAction(for: info)
+                Current.api(for: server)?
+                    .handlePushAction(for: info) ?? .init(error: HomeAssistantAPI.APIError.noAPIAvailable)
             }.ensure {
                 completionHandler()
             }.catch { err in
@@ -263,26 +265,11 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             completionHandler()
         }
 
-        if response.notification.request.identifier == NotificationIdentifier.carPlayActionIntro.rawValue {
-            Current.Log.info("Launching iOS Actions configuration screen")
+        if response.notification.request.identifier == NotificationIdentifier.carPlayIntro.rawValue {
+            Current.Log.info("Launching CarPlay configuration screen")
             Current.sceneManager.webViewWindowControllerPromise.done {
-                let settingsView = SettingsDetailViewController()
-                settingsView.detailGroup = .actions
-                let navController = UINavigationController(rootViewController: settingsView)
-                settingsView.navigationItem.rightBarButtonItem = UIBarButtonItem(
-                    systemItem: .close,
-                    primaryAction: .init(handler: { _ in
-                        navController.dismiss(animated: true)
-                    })
-                )
-                $0.present(navController)
-            }
-        }
-
-        if response.notification.request.identifier == NotificationIdentifier.improvSetup.rawValue {
-            Current.Log.info("Launching Improv setup")
-            Current.sceneManager.webViewWindowControllerPromise.then(\.webViewControllerPromise).done { controller in
-                controller.webViewExternalMessageHandler.presentImprov()
+                let carPlayView = UIHostingController(rootView: CarPlayConfigurationView())
+                $0.present(carPlayView)
             }
         }
     }

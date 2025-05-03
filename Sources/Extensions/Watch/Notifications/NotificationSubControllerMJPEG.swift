@@ -32,7 +32,10 @@ class NotificationSubControllerMJPEG: NotificationSubController {
         self.streamer = streamer
 
         return Promise<Void> { seal in
-            let apiURL = api.server.info.connection.activeAPIURL()
+            guard let apiURL = api.server.info.connection.activeAPIURL() else {
+                seal.reject(ServerConnectionError.noActiveURL(api.server.info.name))
+                return
+            }
             var headers = HTTPHeaders()
             if let tempHeaders = api.server.info.connection.activeCustomHeaders() {
                 for header in tempHeaders {

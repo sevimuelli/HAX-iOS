@@ -1,4 +1,5 @@
 import Foundation
+import HAKit
 import UIKit
 
 public enum Domain: String, CaseIterable {
@@ -11,9 +12,18 @@ public enum Domain: String, CaseIterable {
     case scene
     case script
     case `switch`
+    case sensor
+    case binarySensor = "binary_sensor"
+    case zone
+    case person
     // TODO: Map more domains
 
-    public enum State: String {
+    public init?(entityId: String) {
+        let domainString = entityId.components(separatedBy: ".").first ?? ""
+        self.init(rawValue: domainString)
+    }
+
+    public enum State: String, Codable {
         case locked
         case unlocked
         case jammed
@@ -35,53 +45,88 @@ public enum Domain: String, CaseIterable {
     public var states: [State] {
         var states: [State] = []
         switch self {
-        case .button:
-            states = []
         case .cover:
             states = [.open, .closed, .opening, .closing]
-        case .inputBoolean:
-            states = []
-        case .inputButton:
-            states = []
         case .light:
             states = [.on, .off]
         case .lock:
             states = [.locked, .unlocked, .jammed, .locking, .unlocking]
-        case .scene:
-            states = []
-        case .script:
-            states = []
         case .switch:
             states = [.on, .off]
+        default:
+            states = []
         }
 
         states.append(contentsOf: [.unavailable, .unknown])
         return states
     }
 
-    public var icon: MaterialDesignIcons {
-        var image = MaterialDesignIcons.bookmarkIcon
+    public func icon(deviceClass: String? = nil, state: State? = nil) -> MaterialDesignIcons {
+        let deviceClass = DeviceClass(rawValue: deviceClass ?? "")
+        var image: MaterialDesignIcons = .bookmarkIcon
         switch self {
         case .button:
             image = MaterialDesignIcons.gestureTapButtonIcon
         case .cover:
-            image = MaterialDesignIcons.curtainsIcon
+            image = imageForCover(deviceClass: deviceClass ?? .unknown, state: state ?? .unknown)
         case .inputBoolean:
-            image = MaterialDesignIcons.toggleSwitchOutlineIcon
+            image = .toggleSwitchOutlineIcon
         case .inputButton:
-            image = MaterialDesignIcons.gestureTapButtonIcon
+            image = .gestureTapButtonIcon
         case .light:
-            image = MaterialDesignIcons.lightbulbIcon
+            image = .lightbulbIcon
         case .lock:
-            image = MaterialDesignIcons.lockIcon
+            image = .lockIcon
         case .scene:
-            image = MaterialDesignIcons.paletteOutlineIcon
+            image = .paletteOutlineIcon
         case .script:
-            image = MaterialDesignIcons.scriptTextOutlineIcon
+            image = .scriptTextOutlineIcon
         case .switch:
-            image = MaterialDesignIcons.lightSwitchIcon
+            image = .lightSwitchIcon
+        case .sensor:
+            image = .eyeIcon
+        case .binarySensor:
+            image = .eyeIcon
+        case .zone:
+            image = .mapIcon
+        case .person:
+            image = .accountIcon
         }
         return image
+    }
+
+    private func imageForCover(deviceClass: DeviceClass, state: State) -> MaterialDesignIcons {
+        if state == .closed {
+            switch deviceClass {
+            case .garage:
+                return MaterialDesignIcons.garageIcon
+            case .gate:
+                return MaterialDesignIcons.gateIcon
+            case .shutter:
+                return MaterialDesignIcons.windowShutterIcon
+            case .blind:
+                return MaterialDesignIcons.blindsVerticalClosedIcon
+            case .shade:
+                return MaterialDesignIcons.rollerShadeClosedIcon
+            default:
+                return MaterialDesignIcons.curtainsClosedIcon
+            }
+        } else {
+            switch deviceClass {
+            case .garage:
+                return MaterialDesignIcons.garageOpenIcon
+            case .gate:
+                return MaterialDesignIcons.gateOpenIcon
+            case .shutter:
+                return MaterialDesignIcons.windowShutterOpenIcon
+            case .blind:
+                return MaterialDesignIcons.blindsOpenIcon
+            case .shade:
+                return MaterialDesignIcons.rollerShadeIcon
+            default:
+                return MaterialDesignIcons.curtainsIcon
+            }
+        }
     }
 
     public var localizedDescription: String {
@@ -90,6 +135,30 @@ public enum Domain: String, CaseIterable {
 
     public var isCarPlaySupported: Bool {
         carPlaySupportedDomains.contains(self)
+    }
+
+    public func localizedState(for state: String) -> String {
+        switch self {
+        case .button, .inputButton, .scene:
+            if let relativeDate = isoDateToRelativeTimeString(state) {
+                return relativeDate
+            }
+        default:
+            break
+        }
+        return CoreStrings.getDomainStateLocalizedTitle(state: state) ?? FrontendStrings
+            .getDefaultStateLocalizedTitle(state: state) ?? state
+    }
+
+    private func isoDateToRelativeTimeString(_ isoDateString: String) -> String? {
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = dateFormatter.date(from: isoDateString) else {
+            return nil
+        }
+
+        let relativeFormatter = RelativeDateTimeFormatter()
+        return relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

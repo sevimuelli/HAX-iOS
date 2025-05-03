@@ -1,4 +1,6 @@
+import Communicator
 import Eureka
+import HAKit
 import PromiseKit
 import Shared
 
@@ -10,8 +12,11 @@ class SettingsViewController: HAFormViewController {
 
         static let servers: ContentSection = 0b1
         static let general: ContentSection = 0b10
-        static let integrations: ContentSection = 0b100
-        static let help: ContentSection = 0b1000
+        static let integrations: ContentSection = 0b11
+        static let watch: ContentSection = 0b100
+        static let carPlay: ContentSection = 0b101
+        static let legacy: ContentSection = 0b110
+        static let help: ContentSection = 0b111
         static let all = ContentSection(rawValue: ~0b0)
     }
 
@@ -21,7 +26,7 @@ class SettingsViewController: HAFormViewController {
         super.init()
     }
 
-    class func servers() -> (Section, deallocate: () -> Void) {
+    class func servers(controller: UIViewController) -> (Section, deallocate: () -> Void) {
         class Observer: ServerObserver {
             let updateRows: () -> Void
             init(updateRows: @escaping () -> Void) {
@@ -29,6 +34,7 @@ class SettingsViewController: HAFormViewController {
             }
 
             func serversDidChange(_ serverManager: ServerManager) {
+                guard UIApplication.shared.applicationState == .active else { return }
                 UIView.performWithoutAnimation {
                     updateRows()
                 }
@@ -50,11 +56,13 @@ class SettingsViewController: HAFormViewController {
 
             rows.append(HomeAssistantAccountRow {
                 $0.value = .add
-                $0.presentationMode = .show(controllerProvider: .callback(builder: { () -> UIViewController in
-                    OnboardingNavigationViewController(onboardingStyle: .secondary)
-                }), onDismiss: nil)
                 $0.onCellSelection { _, row in
                     row.deselect(animated: true)
+                    controller.present(
+                        OnboardingNavigationView.controller(onboardingStyle: .secondary),
+                        animated: true,
+                        completion: nil
+                    )
                 }
             })
 
@@ -68,6 +76,7 @@ class SettingsViewController: HAFormViewController {
         return (section, { Current.servers.remove(observer: observer) })
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -96,7 +105,7 @@ class SettingsViewController: HAFormViewController {
         }
 
         if contentSections.contains(.servers) {
-            let (section, deallocate) = Self.servers()
+            let (section, deallocate) = Self.servers(controller: self)
             form +++ section
             after(life: self).done(deallocate)
         }
@@ -104,19 +113,47 @@ class SettingsViewController: HAFormViewController {
         if contentSections.contains(.general) {
             form +++ Section()
                 <<< SettingsRootDataSource.Row.general.row
+                <<< SettingsRootDataSource.Row.gestures.row
                 <<< SettingsRootDataSource.Row.location.row
                 <<< SettingsRootDataSource.Row.notifications.row
         }
 
         if contentSections.contains(.integrations) {
             form +++ Section()
-                <<< SettingsRootDataSource.Row.actions.row
                 <<< SettingsRootDataSource.Row.sensors.row
-                <<< SettingsRootDataSource.Row.complications.row
                 <<< SettingsRootDataSource.Row.nfc.row
                 <<< SettingsRootDataSource.Row.widgets.row
         }
 
+        // Display Apple Watch section only for devices that make sense
+        // iPhones with paired watch
+        let isWatchPaired = {
+            if Current.isDebug {
+                return true
+            } else if case .paired = Communicator.shared.currentWatchState {
+                return true
+            }
+            return false
+        }()
+        if isWatchPaired,
+           contentSections.contains(.watch),
+           UIDevice.current.userInterfaceIdiom == .phone {
+            form +++ Section(header: "Apple Watch", footer: nil)
+                <<< SettingsRootDataSource.Row.watch.row
+                <<< SettingsRootDataSource.Row.complications.row
+        }
+
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            if contentSections.contains(.carPlay) {
+                form +++ Section()
+                    <<< SettingsRootDataSource.Row.carPlay.row
+            }
+        }
+
+        if contentSections.contains(.legacy) {
+            form +++ Section()
+                <<< SettingsRootDataSource.Row.actions.row
+        }
         if contentSections.contains(.help) {
             form +++ Section()
                 <<< SettingsRootDataSource.Row.help.row
@@ -128,11 +165,14 @@ class SettingsViewController: HAFormViewController {
             <<< SettingsRootDataSource.Row.whatsNew.row
     }
 
-    @objc func openAbout(_ sender: UIButton) {
-        let aboutView = AboutViewController()
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Current.appDatabaseUpdater.update()
+    }
 
-        let navController = UINavigationController(rootViewController: aboutView)
-        show(navController, sender: nil)
+    @objc func openAbout(_ sender: UIButton) {
+        let aboutView = AboutView().embeddedInHostingController()
+        show(aboutView, sender: nil)
     }
 
     @objc func closeSettings(_ sender: UIButton) {

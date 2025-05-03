@@ -1,7 +1,6 @@
 import ClockKit
 import Communicator
 import PromiseKit
-import RealmSwift
 import Shared
 import UserNotifications
 import WatchKit
@@ -49,6 +48,7 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         // If the application was previously in the background, optionally refresh the user interface.
 
         Current.Log.verbose("didBecomeActive")
+        _ = HomeAssistantAPI.SyncWatchContext()
     }
 
     func applicationWillResignActive() {
@@ -57,10 +57,13 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         // or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, etc.
         Current.Log.verbose("willResignActive")
+        _ = HomeAssistantAPI.SyncWatchContext()
         Current.backgroundRefreshScheduler.schedule().cauterize()
     }
 
     func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
+        _ = HomeAssistantAPI.SyncWatchContext()
+
         // Sent when the system needs to launch the application in the background to process tasks.
         // Tasks arrive in a set, so loop through and process each one.
         for task in backgroundTasks {
@@ -112,14 +115,14 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
 
         if let identifier = userInfo?[CLKLaunchedComplicationIdentifierKey] as? String,
            identifier != CLKDefaultComplicationIdentifier {
-            complication = Current.realm(objectTypes: [WatchComplication.self]).object(
+            complication = Current.realm().object(
                 ofType: WatchComplication.self,
                 forPrimaryKey: identifier
             )
         } else if let date = userInfo?[CLKLaunchedTimelineEntryDateKey] as? Date,
                   let clkFamily = date.complicationFamilyFromEncodedDate {
             let family = ComplicationGroupMember(family: clkFamily)
-            complication = Current.realm(objectTypes: [WatchComplication.self]).object(
+            complication = Current.realm().object(
                 ofType: WatchComplication.self,
                 forPrimaryKey: family.rawValue
             )
@@ -166,6 +169,10 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
 
         GuaranteedMessage.observations.store[.init(queue: .main)] = { message in
             Current.Log.verbose("Received guaranteed message! \(message)")
+
+            if message.identifier == GuaranteedMessages.sync.rawValue {
+                _ = HomeAssistantAPI.SyncWatchContext()
+            }
 
             self.endWatchConnectivityBackgroundTaskIfNecessary()
         }
@@ -241,17 +248,6 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
 
         if let servers = content["servers"] as? Data {
             Current.servers.restoreState(servers)
-        }
-
-        if let actionsDictionary = content["actions"] as? [[String: Any]] {
-            let actions = actionsDictionary.compactMap { try? Action(JSON: $0) }
-
-            Current.Log.verbose("Updating actions from context \(actions)")
-
-            realm.reentrantWrite {
-                realm.delete(realm.objects(Action.self))
-                realm.add(actions, update: .all)
-            }
         }
 
         if let complicationsDictionary = content["complications"] as? [[String: Any]] {
@@ -332,7 +328,7 @@ extension ExtensionDelegate: UNUserNotificationCenterDelegate {
                 })
             } else {
                 Current.Log.info("sending via local")
-                Current.api(for: server).handlePushAction(for: info)
+                Current.api(for: server)?.handlePushAction(for: info)
                     .pipe(to: seal.resolve)
             }
 

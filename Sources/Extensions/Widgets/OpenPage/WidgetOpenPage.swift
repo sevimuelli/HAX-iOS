@@ -24,10 +24,11 @@ struct WidgetOpenPage: Widget {
                                 subtitle: showSubtitle ? Current.servers.server(for: panel)?.info.name : nil,
                                 interactionType: .widgetURL(panel.widgetURL),
                                 icon: panel.materialDesignIcon,
-                                iconColor: Color(Constants.darkerTintColor)
+                                iconColor: Color(AppConstants.darkerTintColor)
                             )
                         }
-                    }()
+                    }(),
+                    type: .button
                 )
             }
         )

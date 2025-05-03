@@ -20,22 +20,36 @@ struct PerformAction: AppIntent, CustomIntentMigratedAppIntent, PredictableInten
     static var predictionConfiguration: some IntentPredictionConfiguration {
         IntentPrediction(parameters: \.$action) { action in
             DisplayRepresentation(
-                title: "\(action!)",
+                title: "\(action ?? .init(id: "-1", displayString: "Uknown action"))",
                 subtitle: "Perform the action"
             )
         }
     }
 
+    @Parameter(
+        title: LocalizedStringResource(
+            "app_intents.scripts.haptic_confirmation.title",
+            defaultValue: "Haptic confirmation"
+        ),
+        default: false
+    )
+    var hapticConfirmation: Bool
+
     func perform() async throws -> some IntentResult {
         guard let intentAction = $action.wrappedValue,
               let action = Current.realm().object(ofType: Action.self, forPrimaryKey: intentAction.id),
-              let server = Current.servers.server(for: action) else {
+              let server = Current.servers.server(for: action),
+              let api = Current.api(for: server) else {
             Current.Log.warning("ActionID either does not exist or is not a string in the payload")
             return .result()
         }
 
+        if hapticConfirmation {
+            AppIntentHaptics.notify()
+        }
+
         try await withCheckedThrowingContinuation { continuation in
-            Current.api(for: server).HandleAction(actionID: action.ID, source: .AppShortcut).pipe { result in
+            api.HandleAction(actionID: action.ID, source: .AppShortcut).pipe { result in
                 switch result {
                 case .fulfilled:
                     continuation.resume()

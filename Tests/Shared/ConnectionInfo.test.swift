@@ -3,6 +3,10 @@ import Version
 import XCTest
 
 class ConnectionInfoTests: XCTestCase {
+    override func setUp() async throws {
+        ConnectionInfo.shouldFallbackToInternalURL = false
+    }
+
     func testInternalOnlyURL() {
         let url = URL(string: "http://example.com:8123")
         var info = ConnectionInfo(
@@ -15,15 +19,9 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
-
-        Current.connectivity.currentWiFiSSID = { nil }
-
-        XCTAssertEqual(info.activeURL(), url)
-        XCTAssertEqual(info.activeURLType, .internal)
-        XCTAssertEqual(info.webhookURL(), url?.appendingPathComponent("api/webhook/webhook_id1"))
-        XCTAssertEqual(info.activeAPIURL(), url?.appendingPathComponent("api"))
 
         info.internalSSIDs = ["unit_tests"]
         Current.connectivity.currentWiFiSSID = { "unit_tests" }
@@ -32,6 +30,82 @@ class ConnectionInfoTests: XCTestCase {
         XCTAssertEqual(info.activeURLType, .internal)
         XCTAssertEqual(info.webhookURL(), url?.appendingPathComponent("api/webhook/webhook_id1"))
         XCTAssertEqual(info.activeAPIURL(), url?.appendingPathComponent("api"))
+    }
+
+    func testInternalOnlyURLWithoutSSIDWithAlwaysFallbackEnabled() {
+        let url = URL(string: "http://example.com:8123")
+        var info = ConnectionInfo(
+            externalURL: nil,
+            internalURL: url,
+            cloudhookURL: nil,
+            remoteUIURL: nil,
+            webhookID: "webhook_id1",
+            webhookSecret: nil,
+            internalSSIDs: nil,
+            internalHardwareAddresses: nil,
+            isLocalPushEnabled: false,
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
+        )
+
+        info.internalSSIDs = []
+        Current.connectivity.currentWiFiSSID = { "" }
+        info.alwaysFallbackToInternalURL = true
+
+        XCTAssertEqual(info.activeURL(), url)
+        XCTAssertEqual(info.activeURLType, .internal)
+        XCTAssertEqual(info.webhookURL(), url?.appendingPathComponent("api/webhook/webhook_id1"))
+        XCTAssertEqual(info.activeAPIURL(), url?.appendingPathComponent("api"))
+    }
+
+    func testInternalOnlyURLWithoutSSIDWithoutAlwaysFallbackEnabled() {
+        let url = URL(string: "http://example.com:8123")
+        var info = ConnectionInfo(
+            externalURL: nil,
+            internalURL: url,
+            cloudhookURL: nil,
+            remoteUIURL: nil,
+            webhookID: "webhook_id1",
+            webhookSecret: nil,
+            internalSSIDs: nil,
+            internalHardwareAddresses: nil,
+            isLocalPushEnabled: false,
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
+        )
+
+        info.internalSSIDs = []
+        Current.connectivity.currentWiFiSSID = { "" }
+        info.alwaysFallbackToInternalURL = false
+
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.activeURLType, .none)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
+    }
+
+    func testInternalURLWithUndefinedSSID() {
+        let url = URL(string: "http://example.com:8123")
+        var info = ConnectionInfo(
+            externalURL: nil,
+            internalURL: url,
+            cloudhookURL: nil,
+            remoteUIURL: nil,
+            webhookID: "webhook_id1",
+            webhookSecret: nil,
+            internalSSIDs: nil,
+            internalHardwareAddresses: nil,
+            isLocalPushEnabled: false,
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
+        )
+
+        Current.connectivity.currentWiFiSSID = { nil }
+
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.activeURLType, .none)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
     }
 
     func testRemoteOnlyURL() {
@@ -46,20 +120,38 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
-
-        info.useCloud = false
-        XCTAssertEqual(info.activeURL(), url)
-        XCTAssertEqual(info.activeURLType, .remoteUI)
-        XCTAssertEqual(info.webhookURL(), url?.appendingPathComponent("api/webhook/webhook_id1"))
-        XCTAssertEqual(info.activeAPIURL(), url?.appendingPathComponent("api"))
 
         info.useCloud = true
         XCTAssertEqual(info.activeURL(), url)
         XCTAssertEqual(info.activeURLType, .remoteUI)
         XCTAssertEqual(info.webhookURL(), url?.appendingPathComponent("api/webhook/webhook_id1"))
         XCTAssertEqual(info.activeAPIURL(), url?.appendingPathComponent("api"))
+    }
+
+    func testRemoteOnlyURLWithUseCloudOffAndNoSSIDNeitherInternalURL() {
+        let url = URL(string: "http://example.com:8123")
+        var info = ConnectionInfo(
+            externalURL: nil,
+            internalURL: nil,
+            cloudhookURL: nil,
+            remoteUIURL: url,
+            webhookID: "webhook_id1",
+            webhookSecret: nil,
+            internalSSIDs: nil,
+            internalHardwareAddresses: nil,
+            isLocalPushEnabled: false,
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
+        )
+
+        info.useCloud = false
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.activeURLType, .none)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
     }
 
     func testExternalOnlyURL() {
@@ -74,7 +166,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         XCTAssertEqual(info.activeURL(), url)
@@ -113,7 +206,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         XCTAssertEqual(info.activeURL(), externalURL)
@@ -152,7 +246,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         XCTAssertEqual(info.activeURL(), externalURL)
@@ -181,13 +276,9 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
-
-        XCTAssertEqual(info.activeURL(), remoteURL)
-        XCTAssertEqual(info.activeURLType, .remoteUI)
-        XCTAssertEqual(info.webhookURL(), remoteURL?.appendingPathComponent("api/webhook/webhook_id1"))
-        XCTAssertEqual(info.activeAPIURL(), remoteURL?.appendingPathComponent("api"))
 
         info.useCloud = true
 
@@ -214,6 +305,29 @@ class ConnectionInfoTests: XCTestCase {
         XCTAssertEqual(info.activeAPIURL(), internalURL?.appendingPathComponent("api"))
     }
 
+    func testInternalRemoteURLWithoutSSIDDefined() {
+        let internalURL = URL(string: "http://internal.example.com:8123")
+        let remoteURL = URL(string: "http://remote.example.com:8123")
+        var info = ConnectionInfo(
+            externalURL: nil,
+            internalURL: internalURL,
+            cloudhookURL: nil,
+            remoteUIURL: remoteURL,
+            webhookID: "webhook_id1",
+            webhookSecret: nil,
+            internalSSIDs: nil,
+            internalHardwareAddresses: nil,
+            isLocalPushEnabled: false,
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
+        )
+
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.activeURLType, .none)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
+    }
+
     func testInternalExternalRemoteURL() {
         let internalURL = URL(string: "http://internal.example.com:8123")
         let externalURL = URL(string: "http://external.example.com:8123")
@@ -228,7 +342,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         XCTAssertEqual(info.activeURL(), externalURL)
@@ -277,7 +392,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         // valid override states
@@ -309,15 +425,25 @@ class ConnectionInfoTests: XCTestCase {
         XCTAssertEqual(info.webhookURL(), externalURL?.appendingPathComponent("api/webhook/webhook_id1"))
         XCTAssertEqual(info.activeAPIURL(), externalURL?.appendingPathComponent("api"))
 
+        // No SSID defined for internal URL
         info.set(address: nil, for: .external)
         info.overrideActiveURLType = .external
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.activeURLType, .none)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
+
+        // With SSID defined for internal URL
+        info.internalSSIDs = ["unit_tests"]
+        Current.connectivity.currentWiFiSSID = { "unit_tests" }
+
         XCTAssertEqual(info.activeURL(), internalURL)
         XCTAssertEqual(info.activeURLType, .internal)
         XCTAssertEqual(info.webhookURL(), internalURL?.appendingPathComponent("api/webhook/webhook_id1"))
         XCTAssertEqual(info.activeAPIURL(), internalURL?.appendingPathComponent("api"))
     }
 
-    func testFallbackURL() {
+    func testNoFallbackURL() {
         var info = ConnectionInfo(
             externalURL: nil,
             internalURL: nil,
@@ -328,12 +454,13 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
-        XCTAssertEqual(info.activeURL(), URL(string: "http://homeassistant.local:8123"))
-        XCTAssertEqual(info.webhookURL(), URL(string: "http://homeassistant.local:8123/api/webhook/webhook_id1"))
-        XCTAssertEqual(info.activeAPIURL(), URL(string: "http://homeassistant.local:8123/api"))
+        XCTAssertEqual(info.activeURL(), nil)
+        XCTAssertEqual(info.webhookURL(), nil)
+        XCTAssertEqual(info.activeAPIURL(), nil)
     }
 
     func testWebhookURL() {
@@ -351,7 +478,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: ["unit_tests"],
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         Current.connectivity.currentWiFiSSID = { nil }
@@ -380,7 +508,8 @@ class ConnectionInfoTests: XCTestCase {
             internalSSIDs: nil,
             internalHardwareAddresses: nil,
             isLocalPushEnabled: false,
-            securityExceptions: .init()
+            securityExceptions: .init(),
+            alwaysFallbackToInternalURL: false
         )
 
         let oldVersion = Version(major: 2022, minor: 2)

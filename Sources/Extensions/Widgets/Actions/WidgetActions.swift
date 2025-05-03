@@ -22,9 +22,13 @@ struct WidgetActions: Widget {
                         subtitle: nil,
                         interactionType: .appIntent(.action(id: action.ID, name: action.Name)),
                         icon: MaterialDesignIcons(serversideValueNamed: action.IconName),
-                        iconColor: .init(hex: action.IconColor)
+                        textColor: .init(hex: action.TextColor),
+                        iconColor: .init(hex: action.IconColor),
+                        backgroundColor: .init(hex: action.BackgroundColor),
+                        useCustomColors: action.useCustomColors
                     )
-                }
+                },
+                type: .button
             )
         }
         .contentMarginsDisabledIfAvailable()
@@ -52,9 +56,13 @@ struct LegacyWidgetActions: Widget {
                             subtitle: nil,
                             interactionType: .widgetURL(action.widgetLinkURL),
                             icon: MaterialDesignIcons(serversideValueNamed: action.IconName),
-                            iconColor: .init(hex: action.IconColor)
+                            textColor: .init(hex: action.TextColor),
+                            iconColor: .init(hex: action.IconColor),
+                            backgroundColor: .init(hex: action.BackgroundColor),
+                            useCustomColors: action.useCustomColors
                         )
-                    }
+                    },
+                    type: .button
                 )
             }
         )

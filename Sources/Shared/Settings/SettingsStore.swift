@@ -6,8 +6,8 @@ import UIKit
 import Version
 
 public class SettingsStore {
-    let keychain = Constants.Keychain
-    let prefs = UserDefaults(suiteName: Constants.AppGroupID)!
+    let keychain = AppConstants.Keychain
+    let prefs = UserDefaults(suiteName: AppConstants.AppGroupID)!
 
     /// These will only be posted on the main thread
     public static let webViewRelatedSettingDidChange: Notification.Name = .init("webViewRelatedSettingDidChange")
@@ -46,6 +46,33 @@ public class SettingsStore {
     }
 
     #if os(iOS)
+    public var matterLastPreferredNetWorkMacExtendedAddress: String? {
+        get {
+            keychain["matterLastPreferredNetWorkMacExtendedAddress"]
+        }
+        set {
+            keychain["matterLastPreferredNetWorkMacExtendedAddress"] = newValue
+        }
+    }
+
+    public var matterLastPreferredNetWorkActiveOperationalDataset: String? {
+        get {
+            keychain["matterLastPreferredNetWorkActiveOperationalDataset"]
+        }
+        set {
+            keychain["matterLastPreferredNetWorkActiveOperationalDataset"] = newValue
+        }
+    }
+
+    public var matterLastPreferredNetWorkExtendedPANID: String? {
+        get {
+            keychain["matterLastPreferredNetWorkExtendedPANID"]
+        }
+        set {
+            keychain["matterLastPreferredNetWorkExtendedPANID"] = newValue
+        }
+    }
+
     public func isLocationEnabled(for state: UIApplication.State) -> Bool {
         let authorizationStatus: CLAuthorizationStatus
 
@@ -72,7 +99,7 @@ public class SettingsStore {
     }
     #endif
 
-    public struct PageZoom: CaseIterable, Equatable, CustomStringConvertible {
+    public struct PageZoom: CaseIterable, Equatable, CustomStringConvertible, Hashable {
         public let zoom: Int
 
         init?(preference: Int) {
@@ -158,6 +185,15 @@ public class SettingsStore {
         set {
             prefs.set(newValue, forKey: "fullScreen")
             NotificationCenter.default.post(name: Self.webViewRelatedSettingDidChange, object: nil)
+        }
+    }
+
+    public var macNativeFeaturesOnly: Bool {
+        get {
+            prefs.bool(forKey: "macNativeFeaturesOnly")
+        }
+        set {
+            prefs.set(newValue, forKey: "macNativeFeaturesOnly")
         }
     }
 
@@ -260,6 +296,14 @@ public class SettingsStore {
             switch self {
             case .dockAndMenuBar, .dock: return true
             case .menuBar: return false
+            }
+        }
+
+        public var title: String {
+            switch self {
+            case .dock: return L10n.SettingsDetails.General.Visibility.Options.dock
+            case .dockAndMenuBar: return L10n.SettingsDetails.General.Visibility.Options.dockAndMenuBar
+            case .menuBar: return L10n.SettingsDetails.General.Visibility.Options.menuBar
             }
         }
     }
@@ -376,6 +420,27 @@ public class SettingsStore {
             return string
         }
     }
+
+    #if os(iOS)
+    public var gestures: [AppGesture: HAGestureAction] {
+        get {
+            guard let data = prefs.data(forKey: "gesturesSettings"),
+                  let decodedGestures = try? JSONDecoder().decode([AppGesture: HAGestureAction].self, from: data) else {
+                Current.Log.error("Failed to decode gestures from settings")
+                return .defaultGestures
+            }
+            return decodedGestures
+        }
+        set {
+            do {
+                let encoded = try JSONEncoder().encode(newValue)
+                prefs.set(encoded, forKey: "gesturesSettings")
+            } catch {
+                Current.Log.error("Failed to encode gestures for settings, error \(error.localizedDescription)")
+            }
+        }
+    }
+    #endif
 
     // MARK: - Private helpers
 

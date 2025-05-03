@@ -12,10 +12,8 @@ struct WidgetOpenPageProvider: IntentTimelineProvider {
     typealias Intent = WidgetOpenPageIntent
     typealias Entry = WidgetOpenPageEntry
 
-    @Environment(\.diskCache) var diskCache: DiskCache
-
     func placeholder(in context: Context) -> WidgetOpenPageEntry {
-        let count = WidgetBasicContainerView.maximumCount(family: context.family)
+        let count = WidgetFamilySizes.size(for: context.family)
         let pages = stride(from: 0, to: count, by: 1).map { idx in
             with(IntentPanel(identifier: "redacted\(idx)", display: "Redacted Text")) {
                 $0.icon = MaterialDesignIcons.bedEmptyIcon.name
@@ -33,19 +31,22 @@ struct WidgetOpenPageProvider: IntentTimelineProvider {
     ) {
         OpenPageIntentHandler.panels { panels in
             var intentsToDisplay = panels
+
             if !existing.isEmpty {
-                intentsToDisplay = panels.filter { intentPanel in
-                    existing.contains(intentPanel)
+                intentsToDisplay = existing.compactMap { existingValue in
+                    intentsToDisplay.first {
+                        $0.identifier == existingValue.identifier &&
+                            $0.server == existingValue.server
+                    }
                 }
             }
-
-            completion(Array(intentsToDisplay.prefix(WidgetBasicContainerView.maximumCount(family: context.family))))
+            completion(Array(intentsToDisplay.prefix(WidgetFamilySizes.size(for: context.family))))
         }
     }
 
     func getSnapshot(for configuration: Intent, in context: Context, completion: @escaping (Entry) -> Void) {
         panels(for: context, updating: configuration.pages ?? []) { panels in
-            completion(Entry(pages: panels))
+            completion(Entry(pages: Array(panels.prefix(WidgetFamilySizes.sizeForPreview(for: context.family)))))
         }
     }
 

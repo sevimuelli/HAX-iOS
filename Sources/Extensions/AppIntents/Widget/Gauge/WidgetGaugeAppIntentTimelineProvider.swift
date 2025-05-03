@@ -50,24 +50,23 @@ struct WidgetGaugeAppIntentTimelineProvider: AppIntentTimelineProvider {
     }
 
     private func entry(for configuration: WidgetGaugeAppIntent, in context: Context) async throws -> Entry {
-        guard Current.servers.all.count > 0 else {
+        guard let server = configuration.server.getServer() ?? Current.servers.all.first,
+              let connection = Current.api(for: server)?.connection else {
             Current.Log.error("Failed to fetch data for gauge widget: No servers exist")
             throw WidgetGaugeDataError.noServers
         }
 
-        let server = configuration.server.getServer() ?? Current.servers.all.first!
-        let api = Current.api(for: server)
-
         let valueTemplate = !configuration.valueTemplate.isEmpty ? configuration.valueTemplate : "0.0"
         let valueLabelTemplate = !configuration.valueLabelTemplate.isEmpty ? configuration.valueLabelTemplate : "?"
+        let labelTemplate = !configuration.labelTemplate.isEmpty ? configuration.labelTemplate : "?"
         let maxTemplate = configuration.gaugeType == .normal && !configuration.maxTemplate.isEmpty ? configuration
             .maxTemplate : "?"
         let minTemplate = configuration.gaugeType == .normal && !configuration.minTemplate.isEmpty ? configuration
             .minTemplate : "?"
-        let template = "\(valueTemplate)|\(valueLabelTemplate)|\(maxTemplate)|\(minTemplate)"
+        let template = "\(valueTemplate)|\(valueLabelTemplate)|\(maxTemplate)|\(minTemplate)|\(labelTemplate)"
 
         let result = await withCheckedContinuation { continuation in
-            api.connection.send(.init(
+            connection.send(.init(
                 type: .rest(.post, "template"),
                 data: ["template": template],
                 shouldRetry: true
@@ -85,8 +84,12 @@ struct WidgetGaugeAppIntentTimelineProvider: AppIntentTimelineProvider {
             throw WidgetGaugeDataError.apiError
         }
 
+        guard let data else {
+            throw WidgetGaugeDataError.apiError
+        }
+
         var renderedTemplate: String?
-        switch data! {
+        switch data {
         case let .primitive(response):
             renderedTemplate = response as? String
         default:
@@ -94,8 +97,8 @@ struct WidgetGaugeAppIntentTimelineProvider: AppIntentTimelineProvider {
             throw WidgetGaugeDataError.badResponse
         }
 
-        let params = renderedTemplate!.split(separator: "|")
-        guard params.count == 4 else {
+        let params = renderedTemplate?.split(separator: "|") ?? []
+        guard params.count == 5 else {
             Current.Log.error("Failed to render template for gauge widget: Wrong length response")
             throw WidgetGaugeDataError.badResponse
         }
@@ -103,17 +106,30 @@ struct WidgetGaugeAppIntentTimelineProvider: AppIntentTimelineProvider {
         let valueText = String(params[1])
         let maxText = String(params[2])
         let minText = String(params[3])
+        let labelText = String(params[4])
+
+        let action = await withCheckedContinuation { continuation in
+            if let action = configuration.action {
+                action.asAction { action in
+                    continuation.resume(returning: action)
+                }
+            } else {
+                continuation.resume(returning: nil)
+            }
+        }
+
         return .init(
             gaugeType: configuration.gaugeType,
 
             value: Double(params[0]) ?? 0.0,
 
             valueLabel: valueText != "?" ? valueText : nil,
+            label: labelText != "?" ? labelText : nil,
             min: minText != "?" ? minText : nil,
             max: maxText != "?" ? maxText : nil,
 
             runAction: configuration.runAction,
-            action: configuration.action?.asAction()
+            action: action
         )
     }
 }
@@ -133,6 +149,7 @@ struct WidgetGaugeEntry: TimelineEntry {
     var value: Double
 
     var valueLabel: String?
+    var label: String?
     var min: String?
     var max: String?
 

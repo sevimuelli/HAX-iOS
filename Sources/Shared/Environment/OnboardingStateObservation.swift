@@ -1,14 +1,16 @@
 import Foundation
 
-public enum OnboardingState {
-    public enum NeededType {
+public enum OnboardingState: Equatable {
+    public enum NeededType: Equatable {
         case logout
         case error
+        case unauthenticated(_ serverId: String, _ code: Int)
 
         public var shouldShowError: Bool {
             switch self {
             case .logout: return false
             case .error: return true
+            case .unauthenticated: return false
             }
         }
     }

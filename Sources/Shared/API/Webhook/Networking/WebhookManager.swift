@@ -213,13 +213,17 @@ public class WebhookManager: NSObject {
             }
         }
     }
-    
+
     //customheaders_todo
-    public func sendEphemeral<ResponseType>(server: Server, request: WebhookRequest) -> Promise<ResponseType> {
+    public func sendEphemeral<ResponseType>(
+        server: Server,
+        request: WebhookRequest,
+        overrideURL: URL? = nil
+    ) -> Promise<ResponseType> {
         Current.backgroundTask(withName: "webhook-send-ephemeral") { [self, dataQueue] _ in
             attemptNetworking {
                 firstly {
-                    Self.urlRequest(for: request, server: server)
+                    Self.urlRequest(for: request, server: server, baseURL: overrideURL)
                 }.get { _, _ in
                     Current.Log.info("sending to \(server.identifier): \(request)")
                 }.then(on: dataQueue) { [self] urlRequest, data -> Promise<(Data, URLResponse)> in
@@ -246,7 +250,9 @@ public class WebhookManager: NSObject {
         }.then { data, response in
             Promise.value(data).webhookJson(
                 on: DispatchQueue.global(qos: .utility),
+                server: server,
                 statusCode: (response as? HTTPURLResponse)?.statusCode,
+                requestURL: response.url,
                 secretGetter: { server.info.connection.webhookSecretBytes(version: server.info.version) }
             )
         }.map { possible in
@@ -258,12 +264,36 @@ public class WebhookManager: NSObject {
                     desire: String(describing: ResponseType.self)
                 )
             }
-        }.tap { result in
+        }.tap { [weak self] result in
             switch result {
             case let .fulfilled(response):
                 Current.Log.info("got successful response from \(server.identifier) for \(request.type): \(response)")
             case let .rejected(error):
                 Current.Log.error("got failure from \(server.identifier) for \(request.type): \(error)")
+
+                /* If user's cloud subscription expired or account was signed out, retry with activeURL
+                 instad of cloud hook */
+                if let self,
+                   let error = error as? WebhookError,
+                   error == WebhookError.unacceptableStatusCode(503),
+                   overrideURL == nil,
+                   let activeURL = server.info.connection.activeURL() {
+                    let event = ClientEvent(
+                        text: "Retrying with active URL - \(activeURL.absoluteString)",
+                        type: .networkRequest
+                    )
+                    Current.clientEventStore.addEvent(event)
+                    let promise: Promise<Any> = sendEphemeral(
+                        server: server,
+                        request: request,
+                        overrideURL: activeURL
+                    )
+                    promise.cauterize()
+                } else {
+                    Current.Log.error(
+                        "Not retrying with active URL, error: \(error), overrideURL: \(overrideURL?.absoluteString ?? "--"), activeURL: \(server.info.connection.activeURL()?.absoluteString ?? "Unknown")"
+                    )
+                }
             }
         }
     }
@@ -447,7 +477,9 @@ public class WebhookManager: NSObject {
         }.then { data, response in
             Promise.value(data).webhookJson(
                 on: DispatchQueue.global(qos: .utility),
+                server: server,
                 statusCode: (response as? HTTPURLResponse)?.statusCode,
+                requestURL: response.url,
                 secretGetter: { server.info.connection.webhookSecretBytes(version: server.info.version) }
             )
         }.asVoid()
@@ -511,12 +543,17 @@ public class WebhookManager: NSObject {
             if let baseURL {
                 webhookURL = baseURL.appendingPathComponent(server.info.connection.webhookPath, isDirectory: false)
             } else {
-                webhookURL = server.info.connection.webhookURL()
+                if let url = server.info.connection.webhookURL() {
+                    webhookURL = url
+                } else {
+                    seal.resolve(.rejected(ServerConnectionError.noActiveURL(server.info.name)))
+                    return
+                }
             }
 
             var urlRequest = try URLRequest(url: webhookURL, method: .post)
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            
+
             if var customHeaders = server.info.connection.activeCustomHeaders() {
                 for header in customHeaders {
                     urlRequest.setValue(header.value, forHTTPHeaderField: header.key)
@@ -619,7 +656,9 @@ extension WebhookManager: URLSessionDataDelegate, URLSessionTaskDelegate {
                 seal.resolve(error, data)
             }.webhookJson(
                 on: DispatchQueue.global(qos: .utility),
+                server: server,
                 statusCode: statusCode,
+                requestURL: task.response?.url,
                 secretGetter: { server.info.connection.webhookSecretBytes(version: server.info.version) }
             )
 
@@ -669,7 +708,9 @@ extension WebhookManager: URLSessionDataDelegate, URLSessionTaskDelegate {
         sessionInfo.eventGroup.enter()
 
         Current.backgroundTask(withName: "webhook-invoke") { _ -> Promise<Void> in
-            let api = Current.api(for: server)
+            guard let api = Current.api(for: server) else {
+                return .init(error: HomeAssistantAPI.APIError.noAPIAvailable)
+            }
             let handler = handlerType.init(api: api)
             let handlerPromise = firstly {
                 handler.handle(request: .value(request), result: result)
@@ -745,7 +786,7 @@ class WebhookSessionInfo: CustomStringConvertible, Hashable {
             }
 
             return with(configuration) {
-                $0.sharedContainerIdentifier = Constants.AppGroupID
+                $0.sharedContainerIdentifier = AppConstants.AppGroupID
                 $0.httpCookieStorage = nil
                 $0.httpCookieAcceptPolicy = .never
                 $0.httpShouldSetCookies = false

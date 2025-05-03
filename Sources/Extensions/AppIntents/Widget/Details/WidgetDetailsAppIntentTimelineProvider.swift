@@ -48,13 +48,11 @@ struct WidgetDetailsAppIntentTimelineProvider: AppIntentTimelineProvider {
     }
 
     private func entry(for configuration: WidgetDetailsAppIntent, in context: Context) async throws -> Entry {
-        guard Current.servers.all.count > 0 else {
+        guard let server = configuration.server.getServer() ?? Current.servers.all.first,
+              let connection = Current.api(for: server)?.connection else {
             Current.Log.error("Failed to fetch data for details widget: No servers exist")
             throw WidgetDetailsDataError.noServers
         }
-
-        let server = configuration.server.getServer() ?? Current.servers.all.first!
-        let api = Current.api(for: server)
 
         let upperTemplate = !configuration.upperTemplate.isEmpty ? configuration.upperTemplate : "?"
         let lowerTemplate = !configuration.lowerTemplate.isEmpty ? configuration.lowerTemplate : "?"
@@ -62,7 +60,7 @@ struct WidgetDetailsAppIntentTimelineProvider: AppIntentTimelineProvider {
         let template = "\(upperTemplate)|\(lowerTemplate)|\(detailsTemplate)"
 
         let result = await withCheckedContinuation { continuation in
-            api.connection.send(.init(
+            connection.send(.init(
                 type: .rest(.post, "template"),
                 data: ["template": template],
                 shouldRetry: true
@@ -79,9 +77,11 @@ struct WidgetDetailsAppIntentTimelineProvider: AppIntentTimelineProvider {
             Current.Log.error("Failed to render template for details widget: \(error)")
             throw WidgetDetailsDataError.apiError
         }
-
+        guard let data else {
+            throw WidgetDetailsDataError.apiError
+        }
         var renderedTemplate: String?
-        switch data! {
+        switch data {
         case let .primitive(response):
             renderedTemplate = response as? String
         default:
@@ -89,7 +89,7 @@ struct WidgetDetailsAppIntentTimelineProvider: AppIntentTimelineProvider {
             throw WidgetDetailsDataError.badResponse
         }
 
-        let params = renderedTemplate!.split(separator: "|")
+        let params = renderedTemplate?.split(separator: "|") ?? []
         guard params.count == 3 else {
             Current.Log.error("Failed to render template for details widget: Wrong length response")
             throw WidgetDetailsDataError.badResponse
@@ -98,13 +98,24 @@ struct WidgetDetailsAppIntentTimelineProvider: AppIntentTimelineProvider {
         let upperText = String(params[0])
         let lowerText = String(params[1])
         let detailsText = String(params[2])
+
+        let action = await withCheckedContinuation { continuation in
+            if let action = configuration.action {
+                action.asAction { action in
+                    continuation.resume(returning: action)
+                }
+            } else {
+                continuation.resume(returning: nil)
+            }
+        }
+
         return .init(
             upperText: upperText != "?" ? upperText : nil,
             lowerText: lowerText != "?" ? lowerText : nil,
             detailsText: detailsText != "?" ? detailsText : nil,
 
             runAction: configuration.runAction,
-            action: configuration.action?.asAction()
+            action: action
         )
     }
 }

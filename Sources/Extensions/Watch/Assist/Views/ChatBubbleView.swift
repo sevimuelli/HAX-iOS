@@ -5,22 +5,29 @@ struct ChatBubbleView: View {
     let item: AssistChatItem
 
     var body: some View {
-        Text(item.content)
-            .padding(4)
-            .padding(.horizontal, 4)
-            .background(backgroundForChatItemType(item.itemType))
-            .roundedCorner(6, corners: roundedCornersForChatItemType(item.itemType))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, alignment: alignmentForChatItemType(item.itemType))
-            .listRowBackground(Color.clear)
-            .id(item.id)
+        Group {
+            if item.itemType == .typing {
+                AssistTypingIndicator()
+                    .padding(.vertical, Spaces.half)
+            } else {
+                Text(item.content)
+            }
+        }
+        .padding(4)
+        .padding(.horizontal, 4)
+        .background(backgroundForChatItemType(item.itemType))
+        .roundedCorner(6, corners: roundedCornersForChatItemType(item.itemType))
+        .foregroundColor(.white)
+        .frame(maxWidth: .infinity, alignment: alignmentForChatItemType(item.itemType))
+        .listRowBackground(Color.clear)
+        .id(item.id)
     }
 
     private func backgroundForChatItemType(_ itemType: AssistChatItem.ItemType) -> Color {
         switch itemType {
         case .input:
             .asset(Asset.Colors.haPrimary)
-        case .output:
+        case .output, .typing:
             .gray
         case .error:
             .red
@@ -33,7 +40,7 @@ struct ChatBubbleView: View {
         switch itemType {
         case .input:
             .trailing
-        case .output:
+        case .output, .typing:
             .leading
         case .error, .info:
             .center
@@ -44,7 +51,7 @@ struct ChatBubbleView: View {
         switch itemType {
         case .input:
             [.topLeft, .topRight, .bottomLeft]
-        case .output:
+        case .output, .typing:
             [.topLeft, .topRight, .bottomRight]
         case .error, .info:
             [.allCorners]
