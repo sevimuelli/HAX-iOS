@@ -14,6 +14,7 @@ class SettingsViewController: HAFormViewController {
         static let general: ContentSection = 0b10
         static let integrations: ContentSection = 0b11
         static let watch: ContentSection = 0b100
+        static let accessoryWidget: ContentSection = 0b100
         static let carPlay: ContentSection = 0b101
         static let legacy: ContentSection = 0b110
         static let help: ContentSection = 0b111
@@ -144,6 +145,10 @@ class SettingsViewController: HAFormViewController {
         }
 
         if UIDevice.current.userInterfaceIdiom == .phone {
+            if contentSections.contains(.accessoryWidget) {
+                form +++ Section()
+                    <<< SettingsRootDataSource.Row.accessoryWidgets.row
+            }
             if contentSections.contains(.carPlay) {
                 form +++ Section()
                     <<< SettingsRootDataSource.Row.carPlay.row

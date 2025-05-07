@@ -30,6 +30,7 @@ enum SettingsRootDataSource {
         case watch
         case carPlay
         case complications
+        case accessoryWidgets
         case nfc
         case widgets
         case help
@@ -51,6 +52,7 @@ enum SettingsRootDataSource {
                 case .watch: return SettingsRootDataSource.watch()
                 case .carPlay: return SettingsRootDataSource.carPlay()
                 case .complications: return SettingsRootDataSource.complications()
+                case .accessoryWidgets: return SettingsRootDataSource.accessoryWidget()
                 case .nfc: return SettingsRootDataSource.nfc()
                 case .widgets: return SettingsRootDataSource.widgets()
                 case .help: return SettingsRootDataSource.help()
@@ -188,6 +190,19 @@ enum SettingsRootDataSource {
             $0.hidden = .isCatalyst
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 ComplicationListViewController()
+            }, onDismiss: { _ in
+
+            })
+        }
+    }
+
+    private static func accessoryWidget() -> SettingsButtonRow {
+        SettingsButtonRow {
+            $0.title = "Accessory Widgets" //L10n.Settings.DetailsSection.WatchRowComplications.title
+            $0.icon = .chartDonutIcon
+            $0.hidden = .isCatalyst
+            $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
+                AccessoryWidgetListViewController()
             }, onDismiss: { _ in
 
             })

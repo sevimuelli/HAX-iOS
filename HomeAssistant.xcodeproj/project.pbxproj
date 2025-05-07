@@ -991,6 +991,13 @@
 		84F7755EFB03C3F463292ABF /* Pods-watchOS-Shared-watchOS-metadata.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6B55CB9064A0477C9F456B6A /* Pods-watchOS-Shared-watchOS-metadata.plist */; };
 		8E5FA96C740F1D671966CEA9 /* Pods-iOS-Extensions-NotificationContent-metadata.plist in Resources */ = {isa = PBXBuildFile; fileRef = B613440AEDD4209862503F5D /* Pods-iOS-Extensions-NotificationContent-metadata.plist */; };
 		A5A3C1932BE1F4A40EA78754 /* Pods-iOS-Extensions-Matter-metadata.plist in Resources */ = {isa = PBXBuildFile; fileRef = 392B0C44197C98E2653932A5 /* Pods-iOS-Extensions-Matter-metadata.plist */; };
+		AC825D1D2DCAE733000B83ED /* AccessoryWidget+Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D1C2DCAE733000B83ED /* AccessoryWidget+Strings.swift */; };
+		AC825D1E2DCAE733000B83ED /* AccessoryWidget+Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D1C2DCAE733000B83ED /* AccessoryWidget+Strings.swift */; };
+		AC825D272DCBD3DF000B83ED /* AccessoryWidgetFamilySelectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D232DCBD3DF000B83ED /* AccessoryWidgetFamilySelectViewController.swift */; };
+		AC825D292DCBD3DF000B83ED /* AccessoryWidgetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D222DCBD3DF000B83ED /* AccessoryWidgetViewController.swift */; };
+		AC825D2A2DCBD3DF000B83ED /* AccessoryWidgetEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D242DCBD3DF000B83ED /* AccessoryWidgetEditViewController.swift */; };
+		AC825D2E2DCBE9D9000B83ED /* AccessoryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D2D2DCBE9D9000B83ED /* AccessoryWidget.swift */; };
+		AC825D2F2DCBE9DA000B83ED /* AccessoryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC825D2D2DCBE9D9000B83ED /* AccessoryWidget.swift */; };
 		B6022213226DAC9D00E8DBFE /* ScaledFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6022212226DAC9D00E8DBFE /* ScaledFont.swift */; };
 		B60248001FBD343000998205 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B60247FE1FBD343000998205 /* InfoPlist.strings */; };
 		B605C891226E9DAC00EF46DD /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B605C890226E9DAC00EF46DD /* Permissions.swift */; };
@@ -1532,6 +1539,16 @@
 				4697F4C22D8A416400C5C467 /* SharedTesting.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC825CF32DCAB619000B83ED /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B61DA2A7221E8D8F00AADEDD /* Embed Frameworks */ = {
@@ -2434,6 +2451,11 @@
 		A0CE1C12B4ACF0A6876B6F7F /* Pods-iOS-Extensions-Today.beta.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOS-Extensions-Today.beta.xcconfig"; path = "Pods/Target Support Files/Pods-iOS-Extensions-Today/Pods-iOS-Extensions-Today.beta.xcconfig"; sourceTree = "<group>"; };
 		A370326321B07E5ACE0BCB65 /* Pods_iOS_Extensions_PushProvider.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iOS_Extensions_PushProvider.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A90DD8FC6E4726B7E7187C59 /* Pods_watchOS_WatchExtension_Watch.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_watchOS_WatchExtension_Watch.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC825D1C2DCAE733000B83ED /* AccessoryWidget+Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccessoryWidget+Strings.swift"; sourceTree = "<group>"; };
+		AC825D222DCBD3DF000B83ED /* AccessoryWidgetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryWidgetViewController.swift; sourceTree = "<group>"; };
+		AC825D232DCBD3DF000B83ED /* AccessoryWidgetFamilySelectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryWidgetFamilySelectViewController.swift; sourceTree = "<group>"; };
+		AC825D242DCBD3DF000B83ED /* AccessoryWidgetEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryWidgetEditViewController.swift; sourceTree = "<group>"; };
+		AC825D2D2DCBE9D9000B83ED /* AccessoryWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryWidget.swift; sourceTree = "<group>"; };
 		ADC769271BB34C474C2D1E24 /* Pods-iOS-Shared-iOS-metadata.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "Pods-iOS-Shared-iOS-metadata.plist"; path = "Pods/Pods-iOS-Shared-iOS-metadata.plist"; sourceTree = "<group>"; };
 		AF744211EE471EE671F7C928 /* Pods-iOS-Extensions-NotificationService.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOS-Extensions-NotificationService.debug.xcconfig"; path = "Pods/Target Support Files/Pods-iOS-Extensions-NotificationService/Pods-iOS-Extensions-NotificationService.debug.xcconfig"; sourceTree = "<group>"; };
 		B086E41966E89AE531E3C1A5 /* Pods-iOS-Extensions-Widgets.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOS-Extensions-Widgets.debug.xcconfig"; path = "Pods/Target Support Files/Pods-iOS-Extensions-Widgets/Pods-iOS-Extensions-Widgets.debug.xcconfig"; sourceTree = "<group>"; };
@@ -3232,6 +3254,7 @@
 		1171506E24DFCDE60065E874 /* Widgets */ = {
 			isa = PBXGroup;
 			children = (
+				AC825D2C2DCBE526000B83ED /* AccessoryWidgets */,
 				422368892D40F980005911E4 /* Lockscreen */,
 				422368882D40F965005911E4 /* Controls */,
 				422368872D40F959005911E4 /* Custom */,
@@ -5028,6 +5051,23 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		AC825D252DCBD3DF000B83ED /* AccessoryWidget */ = {
+			isa = PBXGroup;
+			children = (
+				AC825D222DCBD3DF000B83ED /* AccessoryWidgetViewController.swift */,
+				AC825D232DCBD3DF000B83ED /* AccessoryWidgetFamilySelectViewController.swift */,
+				AC825D242DCBD3DF000B83ED /* AccessoryWidgetEditViewController.swift */,
+			);
+			path = AccessoryWidget;
+			sourceTree = "<group>";
+		};
+		AC825D2C2DCBE526000B83ED /* AccessoryWidgets */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = AccessoryWidgets;
+			sourceTree = "<group>";
+		};
 		B60614B31D1F116D00249C11 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
@@ -5318,6 +5358,7 @@
 				42EFFAEA2C8882CC002F10FC /* CarPlay */,
 				4251AAC32C6CF5D6004CCC9D /* MagicItem */,
 				1130F530253A1E6400F371BE /* AppleWatch */,
+				AC825D252DCBD3DF000B83ED /* AccessoryWidget */,
 				11AD2E2B2528FDEB00FBC437 /* Observation */,
 				11AD2E1C2528FD6F00FBC437 /* Eureka */,
 				1161C01924D7633700A0E3C4 /* NFC */,
@@ -5643,6 +5684,7 @@
 			children = (
 				B6DF8BC0221C890600370A59 /* UIImageView+UIActivityIndicator.swift */,
 				B6B6B14B215B1E86003DE2DD /* CLKComplication+Strings.swift */,
+				AC825D1C2DCAE733000B83ED /* AccessoryWidget+Strings.swift */,
 				114E9B4D24E89B1300B43EED /* INImage+MaterialDesignIcons.swift */,
 				B6C2C17E20D1F64D00BD810B /* CLLocation+Extensions.swift */,
 				B6C2C17C20D1EC1300BD810B /* CLError+DebugDescription.swift */,
@@ -5696,6 +5738,7 @@
 				11EE9B4D24C6089800404AF8 /* RealmPersistable.swift */,
 				11EE9B5324C62EB300404AF8 /* RealmScene.swift */,
 				B6B6B14E215B6866003DE2DD /* WatchComplication.swift */,
+				AC825D2D2DCBE9D9000B83ED /* AccessoryWidget.swift */,
 				B6DAC734215F069300727D2A /* NotificationCategory.swift */,
 				B6DAC736215F06B100727D2A /* NotificationAction.swift */,
 				B6B2E6A1216AC21400D39A26 /* Action.swift */,
@@ -6182,6 +6225,7 @@
 				B6CC5D8C2159D10E00833E5D /* Resources */,
 				F3E3FC23B4E5B348B92D05F4 /* [CP] Embed Pods Frameworks */,
 				B61DA2A7221E8D8F00AADEDD /* Embed Frameworks */,
+				AC825CF32DCAB619000B83ED /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -6245,7 +6289,7 @@
 			isa = PBXProject;
 			attributes = {
 				DefaultBuildSystemTypeForWorkspace = Original;
-				LastSwiftUpdateCheck = 1540;
+				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1330;
 				ORGANIZATIONNAME = "Home Assistant";
 				TargetAttributes = {
@@ -6981,13 +7025,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Tests-App/Pods-Tests-App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Tests-App/Pods-Tests-App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -7192,13 +7232,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOS-App/Pods-iOS-App-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOS-App/Pods-iOS-App-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -7321,13 +7357,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-watchOS-WatchExtension-Watch/Pods-watchOS-WatchExtension-Watch-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-watchOS-WatchExtension-Watch/Pods-watchOS-WatchExtension-Watch-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -7342,13 +7374,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOS-Shared-iOS-Tests-Shared/Pods-iOS-Shared-iOS-Tests-Shared-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iOS-Shared-iOS-Tests-Shared/Pods-iOS-Shared-iOS-Tests-Shared-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -7554,6 +7582,7 @@
 				426EE49B2CA4194E00A5EF4F /* OnboardingWelcomeView.swift in Sources */,
 				B68EDD03215F0E2900DD6B28 /* NotificationCategoryConfigurator.swift in Sources */,
 				42D5ACCE2C636F2B00D9C4E2 /* WatchConfigurationViewModel.swift in Sources */,
+				AC825D272DCBD3DF000B83ED /* AccessoryWidgetFamilySelectViewController.swift in Sources */,
 				117D8A0824A9347F00580913 /* UIColor+CSSRGB.swift in Sources */,
 				427FEE562D9D39A50047C00C /* OnboardingNavigationView.swift in Sources */,
 				429481E92DA93F4300A8B468 /* WebViewJavascriptCommands.swift in Sources */,
@@ -7618,6 +7647,7 @@
 				119D765F2492F8FA00183C5F /* UIApplication+BackgroundTask.swift in Sources */,
 				11195F6F267EFC8E003DF674 /* NotificationManagerLocalPushInterfaceDirect.swift in Sources */,
 				FD3BC66329B9FF8F00B19FBE /* CarPlaySceneDelegate.swift in Sources */,
+				AC825D2A2DCBD3DF000B83ED /* AccessoryWidgetEditViewController.swift in Sources */,
 				11C4629424B189B100031902 /* NotificationRateLimitsAPI.swift in Sources */,
 				1161C01B24D7634300A0E3C4 /* NFCListViewController.swift in Sources */,
 				11A71C6B24A463FC00D9565F /* ZoneManagerState.swift in Sources */,
@@ -7703,6 +7733,7 @@
 				B657A8EA1CA646EB00121384 /* AppDelegate.swift in Sources */,
 				119DE945263349E50099F7D8 /* HAFormViewController.swift in Sources */,
 				420E2AE72C474718004921D8 /* WidgetBasicViewModel.swift in Sources */,
+				AC825D292DCBD3DF000B83ED /* AccessoryWidgetViewController.swift in Sources */,
 				1178C4E524D5CEB200FDEC3E /* ConnectionURLViewController.swift in Sources */,
 				42F1DA6B2B4ED1BF002729BC /* CarPlayAreasZonesTemplate.swift in Sources */,
 				427FEE0B2D9C05EF0047C00C /* ServersScanAnimationView.swift in Sources */,
@@ -8016,6 +8047,7 @@
 				B6B74CBE228399AC00D58A68 /* Action.swift in Sources */,
 				11358AF024FCA8BE0074C4E2 /* ActiveStateManager.swift in Sources */,
 				11B38EF1275C54A300205C7B /* SendLocationIntentHandler.swift in Sources */,
+				AC825D1E2DCAE733000B83ED /* AccessoryWidget+Strings.swift in Sources */,
 				1120C580274638330046C38B /* PerServerContainer.swift in Sources */,
 				427647262C8F38590027B21F /* HAAreaResponse.swift in Sources */,
 				42E9AFFF2CE63944009DDA46 /* AudioOutputSensor.swift in Sources */,
@@ -8108,6 +8140,7 @@
 				B67CE8BB22200F220034C1D0 /* UNNotificationContent+ClientEvent.swift in Sources */,
 				1148A45124E9AF9200345050 /* MDIMigration.swift in Sources */,
 				114E9B4F24E89B1300B43EED /* INImage+MaterialDesignIcons.swift in Sources */,
+				AC825D2F2DCBE9DA000B83ED /* AccessoryWidget.swift in Sources */,
 				42070EEF2BAC52630031E96F /* AssistRequests.swift in Sources */,
 				118261FE24F9B81A000795C6 /* HACoreBlahProperty.swift in Sources */,
 				1101568824D7712F009424C9 /* TagManagerProtocol.swift in Sources */,
@@ -8260,6 +8293,7 @@
 				420CFC7C2D3F9CCB009A94F3 /* AppPanelTable.swift in Sources */,
 				11B38EE9275C54A200205C7B /* GetCameraImageIntentHandler.swift in Sources */,
 				426740A92B17391000C1DD73 /* Data+Hexadecimal.swift in Sources */,
+				AC825D2E2DCBE9D9000B83ED /* AccessoryWidget.swift in Sources */,
 				D0EEF306214DD3CF00D1D360 /* ObjectMapperTransformers.swift in Sources */,
 				113A8D49283C7B1700B9DA32 /* PeriodicUpdateManager.swift in Sources */,
 				11AF4D22249C924B006C74C0 /* GeocoderSensor.swift in Sources */,
@@ -8373,6 +8407,7 @@
 				4264906B2C0F1B5F002155CC /* AssistChatItem.swift in Sources */,
 				D0C8847A2122A65800CCB501 /* SettingsStore.swift in Sources */,
 				115BC82E2677093900452430 /* FocusStatusWrapper.swift in Sources */,
+				AC825D1D2DCAE733000B83ED /* AccessoryWidget+Strings.swift in Sources */,
 				42CB330F2DAE530400491DCE /* SettingsButton.swift in Sources */,
 				B6A258482232539900ADD202 /* WebhookUpdateLocation.swift in Sources */,
 				B6B74CBA2283983800D58A68 /* CLKComplication+Strings.swift in Sources */,
@@ -9441,6 +9476,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9C4E5E25229D986B0044C8EC /* HomeAssistant.beta.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 44XUBPGXDG;
 			};
 			name = Beta;
 		};
@@ -9627,6 +9663,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/WatchApp/WatchApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Beta;
 		};
@@ -9645,6 +9682,7 @@
 				PROVISIONING_SUFFIX = .watchkitapp.watchkitextension;
 				SDKROOT = watchos;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Beta;
 		};
@@ -9652,6 +9690,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9C4E5E21229D98220044C8EC /* HomeAssistant.debug.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 44XUBPGXDG;
 			};
 			name = Debug;
 		};
@@ -9659,6 +9698,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9C4E5E22229D98530044C8EC /* HomeAssistant.release.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 44XUBPGXDG;
 			};
 			name = Release;
 		};
@@ -9977,6 +10017,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Debug;
 		};
@@ -9996,6 +10037,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Sources/WatchApp/WatchApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Release;
 		};
@@ -10014,6 +10056,7 @@
 				PROVISIONING_SUFFIX = .watchkitapp.watchkitextension;
 				SDKROOT = watchos;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Debug;
 		};
@@ -10032,6 +10075,7 @@
 				PROVISIONING_SUFFIX = .watchkitapp.watchkitextension;
 				SDKROOT = watchos;
 				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9;
 			};
 			name = Release;
 		};
