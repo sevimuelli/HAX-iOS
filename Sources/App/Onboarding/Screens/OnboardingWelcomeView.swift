@@ -4,10 +4,6 @@ import SwiftUI
 
 struct OnboardingWelcomeView: View {
     @State private var showLearnMore = false
-    @State private var showLogo = false
-    @State private var showButtons = false
-    @State private var logoScale = 0.9
-    @State private var buttonYOffset: CGFloat = 10
 
     @Binding var shouldDismissOnboarding: Bool
 
@@ -18,34 +14,17 @@ struct OnboardingWelcomeView: View {
                 logoBlock
                 textBlock
             }
-            .opacity(showLogo ? 1 : 0)
-            .scaleEffect(logoScale)
             Spacer()
             continueButton
-                .opacity(showButtons ? 1 : 0)
-                .offset(y: buttonYOffset)
         }
         .frame(maxWidth: Sizes.maxWidthForLargerScreens)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.5)) {
-                showLogo = true
-                logoScale = 1.0
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        showButtons = true
-                        buttonYOffset = 0
-                    }
-                }
-            }
-        }
         .fullScreenCover(isPresented: $showLearnMore) {
             SafariWebView(url: AppConstants.WebURLs.homeAssistantGetStarted)
         }
     }
 
     private var logoBlock: some View {
-        Image(uiImage: Asset.SharedAssets.logoHorizontalText.image)
+        Image(uiImage: Asset.logoHorizontalText.image)
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(maxWidth: 300)
@@ -64,7 +43,7 @@ struct OnboardingWelcomeView: View {
 
     private var continueButton: some View {
         VStack {
-            NavigationLink(destination: OnboardingServersListView(shouldDismissOnboarding: $shouldDismissOnboarding)) {
+            NavigationLink(destination: OnboardingServersListView()) {
                 Text(verbatim: L10n.continueLabel)
             }
             .buttonStyle(.primaryButton)
@@ -72,7 +51,7 @@ struct OnboardingWelcomeView: View {
             Button(L10n.Onboarding.Welcome.learnMore) {
                 showLearnMore = true
             }
-            .tint(Color.asset(Asset.Colors.haPrimary))
+            .tint(Color.haPrimary)
             .frame(minHeight: 40)
             .buttonStyle(.secondaryButton)
         }

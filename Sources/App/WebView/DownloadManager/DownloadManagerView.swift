@@ -37,9 +37,7 @@ struct DownloadManagerView: View {
             fileCard
             failedCard
         } else {
-            ProgressView()
-                .progressViewStyle(.circular)
-                .scaleEffect(2)
+            HAProgressView(style: .large)
                 .padding(Spaces.four)
             Text(verbatim: L10n.DownloadManager.Downloading.title)
                 .font(.title.bold())
@@ -92,7 +90,7 @@ struct DownloadManagerView: View {
                         .truncationMode(.middle)
                         .padding()
                         .foregroundStyle(.white)
-                        .background(Color.asset(Asset.Colors.haPrimary))
+                        .background(Color.haPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: CornerRadiusSizes.oneAndHalf))
                         .padding()
                         .onAppear {
