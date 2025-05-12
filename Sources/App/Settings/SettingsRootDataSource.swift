@@ -185,7 +185,7 @@ enum SettingsRootDataSource {
 
     private static func complications() -> SettingsButtonRow {
         SettingsButtonRow {
-            $0.title = L10n.Settings.DetailsSection.WatchRowComplications.title
+            $0.title = "(Legacy) Complications" //L10n.Settings.DetailsSection.WatchRowComplications.title
             $0.icon = .chartDonutIcon
             $0.hidden = .isCatalyst
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
@@ -222,7 +222,7 @@ enum SettingsRootDataSource {
 
     private static func widgets() -> SettingsButtonRow {
         SettingsButtonRow {
-            $0.title = L10n.Settings.Widgets.title
+            $0.title = "Custom widgets" //L10n.Settings.Widgets.title
             $0.icon = .widgetsIcon
             $0.presentationMode = .show(controllerProvider: ControllerProvider.callback {
                 WidgetBuilderView().embeddedInHostingController()

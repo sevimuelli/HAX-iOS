@@ -3,12 +3,6 @@ import Foundation
 import Shared
 
 class AccessoryWidgetFamilySelectViewController: HAFormViewController, RowControllerType {
-    let currentFamilies: Set<ComplicationGroupMember>
-
-    init(currentFamilies: Set<ComplicationGroupMember>) {
-        self.currentFamilies = currentFamilies
-        super.init()
-    }
 
     var onDismissCallback: ((UIViewController) -> Void)?
 
@@ -19,7 +13,7 @@ class AccessoryWidgetFamilySelectViewController: HAFormViewController, RowContro
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = L10n.Watch.Configurator.New.title
+        title = "Add Accessory Widgets" //L10n.Watch.Configurator.New.title
 
         navigationItem.leftBarButtonItems = [
             UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel(_:))),
@@ -29,11 +23,11 @@ class AccessoryWidgetFamilySelectViewController: HAFormViewController, RowContro
     }
 
     private func setupForm() {
-        form.append(contentsOf: AccessoryWidgetGroup.allCases.sorted().map { group in
-            let section = Section(header: group.name, footer: group.description)
-            section.append(contentsOf: group.members.sorted().map { family in
+            let footer = "Can be used on the Apple Watch (formerly known as complications) or on the iPhone Lock Screen."
+            let section = Section(footer: footer)
+        section.append(contentsOf: AccessoryWidgetGroup.allCases.sorted().map { family in
                 ButtonRow {
-                    $0.title = family.shortName
+                    $0.title = family.name
                     $0.cellStyle = .subtitle
 
                     $0.cellUpdate { cell, row in
@@ -68,7 +62,6 @@ class AccessoryWidgetFamilySelectViewController: HAFormViewController, RowContro
                     })
                 }
             })
-            return section
-        })
+            form +++ section
     }
 }

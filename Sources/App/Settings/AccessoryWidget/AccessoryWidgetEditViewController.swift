@@ -61,12 +61,12 @@ class AccessoryWidgetEditViewController: HAFormViewController, TypedRowControlle
         onDismissCallback?(self)
     }
 
-    @objc private func deleteComplication(_ sender: UIView) {
+    @objc private func deleteAccessoryWidget(_ sender: UIView) {
         precondition(config.realm != nil)
 
         let alert = UIAlertController(
-            title: L10n.Watch.Configurator.Delete.title,
-            message: L10n.Watch.Configurator.Delete.message,
+            title: "Delete Accessory Widget?",
+            message: "Are you sure you want to delete this Accessory Widget? This cannot be undone.",
             preferredStyle: .actionSheet
         )
         with(alert.popoverPresentationController) {
@@ -74,7 +74,7 @@ class AccessoryWidgetEditViewController: HAFormViewController, TypedRowControlle
             $0?.sourceRect = sender.bounds
         }
         alert.addAction(UIAlertAction(
-            title: L10n.Watch.Configurator.Delete.button, style: .destructive, handler: { [config, server] _ in
+            title: "Delete Accessory Widget", style: .destructive, handler: { [config, server] _ in
                 let realm = Current.realm()
                 realm.reentrantWrite {
                     realm.delete(config)
@@ -430,9 +430,9 @@ class AccessoryWidgetEditViewController: HAFormViewController, TypedRowControlle
                 }
             }
             <<< ButtonRow {
-                $0.title = L10n.Watch.Configurator.Delete.button
+                $0.title = "Delete Accessory Widget" //L10n.Watch.Configurator.Delete.button
                 $0.onCellSelection { [weak self] cell, _ in
-                    self?.deleteComplication(cell)
+                    self?.deleteAccessoryWidget(cell)
                 }
                 $0.cellUpdate { cell, _ in
                     cell.textLabel?.textColor = .systemRed

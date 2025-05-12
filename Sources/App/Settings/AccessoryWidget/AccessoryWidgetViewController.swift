@@ -8,9 +8,7 @@ import Version
 
 class AccessoryWidgetListViewController: HAFormViewController {
     @objc private func add(_ sender: UIBarButtonItem) {
-        let editListViewController = AccessoryWidgetFamilySelectViewController(
-            currentFamilies: Set(Current.realm().objects(WatchComplication.self).map(\.Family))
-        )
+        let editListViewController = AccessoryWidgetFamilySelectViewController()
         editListViewController.onDismissCallback = { $0.dismiss(animated: true, completion: nil) }
         let navigationController = UINavigationController(rootViewController: editListViewController)
         present(navigationController, animated: true, completion: nil)
@@ -19,14 +17,15 @@ class AccessoryWidgetListViewController: HAFormViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = L10n.SettingsDetails.Watch.title
+        title = "Accessory Widgets" //L10n.SettingsDetails.Watch.title
 
         navigationItem.rightBarButtonItems = [
             UIBarButtonItem(title: L10n.addButtonLabel, style: .plain, target: self, action: #selector(add(_:))),
         ]
 
         form +++ InfoLabelRow {
-            $0.title = L10n.Watch.Configurator.List.description
+            //$0.title = L10n.Watch.Configurator.List.description
+            $0.title = "Configure a new Accessory Widgets using the Add button. Once saved, you can choose it on your Apple Watch, in the Watch app or on the Lock Screen."
             $0.displayType = .primary
         }
 
@@ -35,7 +34,8 @@ class AccessoryWidgetListViewController: HAFormViewController {
             }
 
         form +++ InfoLabelRow {
-            $0.title = L10n.Watch.Configurator.Warning.templatingAdmin
+            //$0.title = L10n.Watch.Configurator.Warning.templatingAdmin
+            $0.title = "ATTENTION: For templating in Accessory Widgets the user needs to have admin role."
         }
 
         form +++ Section(
@@ -84,7 +84,7 @@ class AccessoryWidgetListViewController: HAFormViewController {
             }
 
             <<< ButtonRowWithLoading {
-                $0.title = L10n.Watch.Configurator.List.ManualUpdates.manuallyUpdate
+                $0.title = "Update Accessory Widgets" //L10n.Watch.Configurator.List.ManualUpdates.manuallyUpdate
                 $0.onCellSelection { [weak self] _, row in
                     row.value = true
                     row.updateCell()
@@ -105,40 +105,34 @@ class AccessoryWidgetListViewController: HAFormViewController {
             }
 
         let allComplications = Current.realm()
-            .objects(AccessoryWidget.self)
+            .objects(AccessoryWidget.self).sorted(byKeyPath: "rawFamily")
 
-        for group in AccessoryWidgetGroup.allCases.sorted() {
-            let familyItems = allComplications
-                .filter("rawFamily in %@", group.members.map(\.rawValue))
-                .sorted(byKeyPath: "rawFamily")
-
-            form +++ RealmSection(
-                header: group.name,
-                footer: group.description,
-                collection: AnyRealmCollection(familyItems),
-                emptyRows: [],
-                getter: { (accessoryWidget: AccessoryWidget) -> ButtonRow in
-                    ButtonRow {
-                        $0.cellStyle = .value1
-                        $0.title = accessoryWidget.Family.shortName
-                        $0.value = accessoryWidget.displayName
-                        $0.cellUpdate { cell, row in
-                            cell.detailTextLabel?.text = row.value
-                        }
-                        $0.presentationMode = .show(controllerProvider: .callback {
-                            AccessoryWidgetEditViewController(config: accessoryWidget)
-                        }, onDismiss: { vc in
-                            _ = vc.navigationController?.popViewController(animated: true)
-                        })
+        form +++ RealmSection(
+            header: "Accessory Widgets",
+            footer: "Can be used on the Apple Watch (formerly known as complications) or on the iPhone Lock Screen.",
+            collection: AnyRealmCollection(allComplications),
+            emptyRows: [],
+            getter: { (accessoryWidget: AccessoryWidget) -> ButtonRow in
+                ButtonRow {
+                    $0.cellStyle = .value1
+                    $0.title = accessoryWidget.Family.name
+                    $0.value = accessoryWidget.displayName
+                    $0.cellUpdate { cell, row in
+                        cell.detailTextLabel?.text = row.value
                     }
-                }, didUpdate: { section, collection in
-                    let shouldBeHidden = collection.isEmpty
-                    if shouldBeHidden != section.isHidden {
-                        section.hidden = .init(booleanLiteral: shouldBeHidden)
-                        section.evaluateHidden()
-                    }
+                    $0.presentationMode = .show(controllerProvider: .callback {
+                        AccessoryWidgetEditViewController(config: accessoryWidget)
+                    }, onDismiss: { vc in
+                        _ = vc.navigationController?.popViewController(animated: true)
+                    })
                 }
-            )
-        }
+            }, didUpdate: { section, collection in
+                let shouldBeHidden = collection.isEmpty
+                if shouldBeHidden != section.isHidden {
+                    section.hidden = .init(booleanLiteral: shouldBeHidden)
+                    section.evaluateHidden()
+                }
+            }
+        )
     }
 }

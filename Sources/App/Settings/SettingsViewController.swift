@@ -120,10 +120,17 @@ class SettingsViewController: HAFormViewController {
         }
 
         if contentSections.contains(.integrations) {
-            form +++ Section()
+            let integrationSection = Section()
                 <<< SettingsRootDataSource.Row.sensors.row
                 <<< SettingsRootDataSource.Row.nfc.row
                 <<< SettingsRootDataSource.Row.widgets.row
+
+            if UIDevice.current.userInterfaceIdiom == .phone,
+               contentSections.contains(.accessoryWidget) {
+                integrationSection <<< SettingsRootDataSource.Row.accessoryWidgets.row
+            }
+
+            form +++ integrationSection
         }
 
         // Display Apple Watch section only for devices that make sense
@@ -145,10 +152,6 @@ class SettingsViewController: HAFormViewController {
         }
 
         if UIDevice.current.userInterfaceIdiom == .phone {
-            if contentSections.contains(.accessoryWidget) {
-                form +++ Section()
-                    <<< SettingsRootDataSource.Row.accessoryWidgets.row
-            }
             if contentSections.contains(.carPlay) {
                 form +++ Section()
                     <<< SettingsRootDataSource.Row.carPlay.row

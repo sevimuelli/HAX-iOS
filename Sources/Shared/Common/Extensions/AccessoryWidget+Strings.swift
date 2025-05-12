@@ -6,132 +6,58 @@ import WatchKit
 #endif
 
 public enum AccessoryWidgetGroup: String, Comparable {
-    case circularSmall
-    case graphic
-    case utilitarian
+    case circular
+    case corner
+    case inline
+    case rectangular
 
     public static func < (lhs: AccessoryWidgetGroup, rhs: AccessoryWidgetGroup) -> Bool {
         lhs.name < rhs.name
     }
 
-    public var name: String {
-        switch self {
-        case .circularSmall:
-            return L10n.Watch.Labels.ComplicationGroup.CircularSmall.name
-        case .graphic:
-            return L10n.Watch.Labels.ComplicationGroup.Graphic.name
-        case .utilitarian:
-            return L10n.Watch.Labels.ComplicationGroup.Utilitarian.name
-        }
-    }
-
-    public var description: String {
-        switch self {
-        case .circularSmall:
-            return L10n.Watch.Labels.ComplicationGroup.CircularSmall.description
-        case .graphic:
-            return L10n.Watch.Labels.ComplicationGroup.Graphic.description
-        case .utilitarian:
-            return L10n.Watch.Labels.ComplicationGroup.Utilitarian.description
-        }
-    }
-
-    public var members: [AccessoryWidgetGroupMember] {
-        switch self {
-        case .circularSmall:
-            return [AccessoryWidgetGroupMember.circularSmall]
-        case .graphic:
-            return [
-                AccessoryWidgetGroupMember.graphicCircular,
-                AccessoryWidgetGroupMember.graphicCorner,
-                AccessoryWidgetGroupMember.graphicRectangular,
-            ]
-        case .utilitarian:
-            return [
-                AccessoryWidgetGroupMember.utilitarianLarge,
-                AccessoryWidgetGroupMember.utilitarianSmall,
-                AccessoryWidgetGroupMember.utilitarianSmallFlat,
-            ]
-        }
-    }
-}
-
-extension AccessoryWidgetGroup: CaseIterable {}
-
-public enum AccessoryWidgetGroupMember: String, Comparable {
-    case circularSmall
-    case graphicCircular
-    case graphicCorner
-    case graphicRectangular
-    case utilitarianLarge
-    case utilitarianSmall
-    case utilitarianSmallFlat
-
-    public static func < (lhs: AccessoryWidgetGroupMember, rhs: AccessoryWidgetGroupMember) -> Bool {
-        lhs.name < rhs.name
-    }
-
     public init(name: String) {
         switch name {
-        case "circularSmall":
-            self = .circularSmall
-        case "graphicCircular":
-            self = .graphicCircular
-        case "graphicCorner":
-            self = .graphicCorner
-        case "graphicRectangular":
-            self = .graphicRectangular
-        case "utilitarianLarge":
-            self = .utilitarianLarge
-        case "utilitarianSmall":
-            self = .utilitarianSmall
-        case "utilitarianSmallFlat":
-            self = .utilitarianSmallFlat
+        case "circular":
+            self = .circular
+        case "corner":
+            self = .corner
+        case "rectangular":
+            self = .rectangular
+        case "inline":
+            self = .inline
         default:
             Current.Log.warning("Unknown group member name \(name)")
-            self = .circularSmall
+            self = .circular
         }
     }
 
     #if os(watchOS)
     public init(family: CLKComplicationFamily) {
         switch family {
-        case CLKComplicationFamily.circularSmall:
-            self = .circularSmall
         case CLKComplicationFamily.graphicCircular:
-            self = .graphicCircular
+            self = .circular
         case CLKComplicationFamily.graphicCorner:
-            self = .graphicCorner
+            self = .corner
         case CLKComplicationFamily.graphicRectangular:
-            self = .graphicRectangular
-        case CLKComplicationFamily.utilitarianLarge:
-            self = .utilitarianLarge
+            self = .rectangular
         case CLKComplicationFamily.utilitarianSmall:
-            self = .utilitarianSmall
-        case CLKComplicationFamily.utilitarianSmallFlat:
-            self = .utilitarianSmallFlat
+            self = .inline
         default:
             Current.Log.warning("Unknown group member name \(family.rawValue)")
-            self = .circularSmall
+            self = .circular
         }
     }
 
     public var family: CLKComplicationFamily {
         switch self {
-        case .circularSmall:
-            return .circularSmall
-        case .graphicCircular:
+        case .circular:
             return .graphicCircular
-        case .graphicCorner:
+        case .corner:
             return .graphicCorner
-        case .graphicRectangular:
+        case .rectangular:
             return .graphicRectangular
-        case .utilitarianLarge:
-            return .utilitarianLarge
-        case .utilitarianSmall:
+        case .inline:
             return .utilitarianSmall
-        case .utilitarianSmallFlat:
-            return .utilitarianSmallFlat
         }
     }
 
@@ -148,110 +74,49 @@ public enum AccessoryWidgetGroupMember: String, Comparable {
 //    #if os(iOS)
 //    var family: String {
 //        switch self {
-//        case .circularSmall:
-//            return "circularSmall"
 //        case .graphicCircular:
 //            return "graphicCircular"
 //        case .graphicCorner:
 //            return "graphicCorner"
 //        case .graphicRectangular:
 //            return "graphicRectangular"
-//        case .utilitarianLarge:
-//            return "utilitarianLarge"
 //        case .utilitarianSmall:
 //            return "utilitarianSmall"
-//        case .utilitarianSmallFlat:
-//            return "utilitarianSmallFlat"
 //        }
 //    }
 //    #endif
 
     public var name: String {
         switch self {
-        case .circularSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.CircularSmall.name
-        case .graphicCircular:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicCircular.name
-        case .graphicCorner:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicCorner.name
-        case .graphicRectangular:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicRectangular.name
-        case .utilitarianLarge:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianLarge.name
-        case .utilitarianSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmall.name
-        case .utilitarianSmallFlat:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmallFlat.name
-        }
-    }
-
-    public var shortName: String {
-        switch self {
-        case .circularSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.CircularSmall.shortName
-        case .graphicCircular:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicCircular.shortName
-        case .graphicCorner:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicCorner.shortName
-        case .graphicRectangular:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicRectangular.shortName
-        case .utilitarianLarge:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianLarge.shortName
-        case .utilitarianSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmall.shortName
-        case .utilitarianSmallFlat:
-            return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmallFlat.shortName
-        }
-    }
-
-    public var group: AccessoryWidgetGroup {
-        switch self {
-        case .circularSmall:
-            return AccessoryWidgetGroup.circularSmall
-        case .graphicCircular, .graphicCorner, .graphicRectangular:
-            return AccessoryWidgetGroup.graphic
-        case .utilitarianLarge, .utilitarianSmall, .utilitarianSmallFlat:
-            return AccessoryWidgetGroup.utilitarian
+        case .circular:
+            return "Circular" //L10n.Watch.Labels.ComplicationGroupMember.GraphicCircular.name
+        case .corner:
+            return "Corner" //L10n.Watch.Labels.ComplicationGroupMember.GraphicCorner.name
+        case .rectangular:
+            return "Rectangular" //L10n.Watch.Labels.ComplicationGroupMember.GraphicRectangular.name
+        case .inline:
+            return "Inline"
         }
     }
 
     public var description: String {
         switch self {
-        case .circularSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.CircularSmall.description
-        case .utilitarianSmall:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicCorner.description
-        case .utilitarianSmallFlat:
-            return L10n.Watch.Labels.ComplicationGroupMember.GraphicRectangular.description
-        case .utilitarianLarge:
-            return L10n.Watch.Labels.ComplicationGroupMember.ModularLarge.description
-        case .graphicCorner:
+        case .inline:
+            return "A square or rectangular area used in watch faces such as Utility, Motion, Chronograph, and Simple clock faces."
+        case .corner:
             return L10n.Watch.Labels.ComplicationGroupMember.ModularSmall.description
-        case .graphicCircular:
+        case .circular:
             return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianLarge.description
-        case .graphicRectangular:
+        case .rectangular:
             return L10n.Watch.Labels.ComplicationGroupMember.UtilitarianSmallFlat.description
         }
     }
 
     public var templates: [AccessoryWidgetTemplate] {
         switch self {
-        case .circularSmall:
-            return [
-                .CircularSmallRingImage,
-                .CircularSmallSimpleImage,
-                .CircularSmallStackImage,
-                .CircularSmallRingText,
-                .CircularSmallSimpleText,
-                .CircularSmallStackText,
-            ]
-        case .utilitarianSmall:
-            return [.UtilitarianSmallRingImage, .UtilitarianSmallRingText, .UtilitarianSmallSquare]
-        case .utilitarianSmallFlat:
-            return [.UtilitarianSmallFlat]
-        case .utilitarianLarge:
-            return [.UtilitarianLargeFlat]
-        case .graphicCorner:
+        case .inline:
+            return [.UtilitarianSmallRingImage, .UtilitarianSmallRingText, .UtilitarianSmallSquare, .UtilitarianSmallFlat, .UtilitarianLargeFlat]
+        case .corner:
             return [
                 .GraphicCornerCircularImage,
                 .GraphicCornerGaugeImage,
@@ -259,7 +124,7 @@ public enum AccessoryWidgetGroupMember: String, Comparable {
                 .GraphicCornerStackText,
                 .GraphicCornerTextImage,
             ]
-        case .graphicCircular:
+        case .circular:
             return [
                 .GraphicCircularImage,
                 .GraphicCircularClosedGaugeImage,
@@ -267,8 +132,11 @@ public enum AccessoryWidgetGroupMember: String, Comparable {
                 .GraphicCircularClosedGaugeText,
                 .GraphicCircularOpenGaugeSimpleText,
                 .GraphicCircularOpenGaugeRangeText,
+                .GraphicCircularStackImage,
+                .GraphicCircularStackText,
+                
             ]
-        case .graphicRectangular:
+        case .rectangular:
             return [.GraphicRectangularStandardBody, .GraphicRectangularTextGauge, .GraphicRectangularLargeImage]
         }
     }
@@ -281,20 +149,15 @@ public enum AccessoryWidgetGroupMember: String, Comparable {
         let isPlaceholder = identifier?.starts(with: "placeholder") == true
 
         switch self {
-        case .circularSmall:
-            let template = CLKComplicationTemplateCircularSmallSimpleImage()
-            template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
-            template.tintColor = hassColor
-            return template
-        case .graphicCircular:
+        case .circular:
             let template = CLKComplicationTemplateGraphicCircularImage()
             template.imageProvider = CLKFullColorImageProvider(fullColorImage: logoImage)
             return template
-        case .graphicCorner:
+        case .corner:
             let template = CLKComplicationTemplateGraphicCornerCircularImage()
             template.imageProvider = CLKFullColorImageProvider(fullColorImage: logoImage)
             return template
-        case .graphicRectangular:
+        case .rectangular:
             if isPlaceholder {
                 let template = CLKComplicationTemplateGraphicRectangularFullImage()
                 template.imageProvider = CLKFullColorImageProvider(fullColorImage: logoImage)
@@ -308,55 +171,19 @@ public enum AccessoryWidgetGroupMember: String, Comparable {
                 template.body2TextProvider = CLKSimpleTextProvider(text: "has not been configured")
                 return template
             }
-        case .utilitarianLarge:
-            if isPlaceholder {
-                let template = CLKComplicationTemplateUtilitarianLargeFlat()
-                template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
-                template.textProvider = CLKSimpleTextProvider(text: "Home Assistant")
-                template.tintColor = hassColor
-                return template
-            } else {
-                let template = CLKComplicationTemplateUtilitarianLargeFlat()
-                template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
-                let desc = ComplicationTemplate.UtilitarianLargeFlat.description
-                template.textProvider = CLKSimpleTextProvider(text: "\(desc) has not been configured in the app")
-                template.tintColor = hassColor
-                return template
-            }
-        case .utilitarianSmall:
+        case .inline:
             let template = CLKComplicationTemplateUtilitarianSmallSquare()
             template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
             template.tintColor = hassColor
             return template
-        case .utilitarianSmallFlat:
-            if isPlaceholder {
-                let template = CLKComplicationTemplateUtilitarianSmallFlat()
-                template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
-                template.textProvider = CLKSimpleTextProvider(text: "HA")
-                template.tintColor = hassColor
-                return template
-            } else {
-                let template = CLKComplicationTemplateUtilitarianSmallFlat()
-                template.imageProvider = CLKImageProvider(onePieceImage: templateImage)
-                let desc = ComplicationTemplate.UtilitarianSmallFlat.description
-                template.textProvider = CLKSimpleTextProvider(text: "\(desc) has not been configured in the app")
-                template.tintColor = hassColor
-                return template
-            }
         }
     }
     #endif
 }
 
-extension AccessoryWidgetGroupMember: CaseIterable {}
+extension AccessoryWidgetGroup: CaseIterable {}
 
 public enum AccessoryWidgetTemplate: String {
-    case CircularSmallRingImage
-    case CircularSmallSimpleImage
-    case CircularSmallStackImage
-    case CircularSmallRingText
-    case CircularSmallSimpleText
-    case CircularSmallStackText
     case UtilitarianSmallFlat
     case UtilitarianSmallRingImage
     case UtilitarianSmallRingText
@@ -373,28 +200,26 @@ public enum AccessoryWidgetTemplate: String {
     case GraphicCircularClosedGaugeText
     case GraphicCircularOpenGaugeSimpleText
     case GraphicCircularOpenGaugeRangeText
+    case GraphicCircularStackImage
+    case GraphicCircularStackText
     case GraphicRectangularStandardBody
     case GraphicRectangularTextGauge
     case GraphicRectangularLargeImage
 
     public var style: String {
         switch self {
-        case .CircularSmallRingImage, .UtilitarianSmallRingImage:
+        case .UtilitarianSmallRingImage:
             return L10n.Watch.Labels.ComplicationTemplate.Style.ringImage
-        case .CircularSmallSimpleImage:
-            return L10n.Watch.Labels.ComplicationTemplate.Style.simpleImage
-        case .CircularSmallStackImage:
-            return L10n.Watch.Labels.ComplicationTemplate.Style.stackImage
-        case .CircularSmallRingText, .UtilitarianSmallRingText:
+        case .UtilitarianSmallRingText:
             return L10n.Watch.Labels.ComplicationTemplate.Style.ringText
-        case .CircularSmallSimpleText:
-            return L10n.Watch.Labels.ComplicationTemplate.Style.simpleText
-        case .CircularSmallStackText, .GraphicCornerStackText:
+        case .GraphicCornerStackText:
             return L10n.Watch.Labels.ComplicationTemplate.Style.stackText
         case .GraphicRectangularStandardBody:
             return L10n.Watch.Labels.ComplicationTemplate.Style.standardBody
-        case .UtilitarianSmallFlat, .UtilitarianLargeFlat:
+        case .UtilitarianSmallFlat:
             return L10n.Watch.Labels.ComplicationTemplate.Style.flat
+        case .UtilitarianLargeFlat:
+            return "Large flat"
         case .UtilitarianSmallSquare:
             return L10n.Watch.Labels.ComplicationTemplate.Style.square
         case .GraphicCornerCircularImage, .GraphicCircularImage:
@@ -413,6 +238,10 @@ public enum AccessoryWidgetTemplate: String {
             return L10n.Watch.Labels.ComplicationTemplate.Style.closedGaugeText
         case .GraphicCircularOpenGaugeSimpleText:
             return L10n.Watch.Labels.ComplicationTemplate.Style.openGaugeSimpleText
+        case .GraphicCircularStackImage:
+            return "Stack Image"
+        case .GraphicCircularStackText:
+            return "Stack Text"
         case .GraphicCircularOpenGaugeRangeText:
             return L10n.Watch.Labels.ComplicationTemplate.Style.openGaugeRangeText
         case .GraphicRectangularTextGauge:
@@ -424,18 +253,6 @@ public enum AccessoryWidgetTemplate: String {
 
     public var description: String {
         switch self {
-        case .CircularSmallRingImage:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallRingImage.description
-        case .CircularSmallSimpleImage:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallSimpleImage.description
-        case .CircularSmallStackImage:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallStackImage.description
-        case .CircularSmallRingText:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallRingText.description
-        case .CircularSmallSimpleText:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallSimpleText.description
-        case .CircularSmallStackText:
-            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallStackText.description
         case .UtilitarianSmallFlat:
             return L10n.Watch.Labels.ComplicationTemplate.UtilitarianSmallFlat.description
         case .UtilitarianSmallRingImage:
@@ -468,6 +285,10 @@ public enum AccessoryWidgetTemplate: String {
             return L10n.Watch.Labels.ComplicationTemplate.GraphicCircularOpenGaugeSimpleText.description
         case .GraphicCircularOpenGaugeRangeText:
             return L10n.Watch.Labels.ComplicationTemplate.GraphicCircularOpenGaugeRangeText.description
+        case .GraphicCircularStackImage:
+            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallStackImage.description
+        case .GraphicCircularStackText:
+            return L10n.Watch.Labels.ComplicationTemplate.CircularSmallStackText.description
         case .GraphicRectangularStandardBody:
             return L10n.Watch.Labels.ComplicationTemplate.GraphicRectangularStandardBody.description
         case .GraphicRectangularTextGauge:
@@ -479,10 +300,6 @@ public enum AccessoryWidgetTemplate: String {
 
     public var type: String {
         switch self {
-        case .CircularSmallRingImage, .CircularSmallSimpleImage, .CircularSmallStackImage:
-            return "image"
-        case .CircularSmallRingText, .CircularSmallSimpleText, .CircularSmallStackText:
-            return "text"
         case .UtilitarianSmallFlat, .UtilitarianSmallRingImage, .UtilitarianSmallRingText:
             return "text"
         case .UtilitarianSmallSquare:
@@ -493,9 +310,9 @@ public enum AccessoryWidgetTemplate: String {
             return "text"
         case .GraphicCornerCircularImage, .GraphicCornerGaugeImage, .GraphicCornerTextImage:
             return "image"
-        case .GraphicCircularClosedGaugeText, .GraphicCircularOpenGaugeSimpleText, .GraphicCircularOpenGaugeRangeText:
+        case .GraphicCircularClosedGaugeText, .GraphicCircularOpenGaugeSimpleText, .GraphicCircularOpenGaugeRangeText, .GraphicCircularStackText:
             return "text"
-        case .GraphicCircularImage, .GraphicCircularClosedGaugeImage, .GraphicCircularOpenGaugeImage:
+        case .GraphicCircularImage, .GraphicCircularClosedGaugeImage, .GraphicCircularOpenGaugeImage, .GraphicCircularStackImage:
             return "image"
         case .GraphicRectangularStandardBody, .GraphicRectangularTextGauge:
             return "text"
@@ -504,59 +321,23 @@ public enum AccessoryWidgetTemplate: String {
         }
     }
 
-    public var group: AccessoryWidgetGroup {
+    public var groupMember: AccessoryWidgetGroup {
         switch self {
-        case .CircularSmallRingImage, .CircularSmallSimpleImage, .CircularSmallStackImage, .CircularSmallRingText,
-             .CircularSmallSimpleText, .CircularSmallStackText:
-            return .circularSmall
-        case .UtilitarianSmallFlat, .UtilitarianSmallRingImage, .UtilitarianSmallRingText, .UtilitarianSmallSquare,
-             .UtilitarianLargeFlat:
-            return .utilitarian
-        case .GraphicCornerCircularImage, .GraphicCornerGaugeImage, .GraphicCornerGaugeText, .GraphicCornerStackText,
-             .GraphicCornerTextImage, .GraphicCircularImage, .GraphicCircularClosedGaugeImage,
-             .GraphicCircularOpenGaugeImage, .GraphicCircularClosedGaugeText, .GraphicCircularOpenGaugeSimpleText,
-             .GraphicCircularOpenGaugeRangeText, .GraphicRectangularStandardBody,
-             .GraphicRectangularTextGauge, .GraphicRectangularLargeImage:
-            return .graphic
-        }
-    }
-
-    public var groupMember: AccessoryWidgetGroupMember {
-        switch self {
-        case .CircularSmallRingImage, .CircularSmallSimpleImage, .CircularSmallStackImage, .CircularSmallRingText,
-             .CircularSmallSimpleText, .CircularSmallStackText:
-            return .circularSmall
-        case .UtilitarianSmallFlat:
-            return .utilitarianSmallFlat
-        case .UtilitarianSmallRingImage, .UtilitarianSmallRingText, .UtilitarianSmallSquare:
-            return .utilitarianSmall
-        case .UtilitarianLargeFlat:
-            return .utilitarianLarge
+        case .UtilitarianSmallRingImage, .UtilitarianSmallRingText, .UtilitarianSmallSquare, .UtilitarianSmallFlat, .UtilitarianLargeFlat:
+            return .inline
         case .GraphicCornerCircularImage, .GraphicCornerGaugeImage, .GraphicCornerGaugeText, .GraphicCornerStackText,
              .GraphicCornerTextImage:
-            return .graphicCorner
+            return .corner
         case .GraphicCircularImage, .GraphicCircularClosedGaugeImage, .GraphicCircularOpenGaugeImage,
-             .GraphicCircularClosedGaugeText, .GraphicCircularOpenGaugeSimpleText, .GraphicCircularOpenGaugeRangeText:
-            return .graphicCircular
+             .GraphicCircularClosedGaugeText, .GraphicCircularOpenGaugeSimpleText, .GraphicCircularOpenGaugeRangeText, .GraphicCircularStackImage, .GraphicCircularStackText:
+            return .circular
         case .GraphicRectangularStandardBody, .GraphicRectangularTextGauge, .GraphicRectangularLargeImage:
-            return .graphicRectangular
+            return .rectangular
         }
     }
 
     public var textAreas: [AccessoryWidgetTextAreas] {
         switch self {
-        case .CircularSmallRingImage:
-            return []
-        case .CircularSmallSimpleImage:
-            return []
-        case .CircularSmallStackImage:
-            return [.Line2]
-        case .CircularSmallRingText:
-            return [.InsideRing]
-        case .CircularSmallSimpleText:
-            return [.Center]
-        case .CircularSmallStackText:
-            return [.Line1, .Line2]
         case .UtilitarianSmallFlat:
             return [.Center]
         case .UtilitarianSmallRingImage:
@@ -589,6 +370,10 @@ public enum AccessoryWidgetTemplate: String {
             return [.Center, .Bottom]
         case .GraphicCircularOpenGaugeRangeText:
             return [.Center, .Leading, .Trailing]
+        case .GraphicCircularStackImage:
+            return [.Line2]
+        case .GraphicCircularStackText:
+            return [.Line1, .Line2]
         case .GraphicRectangularStandardBody:
             return [.Header, .Body1, .Body2]
         case .GraphicRectangularTextGauge:
@@ -601,18 +386,6 @@ public enum AccessoryWidgetTemplate: String {
     #if os(watchOS)
     public init(_ template: CLKComplicationTemplate) {
         switch template {
-        case is CLKComplicationTemplateCircularSmallRingImage:
-            self = .CircularSmallRingImage
-        case is CLKComplicationTemplateCircularSmallSimpleImage:
-            self = .CircularSmallSimpleImage
-        case is CLKComplicationTemplateCircularSmallStackImage:
-            self = .CircularSmallStackImage
-        case is CLKComplicationTemplateCircularSmallRingText:
-            self = .CircularSmallRingText
-        case is CLKComplicationTemplateCircularSmallSimpleText:
-            self = .CircularSmallSimpleText
-        case is CLKComplicationTemplateCircularSmallStackText:
-            self = .CircularSmallStackText
         case is CLKComplicationTemplateUtilitarianSmallFlat:
             self = .UtilitarianSmallFlat
         case is CLKComplicationTemplateUtilitarianSmallRingImage:
@@ -645,6 +418,10 @@ public enum AccessoryWidgetTemplate: String {
             self = .GraphicCircularOpenGaugeSimpleText
         case is CLKComplicationTemplateGraphicCircularOpenGaugeRangeText:
             self = .GraphicCircularOpenGaugeRangeText
+        case is CLKComplicationTemplateGraphicCircularStackImage:
+            self = .GraphicCircularStackImage
+        case is CLKComplicationTemplateGraphicCircularStackText:
+            self = .GraphicCircularStackText
         case is CLKComplicationTemplateGraphicRectangularStandardBody:
             self = .GraphicRectangularStandardBody
         case is CLKComplicationTemplateGraphicRectangularTextGauge:
@@ -659,18 +436,6 @@ public enum AccessoryWidgetTemplate: String {
 
     public var CLKComplicationTemplate: CLKComplicationTemplate {
         switch self {
-        case .CircularSmallRingImage:
-            return CLKComplicationTemplateCircularSmallRingImage()
-        case .CircularSmallSimpleImage:
-            return CLKComplicationTemplateCircularSmallSimpleImage()
-        case .CircularSmallStackImage:
-            return CLKComplicationTemplateCircularSmallStackImage()
-        case .CircularSmallRingText:
-            return CLKComplicationTemplateCircularSmallRingText()
-        case .CircularSmallSimpleText:
-            return CLKComplicationTemplateCircularSmallSimpleText()
-        case .CircularSmallStackText:
-            return CLKComplicationTemplateCircularSmallStackText()
         case .UtilitarianSmallFlat:
             return CLKComplicationTemplateUtilitarianSmallFlat()
         case .UtilitarianSmallRingImage:
@@ -703,6 +468,10 @@ public enum AccessoryWidgetTemplate: String {
             return CLKComplicationTemplateGraphicCircularOpenGaugeSimpleText()
         case .GraphicCircularOpenGaugeRangeText:
             return CLKComplicationTemplateGraphicCircularOpenGaugeRangeText()
+        case .GraphicCircularStackImage:
+            return CLKComplicationTemplateGraphicCircularStackImage()
+        case .GraphicCircularStackText:
+            return CLKComplicationTemplateGraphicCircularStackText()
         case .GraphicRectangularStandardBody:
             return CLKComplicationTemplateGraphicRectangularStandardBody()
         case .GraphicRectangularTextGauge:
@@ -716,42 +485,6 @@ public enum AccessoryWidgetTemplate: String {
     public var imageSize: CGSize? {
         // Template: Device Size: Image Size @2x in pixels -- odd format, but what Apple's docs use
         let imageSizes: [Self: [Int: CGSize]] = [
-            .CircularSmallRingImage: [
-                38: CGSize(width: 40, height: 40),
-                40: CGSize(width: 44, height: 44),
-                42: CGSize(width: 44, height: 44),
-                44: CGSize(width: 48, height: 48),
-            ],
-            .CircularSmallSimpleImage: [
-                38: CGSize(width: 32, height: 32),
-                40: CGSize(width: 36, height: 36),
-                42: CGSize(width: 36, height: 36),
-                44: CGSize(width: 40, height: 40),
-            ],
-            .CircularSmallStackImage: [
-                38: CGSize(width: 32, height: 14),
-                40: CGSize(width: 34, height: 16),
-                42: CGSize(width: 34, height: 16),
-                44: CGSize(width: 38, height: 18),
-            ],
-            .UtilitarianSmallFlat: [
-                38: CGSize(width: 42, height: 18),
-                40: CGSize(width: 44, height: 20),
-                42: CGSize(width: 44, height: 20),
-                44: CGSize(width: 49, height: 22),
-            ],
-            .UtilitarianSmallRingImage: [
-                38: CGSize(width: 28, height: 28),
-                40: CGSize(width: 28, height: 28),
-                42: CGSize(width: 28, height: 28),
-                44: CGSize(width: 32, height: 32),
-            ],
-            .UtilitarianSmallSquare: [
-                38: CGSize(width: 40, height: 40),
-                40: CGSize(width: 44, height: 44),
-                42: CGSize(width: 44, height: 44),
-                44: CGSize(width: 50, height: 50),
-            ],
             .UtilitarianLargeFlat: [
                 38: CGSize(width: 42, height: 18),
                 40: CGSize(width: 44, height: 20),
@@ -782,6 +515,14 @@ public enum AccessoryWidgetTemplate: String {
                 40: CGSize(width: 22, height: 22),
                 44: CGSize(width: 24, height: 24),
             ],
+            .GraphicCircularStackImage: [
+                40: CGSize(width: 84, height: 84),
+                44: CGSize(width: 94, height: 94),
+            ],
+            .GraphicCircularStackText: [
+                40: CGSize(width: 56, height: 28),
+                44: CGSize(width: 62, height: 32),
+            ],
             .GraphicRectangularLargeImage: [
                 40: CGSize(width: 300, height: 94),
                 44: CGSize(width: 342, height: 108),
@@ -809,8 +550,7 @@ public enum AccessoryWidgetTemplate: String {
 
     public var hasRing: Bool {
         switch self {
-        case .CircularSmallRingImage, .CircularSmallRingText,
-             .UtilitarianSmallRingImage, .UtilitarianSmallRingText:
+        case .UtilitarianSmallRingImage, .UtilitarianSmallRingText:
             return true
         default:
             return false
@@ -857,8 +597,8 @@ public enum AccessoryWidgetTemplate: String {
 
     public var hasImage: Bool {
         switch self {
-        case .CircularSmallRingImage, .CircularSmallSimpleImage, .CircularSmallStackImage, .GraphicCircularClosedGaugeImage, .GraphicCircularImage,
-             .GraphicCircularOpenGaugeImage, .GraphicCornerCircularImage, .GraphicCornerGaugeImage,
+        case .GraphicCircularClosedGaugeImage, .GraphicCircularImage,
+                .GraphicCircularOpenGaugeImage, .GraphicCornerCircularImage, .GraphicCircularStackImage, .GraphicCornerGaugeImage,
              .GraphicCornerTextImage, .GraphicRectangularLargeImage, .GraphicRectangularStandardBody,
              .GraphicRectangularTextGauge, .UtilitarianLargeFlat,
              .UtilitarianSmallFlat, .UtilitarianSmallRingImage, .UtilitarianSmallSquare:

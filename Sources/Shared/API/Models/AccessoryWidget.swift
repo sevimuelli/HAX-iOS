@@ -12,13 +12,13 @@ public class AccessoryWidget: Object, ImmutableMappable {
     @objc public dynamic var serverIdentifier: String?
 
     @objc private dynamic var rawFamily: String = ""
-    public var Family: AccessoryWidgetGroupMember {
+    public var Family: AccessoryWidgetGroup {
         get {
             // Current.Log.verbose("GET Family for str '\(rawFamily)'")
-            if let f = AccessoryWidgetGroupMember(rawValue: rawFamily) {
+            if let f = AccessoryWidgetGroup(rawValue: rawFamily) {
                 return f
             }
-            return AccessoryWidgetGroupMember.graphicCircular
+            return AccessoryWidgetGroup.circular
         }
         set {
             rawFamily = newValue.rawValue
@@ -355,77 +355,11 @@ public class AccessoryWidget: Object, ImmutableMappable {
 
     // swiftlint:disable:next cyclomatic_complexity
     public func CLKComplicationTemplate(family: CLKComplicationFamily) -> CLKComplicationTemplate? {
-        if Template.groupMember != AccessoryWidgetGroupMember(family: family) {
+        if Template.groupMember != AccessoryWidgetGroup(family: family) {
             Current.Log.warning("Would have returned template (\(Template)) outside expected family (\(family)")
             return nil
         }
         switch Template {
-        case .CircularSmallRingImage:
-            let template = CLKComplicationTemplateCircularSmallRingImage()
-            if let iconProvider {
-                template.imageProvider = iconProvider
-            } else {
-                return nil
-            }
-            let ringData = ringData
-            template.fillFraction = ringData.fraction
-            template.ringStyle = ringData.style
-            template.tintColor = ringData.color
-            return template
-        case .CircularSmallSimpleImage:
-            let template = CLKComplicationTemplateCircularSmallSimpleImage()
-            if let iconProvider {
-                template.imageProvider = iconProvider
-            } else {
-                return nil
-            }
-            return template
-        case .CircularSmallStackImage:
-            let template = CLKComplicationTemplateCircularSmallStackImage()
-            if let iconProvider {
-                template.line1ImageProvider = iconProvider
-            } else {
-                return nil
-            }
-            if let textProvider = textDataProviders["Line2"] {
-                template.line2TextProvider = textProvider
-            } else {
-                return nil
-            }
-            return template
-        case .CircularSmallRingText:
-            let template = CLKComplicationTemplateCircularSmallRingText()
-            if let textProvider = textDataProviders["InsideRing"] {
-                template.textProvider = textProvider
-            } else {
-                return nil
-            }
-            let ringData = ringData
-            template.fillFraction = ringData.fraction
-            template.ringStyle = ringData.style
-            template.tintColor = ringData.color
-            return template
-        case .CircularSmallSimpleText:
-            let template = CLKComplicationTemplateCircularSmallSimpleText()
-            if let textProvider = textDataProviders["Center"] {
-                template.textProvider = textProvider
-            } else {
-                return nil
-            }
-            return template
-        case .CircularSmallStackText:
-            let template = CLKComplicationTemplateCircularSmallStackText()
-            if let textProvider = textDataProviders["Line1"] {
-                template.line1TextProvider = textProvider
-            } else {
-                return nil
-            }
-            if let textProvider = textDataProviders["Line2"] {
-                template.line2TextProvider = textProvider
-            } else {
-                return nil
-            }
-            return template
         case .UtilitarianSmallFlat:
             let template = CLKComplicationTemplateUtilitarianSmallFlat()
             if let iconProvider {
@@ -653,6 +587,32 @@ public class AccessoryWidget: Object, ImmutableMappable {
             }
             if let textProvider = textDataProviders["Trailing"] {
                 template.trailingTextProvider = textProvider
+            } else {
+                return nil
+            }
+            return template
+        case .GraphicCircularStackImage:
+            let template = CLKComplicationTemplateGraphicCircularStackImage()
+            if let iconProvider = fullColorImageProvider{
+                template.line1ImageProvider = iconProvider
+            } else {
+                return nil
+            }
+            if let textProvider = textDataProviders["Line2"] {
+                template.line2TextProvider = textProvider
+            } else {
+                return nil
+            }
+            return template
+        case .GraphicCircularStackText:
+            let template = CLKComplicationTemplateGraphicCircularStackText()
+            if let textProvider = textDataProviders["Line1"] {
+                template.line1TextProvider = textProvider
+            } else {
+                return nil
+            }
+            if let textProvider = textDataProviders["Line2"] {
+                template.line2TextProvider = textProvider
             } else {
                 return nil
             }
